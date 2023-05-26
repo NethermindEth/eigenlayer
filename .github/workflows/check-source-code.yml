@@ -1,0 +1,131 @@
+name: Check source code
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  code-format:
+    name: Code format 
+    strategy:
+      matrix:
+        go: ["1.20"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set git to use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Instal gofumpt
+        run: make install-gofumpt
+
+      - name: Check code format
+        run: |
+          if [[ ! -z $(make format) ]];
+          then
+            echo "Code is not formatted. Please run 'make format' and commit changes"
+            exit 1
+          fi
+        shell: bash
+      
+      - name: Install staticcheck
+        run: make install-staticcheck
+      
+      - name: Run staticcheck
+        run: make staticcheck
+  build:
+    name: Build
+    needs: code-format
+    strategy:
+      matrix:
+        go: ["1.20"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set git to use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      
+      - name: Install mockgen
+        run: make install-mockgen
+
+      - name: Generate mocks
+        run: make generate
+
+      - name: Check go mod status
+        run: |
+          make gomod_tidy
+          if [[ ! -z $(git status -s | grep 'go.mod') ]] || [[ ! -z $(git status -s | grep 'go.sum') ]];
+          then
+            echo "Changes on go.mod or go.sum files - state is not clean:"
+            git status -s
+            git diff "$GITHUB_SHA"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Check build
+        run: make build
+  test:
+    name: Run tests
+    needs: build
+    strategy:
+      matrix:
+        go: ["1.20"]
+        os: [ubuntu-latest]
+        codecov: [false]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Install deps
+        run: make install-deps
+
+      - name: Run tests
+        if: matrix.codecov == false 
+        run: make test
+
+      - name: Run codecov tests
+        if: matrix.codecov == true
+        run: make codecov-test
+
+      - name: Upload coverage to Codecov
+        if: matrix.codecov == true
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          files: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}

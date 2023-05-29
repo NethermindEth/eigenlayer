@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ENV APP_NAME=app
+ENV APP_NAME=eigenwiz
 
 WORKDIR /root/
 COPY ./bin/${APP_NAME} ./${APP_NAME}

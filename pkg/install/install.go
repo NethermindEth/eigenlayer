@@ -27,6 +27,7 @@ type Installer struct {
 //
 // Pat field has more priority than Password field, meaning that if both are set, the
 // Pat field will be used.
+// TODO: support key authentication
 type GitAuth struct {
 	Username string
 	Password string

@@ -1,2 +1,4 @@
 bin/
 coverage.out
+coverage/coverage.html
+.DS_Store

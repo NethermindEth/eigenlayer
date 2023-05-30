@@ -13,7 +13,7 @@ import (
 
 // Installer is used to install AVS node software from a git repository.
 type Installer struct {
-	gitAhut *GitAuth
+	gitAuth *GitAuth
 }
 
 // GitAuth is used to provide authentication to a private git repository. Two types of
@@ -36,14 +36,14 @@ type GitAuth struct {
 // NewInstaller returns a new Installer instance. If you need to install from a private
 // repository, use NewInstallerWithAuth instead.
 func NewInstaller() *Installer {
-	return &Installer{gitAhut: nil}
+	return &Installer{gitAuth: nil}
 }
 
 // NewInstallerWithAuth returns a new Installer instance with git credentials. If you
 // need to install from a public repository, NewInstaller will be sufficient.
 func NewInstallerWithAuth(gitAuth GitAuth) *Installer {
 	return &Installer{
-		gitAhut: &gitAuth,
+		gitAuth: &gitAuth,
 	}
 }
 
@@ -86,18 +86,18 @@ func (i *Installer) Install(url, version, dest string) error {
 }
 
 func (g *Installer) getAuth() *http.BasicAuth {
-	if g.gitAhut == nil {
+	if g.gitAuth == nil {
 		return nil
 	}
-	if g.gitAhut.Pat != "" {
+	if g.gitAuth.Pat != "" {
 		return &http.BasicAuth{
-			Username: g.gitAhut.Username,
-			Password: g.gitAhut.Pat,
+			Username: g.gitAuth.Username,
+			Password: g.gitAuth.Pat,
 		}
 	}
 	return &http.BasicAuth{
-		Username: g.gitAhut.Username,
-		Password: g.gitAhut.Password,
+		Username: g.gitAuth.Username,
+		Password: g.gitAuth.Password,
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/errdefs"
 	"github.com/golang/mock/gomock"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -131,27 +132,9 @@ func TestStopError(t *testing.T) {
 }
 
 func TestStopContainerAlreadyStopped(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	dockerClient := mocks.NewMockAPIClient(ctrl)
-	defer ctrl.Finish()
+	// Silence logger
+	log.SetOutput(io.Discard)
 
-	dockerClient.EXPECT().
-		ContainerInspect(context.Background(), "eigen").
-		Return(types.ContainerJSON{
-			ContainerJSONBase: &types.ContainerJSONBase{
-				State: &types.ContainerState{
-					Running: false,
-				},
-			},
-		}, nil).
-		Times(1)
-
-	dockerManager := NewDockerManager(dockerClient)
-	err := dockerManager.Stop("eigen")
-	assert.Nil(t, err)
-}
-
-func TestStopContainerError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	dockerClient := mocks.NewMockAPIClient(ctrl)
 	defer ctrl.Finish()
@@ -178,6 +161,58 @@ func TestStopContainerError(t *testing.T) {
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Stop("eigen")
 	assert.ErrorIs(t, err, ErrStoppingContainer)
+}
+
+func TestStopContainer(t *testing.T) {
+	// Silence logger
+	log.SetOutput(io.Discard)
+
+	tests := []struct {
+		name           string
+		containerState *types.ContainerState
+	}{
+		{
+			name: "Running status success",
+			containerState: &types.ContainerState{
+				Running: true,
+			},
+		},
+		{
+			name: "Restarting status success",
+			containerState: &types.ContainerState{
+				Restarting: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			defer ctrl.Finish()
+
+			eigenCtId := "eigenctid"
+			dockerClient.EXPECT().
+				ContainerInspect(context.Background(), "eigen").
+				Return(types.ContainerJSON{
+					ContainerJSONBase: &types.ContainerJSONBase{
+						ID:    eigenCtId,
+						State: tt.containerState,
+					},
+				}, nil).
+				Times(1)
+			dockerClient.EXPECT().
+				ContainerStop(context.Background(), eigenCtId, gomock.Any()).
+				Return(nil).
+				Times(1)
+
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.Stop("eigen")
+			assert.Nil(t, err)
+		})
+	}
 }
 
 // ContainerID tests

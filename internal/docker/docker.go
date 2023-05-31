@@ -8,41 +8,53 @@ import (
 
 	"github.com/NethermindEth/eigen-wiz/internal/utils"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	dockerCt "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
 )
 
-func NewDockerManager(dockerClient client.APIClient) dockerManager {
-	return dockerManager{dockerClient}
+// NewDockerManager returns a new instance of DockerManager
+func NewDockerManager(dockerClient client.APIClient) DockerManager {
+	return DockerManager{dockerClient}
 }
 
 // DockerManager is an interface to the Docker Daemon for managing docker containers
-type dockerManager struct {
+type DockerManager struct {
 	dockerClient client.APIClient
 }
 
-// Returns the image name of a container
-func (d *dockerManager) Image(containerName string) (img string, err error) {
+// Image retrieves the image name associated with a specified Docker container.
+// The function accepts a string parameter 'container', which represents the name or ID of the Docker container.
+// It uses the ContainerInspect method of the Docker client to fetch the container's information.
+// If the container is found and no error occurs, the function returns the image name as a string.
+// If the container is not found or an error occurs during the inspection, the function returns an empty string and the error.
+func (d *DockerManager) Image(container string) (string, error) {
 	var ctInfo types.ContainerJSON
-	if ctInfo, err = d.dockerClient.ContainerInspect(context.Background(), containerName); err != nil {
+	var err error
+	if ctInfo, err = d.dockerClient.ContainerInspect(context.Background(), container); err != nil {
 		return "", err
 	}
 	return ctInfo.Image, nil
 }
 
-// Starts a container
-func (d *dockerManager) Start(containerName string) error {
-	if err := d.dockerClient.ContainerStart(context.Background(), containerName, types.ContainerStartOptions{}); err != nil {
-		return fmt.Errorf("%w %s: %s", ErrStartingContainer, containerName, err)
+// Start initiates the start process of a specified Docker container.
+// The function accepts a string parameter 'container', which represents the name or ID of the Docker container.
+// It uses the ContainerStart method of the Docker client to start the container.
+// If the container is successfully started, the function returns nil.
+// If an error occurs during the start process, the function wraps the error with a custom message and returns it.
+func (d *DockerManager) Start(container string) error {
+	if err := d.dockerClient.ContainerStart(context.Background(), container, types.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("%w %s: %s", ErrStartingContainer, container, err)
 	}
 	return nil
 }
 
-// Stops a container
-func (d *dockerManager) Stop(containerName string) error {
-	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), containerName)
+// Stop attempts to stop a specified Docker container.
+// The function first inspects the container to check if it's running. If the container is not found, it returns nil.
+// If the container is running, it attempts to stop the container and returns any error that occurs during the process.
+func (d *DockerManager) Stop(container string) error {
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
 	if err != nil {
 		if client.IsErrNotFound(err) {
 			return nil
@@ -50,19 +62,21 @@ func (d *dockerManager) Stop(containerName string) error {
 		return err
 	}
 	if ctInfo.State.Running {
-		log.Infof("Stopping service: %s, currently on %s status", containerName, ctInfo.State.Status)
+		log.Infof("Stopping service: %s, currently on %s status", container, ctInfo.State.Status)
 		timeout := 5 * int(time.Minute)
-		if err := d.dockerClient.ContainerStop(context.Background(), ctInfo.ID, container.StopOptions{
+		if err := d.dockerClient.ContainerStop(context.Background(), ctInfo.ID, dockerCt.StopOptions{
 			Timeout: &timeout,
 		}); err != nil {
-			return fmt.Errorf("%w %s: %s", ErrStoppingContainer, containerName, err)
+			return fmt.Errorf("%w %s: %s", ErrStoppingContainer, container, err)
 		}
 	}
 	return nil
 }
 
-// Returns the container id of a container
-func (d *dockerManager) ContainerID(containerName string) (string, error) {
+// ContainerID retrieves the ID of a specified Docker container name.
+// The function lists all containers and filters them by name. If a container with the specified name is found, its ID is returned.
+// If no container with the specified name is found, the function returns an error.
+func (d *DockerManager) ContainerID(containerName string) (string, error) {
 	containers, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{
 		All:     true,
 		Filters: filters.NewArgs(filters.Arg("name", containerName)),
@@ -78,16 +92,19 @@ func (d *dockerManager) ContainerID(containerName string) (string, error) {
 	return "", fmt.Errorf("%w: %s", ErrContainerNotFound, containerName)
 }
 
-// Pulls an image
-func (d *dockerManager) Pull(image string) error {
+// Pull pulls a specified Docker image.
+// The function attempts to pull the image and returns any error that occurs during the process.
+func (d *DockerManager) Pull(image string) error {
 	log.Debugf("Pulling image: %s", image)
 	_, err := d.dockerClient.ImagePull(context.Background(), image, types.ImagePullOptions{})
 	return err
 }
 
-// Returns the logs of a container
-func (d *dockerManager) ContainerLogs(containerID string) (string, error) {
-	logReader, err := d.dockerClient.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{
+// ContainerLogs retrieves the logs of a specified Docker container.
+// The function accepts a string parameter 'container', which represents the name or ID of the Docker container.
+// The function attempts to fetch the logs and returns them as a string. If an error occurs during the process, it returns the error.
+func (d *DockerManager) ContainerLogs(container string) (string, error) {
+	logReader, err := d.dockerClient.ContainerLogs(context.Background(), container, types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     false,
@@ -98,7 +115,6 @@ func (d *dockerManager) ContainerLogs(containerID string) (string, error) {
 	defer logReader.Close()
 
 	logs, err := io.ReadAll(logReader)
-	log.Errorf("%p", &logReader)
 	if err == nil {
 		log.Debugf("Container logs: %s", string(logs))
 	}

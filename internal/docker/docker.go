@@ -121,7 +121,24 @@ func (d *DockerManager) ContainerLogs(container string) (string, error) {
 	return string(logs), err
 }
 
-// Waits for a container to reach a certain condition
-func (d *dockerManager) Wait(service string, condition container.WaitCondition) (<-chan container.WaitResponse, <-chan error) {
-	return d.dockerClient.ContainerWait(context.Background(), service, condition)
+// Wait waits for a specified Docker container to reach a certain condition.
+// The function returns two channels: one for the wait response and one for any error that occurs during the wait process.
+func (d *DockerManager) Wait(container string, condition WaitCondition) (<-chan WaitResponse, <-chan error) {
+	dwrChan, err := d.dockerClient.ContainerWait(context.Background(), container, dockerCt.WaitCondition(condition))
+
+	wrChan := make(chan WaitResponse)
+	go func() {
+		for r := range dwrChan {
+			var waitExitError *WaitExitError
+			if r.Error != nil {
+				waitExitError = &WaitExitError{Message: r.Error.Message}
+			}
+			wrChan <- WaitResponse{
+				StatusCode: r.StatusCode,
+				Error:      waitExitError,
+			}
+		}
+		close(wrChan)
+	}()
+	return wrChan, err
 }

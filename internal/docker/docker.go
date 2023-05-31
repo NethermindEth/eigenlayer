@@ -61,7 +61,7 @@ func (d *DockerManager) Stop(container string) error {
 		}
 		return err
 	}
-	if ctInfo.State.Running {
+	if ctInfo.State.Running || ctInfo.State.Restarting {
 		log.Infof("Stopping service: %s, currently on %s status", container, ctInfo.State.Status)
 		timeout := 5 * int(time.Minute)
 		if err := d.dockerClient.ContainerStop(context.Background(), ctInfo.ID, dockerCt.StopOptions{

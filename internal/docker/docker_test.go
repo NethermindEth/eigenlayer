@@ -432,7 +432,7 @@ func TestWaitErrCh(t *testing.T) {
 		Times(1)
 
 	dockerManager := NewDockerManager(dockerClient)
-	exitCh, errCh := dockerManager.Wait("eigen", container.WaitConditionNextExit)
+	exitCh, errCh := dockerManager.Wait("eigen", WaitConditionNextExit)
 	select {
 	case <-waitCh:
 		t.Fatal("err channel timeout")
@@ -444,30 +444,59 @@ func TestWaitErrCh(t *testing.T) {
 }
 
 func TestWaitExitCh(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	dockerClient := mocks.NewMockAPIClient(ctrl)
-	defer ctrl.Finish()
-
-	waitCh := time.After(3 * time.Second)
-	wantWait := container.WaitResponse{
-		StatusCode: 0,
+	tests := []struct {
+		name     string
+		response container.WaitResponse
+	}{
+		{
+			name: "response without error",
+			response: container.WaitResponse{
+				StatusCode: 0,
+			},
+		},
+		{
+			name: "response with error",
+			response: container.WaitResponse{
+				StatusCode: 0,
+				Error: &container.WaitExitError{
+					Message: "error",
+				},
+			},
+		},
 	}
-	wantWaitCh := make(chan container.WaitResponse, 1)
-	wantWaitCh <- wantWait
 
-	dockerClient.EXPECT().
-		ContainerWait(context.Background(), "eigen", gomock.Any()).
-		Return(wantWaitCh, make(chan error)).
-		Times(1)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	dockerManager := NewDockerManager(dockerClient)
-	exitCh, errCh := dockerManager.Wait("eigen", container.WaitConditionNextExit)
-	select {
-	case <-waitCh:
-		t.Fatal("exit channel timeout")
-	case exit := <-exitCh:
-		assert.Equal(t, wantWait.StatusCode, exit.StatusCode)
-	case <-errCh:
-		t.Fatal("unexpected value from error channel")
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			defer ctrl.Finish()
+
+			waitCh := time.After(3 * time.Second)
+			wantWaitCh := make(chan container.WaitResponse, 1)
+			wantWaitCh <- tt.response
+			close(wantWaitCh)
+
+			dockerClient.EXPECT().
+				ContainerWait(context.Background(), "eigen", gomock.Any()).
+				Return(wantWaitCh, make(chan error)).
+				Times(1)
+
+			dockerManager := NewDockerManager(dockerClient)
+			exitCh, errCh := dockerManager.Wait("eigen", WaitConditionNextExit)
+			select {
+			case <-waitCh:
+				t.Fatal("exit channel timeout")
+			case exit := <-exitCh:
+				assert.Equal(t, tt.response.StatusCode, exit.StatusCode)
+				if tt.response.Error == nil {
+					assert.Nil(t, exit.Error)
+				} else {
+					assert.Equal(t, tt.response.Error.Message, exit.Error.Message)
+				}
+			case <-errCh:
+				t.Fatal("unexpected value from error channel")
+			}
+		})
 	}
 }

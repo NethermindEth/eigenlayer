@@ -1,4 +1,3 @@
 bin/
-coverage.out
-coverage/coverage.html
+coverage/*
 .DS_Store

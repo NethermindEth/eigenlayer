@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
@@ -61,6 +62,24 @@ func TestImageNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, expectedError)
 	assert.True(t, errdefs.IsNotFound(err))
 	assert.Equal(t, "", image)
+}
+
+func ExampleImage() {
+	// Create a new Docker client
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer dockerClient.Close()
+
+	// Create a new dockerManager
+	dm := NewDockerManager(dockerClient)
+
+	// Get the image name of a running container
+	_, err = dm.Image("myContainer")
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 // Start tests

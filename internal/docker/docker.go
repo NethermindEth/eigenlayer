@@ -30,9 +30,8 @@ type DockerManager struct {
 // If the container is found and no error occurs, the function returns the image name as a string.
 // If the container is not found or an error occurs during the inspection, the function returns an empty string and the error.
 func (d *DockerManager) Image(container string) (string, error) {
-	var ctInfo types.ContainerJSON
-	var err error
-	if ctInfo, err = d.dockerClient.ContainerInspect(context.Background(), container); err != nil {
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
+	if err != nil {
 		return "", err
 	}
 	return ctInfo.Image, nil

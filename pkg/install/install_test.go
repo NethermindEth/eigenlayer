@@ -18,13 +18,13 @@ func TestInstall(t *testing.T) {
 		{
 			name:      "valid target",
 			installer: install.NewInstaller(),
-			url:       "https://github.com/NethermindEth/sedge.git", // TODO: use a mock tap repository
-			version:   "v1.1.0",
+			url:       "https://github.com/NethermindEth/mock-avs.git",
+			version:   "v0.1.0",
 		},
 		{
 			name:      "invalid version",
 			installer: install.NewInstaller(),
-			url:       "https://github.com/NethermindEth/sedge.git", // TODO: use a mock tap repository
+			url:       "https://github.com/NethermindEth/mock-avs.git",
 			version:   "invalid-tag",
 			err: install.TagNotFoundError{
 				Tag: "invalid-tag",
@@ -33,10 +33,10 @@ func TestInstall(t *testing.T) {
 		{
 			name:      "not found or private",
 			installer: install.NewInstaller(),
-			url:       "https://github.com/NethermindEth/sedge-invalid.git", // TODO: use a mock tap repository
-			version:   "v1.1.0",
+			url:       "https://github.com/NethermindEth/mock-avs-invalid.git",
+			version:   "v0.1.0",
 			err: install.RepositoryNotFoundOrPrivateError{
-				URL: "https://github.com/NethermindEth/sedge-invalid.git",
+				URL: "https://github.com/NethermindEth/mock-avs-invalid.git",
 			},
 		},
 		// TODO: add testcase using GitAuth and a private repository

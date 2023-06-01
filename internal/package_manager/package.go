@@ -1,6 +1,7 @@
 package package_manager
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 )
@@ -21,18 +22,23 @@ func NewPackageManager(path string) *PackageManager {
 	return &PackageManager{path: path}
 }
 
-// Check checks the package for validity. It returns an error if the package is invalid.
+// Check validates a package. It returns an error if the package is invalid.
 // It checks the existence of some required files and directories and computes the
 // checksums comparing them with the ones listed in the checksum.txt file.
 func (p *PackageManager) Check() error {
 	if err := checkPackageDirExist(p.path, pkgDirName); err != nil {
 		return err
 	}
-	if err := checkPackageFileExist(p.path, checksumFileName); err != nil {
+	err := checkPackageFileExist(p.path, checksumFileName)
+	if err != nil {
+		var fileNotFoundErr PackageFileNotFoundError
+		if errors.As(err, &fileNotFoundErr) {
+			return nil
+		}
 		return err
+	} else {
+		return p.checkSum()
 	}
-
-	return p.checkSum()
 }
 
 func (p *PackageManager) checkSum() error {

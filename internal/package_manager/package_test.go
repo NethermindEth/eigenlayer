@@ -45,10 +45,7 @@ func TestCheck(t *testing.T) {
 			return testCase{
 				name:      "checksum.txt file does not exist",
 				pkgFolder: pkgFolder,
-				err: PackageFileNotFoundError{
-					fileRelativePath: "checksum.txt",
-					packagePath:      pkgFolder,
-				},
+				err:       nil,
 			}
 		}(),
 		func() testCase {

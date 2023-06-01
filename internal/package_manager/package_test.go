@@ -1,7 +1,7 @@
 package package_manager
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -56,7 +56,28 @@ func TestCheck(t *testing.T) {
 			return testCase{
 				name:      "missing file that is listed in checksum.txt produces ErrInvalidChecksum",
 				pkgFolder: pkgFolder,
-				err:       fmt.Errorf("%w: expected 4 files, got 3", ErrInvalidChecksum),
+				err:       ErrInvalidChecksum,
+			}
+		}(),
+		func() testCase {
+			pkgFolder := setupPackage(t)
+			targetFile := filepath.Join(pkgFolder, "pkg", "manifest.yml") // replace targetFile.txt with the file you want to modify
+
+			file, err := os.OpenFile(targetFile, os.O_APPEND|os.O_WRONLY, 0o644)
+			if err != nil {
+				t.Fatal("error opening target file: " + err.Error())
+			}
+			defer file.Close()
+
+			_, err = file.WriteString("\n")
+			if err != nil {
+				t.Fatal("error writing to target file: " + err.Error())
+			}
+
+			return testCase{
+				name:      "invalid hash in the checksum.txt",
+				pkgFolder: pkgFolder,
+				err:       ErrInvalidChecksum,
 			}
 		}(),
 	}
@@ -65,7 +86,7 @@ func TestCheck(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pkgManager := NewPackageManager(tc.pkgFolder)
 			err := pkgManager.Check()
-			assert.Equal(t, tc.err, err)
+			assert.ErrorIs(t, err, tc.err)
 		})
 	}
 }

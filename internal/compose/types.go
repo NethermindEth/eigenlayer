@@ -1,65 +1,66 @@
 package compose
 
-// DockerComposeUpOptions : Represent docker compose up command options
+// DockerComposeUpOptions defines the options for the 'docker compose up' command.
 type DockerComposeUpOptions struct {
-	// Path : path to docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services : services names
+	// Services lists the names of the services to be started.
 	Services []string
 }
 
-// DockerComposePullOptions represents 'docker compose pull' command options
+// DockerComposePullOptions defines the options for the 'docker compose pull' command.
 type DockerComposePullOptions struct {
-	// Path to the docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services names
+	// Services lists the names of the services for which images should be pulled.
 	Services []string
 }
 
-// DockerComposeCreateOptions represents `docker compose create` command options
+// DockerComposeCreateOptions defines the options for the 'docker compose create' command.
 type DockerComposeCreateOptions struct {
-	// Path to the docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services names
+	// Services lists the names of the services to be created.
 	Services []string
 }
 
-// DockerComposeBuildOptions represents `docker compose build` command options
+// DockerComposeBuildOptions defines the options for the 'docker compose build' command.
 type DockerComposeBuildOptions struct {
-	// Path to the docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services names
+	// Services lists the names of the services to be built.
 	Services []string
 }
 
-// DockerComposePsOptions : Represents docker compose ps command options
+// DockerComposePsOptions defines the options for the 'docker compose ps' command.
 type DockerComposePsOptions struct {
-	// Path : path to docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services : use with --services to display services
+	// Services, when true, displays the services.
 	Services bool
-	// Quiet : use with --quiet to display only IDs
+	// Quiet, when true, displays only IDs.
 	Quiet bool
-	// ServiceName: Service argument
+	// ServiceName specifies the name of a service.
 	ServiceName string
-	// FilterRunning : use with --filter status=running
+	// FilterRunning, when true, filters to display only running services.
 	FilterRunning bool
 }
 
-// DockerComposeLogsOptions : Represents docker compose log command options
+// DockerComposeLogsOptions defines the options for the 'docker compose logs' command.
 type DockerComposeLogsOptions struct {
-	// Path : path to docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
-	// Services : services names
+	// Services lists the names of the services for which logs should be displayed.
 	Services []string
-	// Follow : use with --follow
+	// Follow, when true, follows the log output.
 	Follow bool
-	// Tail : if greater than 0 and Follow is False used for --tail
+	// Tail specifies the number of lines from the end of the logs to display.
+	// If greater than 0 and Follow is false, it is used for the --tail option.
 	Tail int
 }
 
-// DockerComposeDownOptions : Represents docker compose down command options
+// DockerComposeDownOptions defines the options for the 'docker compose down' command.
 type DockerComposeDownOptions struct {
-	// Path : path to docker-compose.yaml
+	// Path specifies the location of the docker-compose.yaml file.
 	Path string
 }

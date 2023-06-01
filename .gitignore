@@ -1,3 +1,4 @@
 bin/
 coverage/*
 .DS_Store
+mocks/*

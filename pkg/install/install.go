@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/NethermindEth/eigen-wiz/internal/pkgmngr"
+	"github.com/NethermindEth/eigen-wiz/internal/package_manager"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"

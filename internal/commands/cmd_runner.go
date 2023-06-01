@@ -34,27 +34,24 @@ type ScriptFile struct {
 	Data interface{}
 }
 
-// CMDRunnerOptions provides options for configuring a command runner.
-type CMDRunnerOptions struct {
-	// RunAsAdmin indicates whether commands should be run as admin.
-	RunAsAdmin bool
-}
-
 // CMDRunner is a command runner that can run commands with or without sudo.
 type CMDRunner struct {
-	RunWithSudo bool
+	runWithSudo bool
 }
 
 // NewCMDRunner creates a new command runner with the given options.
-func NewCMDRunner(options CMDRunnerOptions) CMDRunner {
-	return CMDRunner{
-		RunWithSudo: options.RunAsAdmin,
-	}
+func NewCMDRunner() CMDRunner {
+	return CMDRunner{}
+}
+
+// NewCMDRunnerWithSudo creates a new command runner that runs commands with sudo.
+func NewCMDRunnerWithSudo() CMDRunner {
+	return CMDRunner{runWithSudo: true}
 }
 
 // RunCMD runs a command. If the command runner is configured to run with sudo and the command is not forced to run without sudo, the command is run with sudo.
 func (cr *CMDRunner) RunCMD(cmd Command) (out string, exitCode int, err error) {
-	if cr.RunWithSudo && !cmd.ForceNoSudo {
+	if cr.runWithSudo && !cmd.ForceNoSudo {
 		log.Debug(`Running command with sudo.`)
 		cmd.Cmd = fmt.Sprintf("sudo %s", cmd.Cmd)
 	} else {
@@ -65,9 +62,10 @@ func (cr *CMDRunner) RunCMD(cmd Command) (out string, exitCode int, err error) {
 
 // RunScript executes a bash script.
 func (cr *CMDRunner) RunScript(script ScriptFile) (string, error) {
-	return executeBashScript(script, cr.RunWithSudo)
+	return executeBashScript(script, cr.runWithSudo)
 }
 
+// TODO: Refactor to be able to opt for show output to stdout/stderr, and by default show output to stdout/stderr and return output
 // runCmd executes a command and returns the output, exit code, and any error that occurred during execution. If getOutput is true, the output of the command is returned.
 func runCmd(cmd string, getOutput bool) (out string, exitCode int, err error) {
 	r := strings.ReplaceAll(cmd, "\n", "")

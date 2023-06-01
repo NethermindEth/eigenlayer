@@ -22,7 +22,7 @@ func checkPackageFileExist(packagePath, filePath string) error {
 		return err
 	}
 	if stats.IsDir() {
-		return fmt.Errorf("%w: %s is a directory", ErrInvalidFilePath, filePath)
+		return fmt.Errorf("%w: %s is not a file", ErrInvalidFilePath, filePath)
 	}
 	return nil
 }

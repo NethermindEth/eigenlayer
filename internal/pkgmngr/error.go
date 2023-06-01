@@ -2,7 +2,10 @@ package package_manager
 
 import "errors"
 
-var ErrInvalidFilePath = errors.New("invalid file path")
+var (
+	ErrInvalidFilePath = errors.New("invalid file path")
+	ErrInvalidChecksum = errors.New("invalid checksum")
+)
 
 type PackageFileNotFoundError struct {
 	fileRelativePath string

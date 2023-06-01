@@ -1,7 +1,6 @@
 package package_manager
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 )
@@ -40,11 +39,11 @@ func (p *PackageManager) checkSum() error {
 		return err
 	}
 	if len(currentChecksums) != len(computedChecksums) {
-		return errors.New("invalid checksum file")
+		return fmt.Errorf("%w: expected %d files, got %d", ErrInvalidChecksum, len(currentChecksums), len(computedChecksums))
 	}
 	for file, hash := range currentChecksums {
 		if computedChecksums[file] != hash {
-			return fmt.Errorf("checksum mismatch for file %s, expected %s, got %s", file, hash, computedChecksums[file])
+			return fmt.Errorf("%w: checksum mismatch for file %s, expected %s, got %s", ErrInvalidChecksum, file, hash, computedChecksums[file])
 		}
 	}
 	return nil

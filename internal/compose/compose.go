@@ -118,7 +118,7 @@ func (cm *ComposeManager) PS(opts DockerComposePsOptions) (string, error) {
 func (cm *ComposeManager) Logs(opts DockerComposeLogsOptions) error {
 	logsCmd := fmt.Sprintf("docker compose -f %s logs", opts.Path)
 	if opts.Follow {
-		logsCmd += fmt.Sprintf(" --follow")
+		logsCmd += " --follow"
 	}
 	if opts.Tail > 0 {
 		logsCmd += fmt.Sprintf(" --tail=%d", opts.Tail)

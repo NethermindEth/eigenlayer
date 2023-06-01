@@ -33,19 +33,17 @@ test: generate ## Run tests
 
 codecov-test: generate ## Run tests with coverage
 	@mkdir -p coverage
-	@courtney -o coverage/coverage.out ./...
+	@go test -coverprofile=coverage/coverage.out -covermode=count ./...
 	@go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
-install-deps: install-gofumpt install-mockgen install-courtney install-staticcheck ## Install dependencies
+install-deps: install-gofumpt install-mockgen install-staticcheck ## Install dependencies
 
 install-gofumpt: ## Install gofumpt for formatting
 	go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION)
 
 install-mockgen: ## Install mockgen for generating mocks
 	go install github.com/golang/mock/mockgen@$(MOCKGEN_VERSION)
-
-install-courtney: ## Install courtney for code coverage
-	go install github.com/dave/courtney@$(COURTNEY_VERSION)
+	go get github.com/golang/mock/mockgen/model
 
 install-staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@$(STATICCHECK_VERSION)

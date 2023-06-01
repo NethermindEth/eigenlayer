@@ -14,7 +14,10 @@ func checkPackageFileExist(packagePath, filePath string) error {
 	stats, err := os.Stat(path.Join(packagePath, filePath))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return PackageFileNotFoundError{packagePath, filePath}
+			return PackageFileNotFoundError{
+				fileRelativePath: filePath,
+				packagePath:      packagePath,
+			}
 		}
 		return err
 	}
@@ -28,7 +31,10 @@ func checkPackageDirExist(packagePath, dirPath string) error {
 	stats, err := os.Stat(path.Join(packagePath, dirPath))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return PackageDirNotFoundError{packagePath, dirPath}
+			return PackageDirNotFoundError{
+				dirRelativePath: dirPath,
+				packagePath:     packagePath,
+			}
 		}
 		return err
 	}

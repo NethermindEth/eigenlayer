@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/NethermindEth/eigen-wiz/internal/pkgmngr"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -51,39 +52,12 @@ func NewInstallerWithAuth(gitAuth GitAuth) *Installer {
 // Install installs the AVS node software from the given git repository URL and version
 // to the given destination directory.
 func (i *Installer) Install(url, version, dest string) error {
-	gitRepo, err := git.PlainClone(dest, false, &git.CloneOptions{
-		URL:  url,
-		Auth: i.getAuth(),
-	})
-	if err != nil {
-		if errors.Is(err, transport.ErrAuthenticationRequired) {
-			return RepositoryNotFoundOrPrivateError{
-				URL: url,
-			}
-		}
-		if errors.Is(err, transport.ErrRepositoryNotFound) {
-			return RepositoryNotFoundError{
-				URL: url,
-			}
-		}
+	if err := cloneGitRepo(url, version, dest, i.getAuth()); err != nil {
 		return err
 	}
 
-	tag, err := getTag(gitRepo, version)
-	if err != nil {
-		return err
-	}
-	if err != nil {
-		return err
-	}
-	worktree, err := gitRepo.Worktree()
-	if err != nil {
-		return fmt.Errorf("error getting worktree: %w", err)
-	}
-	worktree.Checkout(&git.CheckoutOptions{
-		Hash: tag.Hash(),
-	})
-	return nil
+	pkgMngr := package_manager.NewPackageManager(dest)
+	return pkgMngr.Check()
 }
 
 func (g *Installer) getAuth() *http.BasicAuth {
@@ -100,6 +74,42 @@ func (g *Installer) getAuth() *http.BasicAuth {
 		Username: g.gitAuth.Username,
 		Password: g.gitAuth.Password,
 	}
+}
+
+func cloneGitRepo(url, tagName, dest string, auth *http.BasicAuth) error {
+	gitRepo, err := git.PlainClone(dest, false, &git.CloneOptions{
+		URL:  url,
+		Auth: auth,
+	})
+	if err != nil {
+		if errors.Is(err, transport.ErrAuthenticationRequired) {
+			return RepositoryNotFoundOrPrivateError{
+				URL: url,
+			}
+		}
+		if errors.Is(err, transport.ErrRepositoryNotFound) {
+			return RepositoryNotFoundError{
+				URL: url,
+			}
+		}
+		return err
+	}
+
+	tag, err := getTag(gitRepo, tagName)
+	if err != nil {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	worktree, err := gitRepo.Worktree()
+	if err != nil {
+		return fmt.Errorf("error getting worktree: %w", err)
+	}
+	worktree.Checkout(&git.CheckoutOptions{
+		Hash: tag.Hash(),
+	})
+	return nil
 }
 
 func getTag(gitRepo *git.Repository, tag string) (*plumbing.Reference, error) {

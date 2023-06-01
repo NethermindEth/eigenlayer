@@ -80,7 +80,7 @@ func TestUp(t *testing.T) {
 
 func ExampleComposeManager_Up() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -163,7 +163,7 @@ func TestPull(t *testing.T) {
 
 func ExampleComposeManager_Pull() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -246,7 +246,7 @@ func TestCreate(t *testing.T) {
 
 func ExampleComposeManager_Create() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -329,7 +329,7 @@ func TestBuild(t *testing.T) {
 
 func ExampleComposeManager_Build() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -464,7 +464,7 @@ func TestPS(t *testing.T) {
 
 func ExampleComposeManager_PS() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -567,7 +567,7 @@ func TestLogs(t *testing.T) {
 
 func ExampleComposeManager_Logs() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)
@@ -636,7 +636,7 @@ func TestDown(t *testing.T) {
 
 func ExampleComposeManager_Down() {
 	// Create a new CMDRunner with admin privileges
-	cmdRunner := commands.NewCMDRunner(commands.CMDRunnerOptions{RunAsAdmin: true})
+	cmdRunner := commands.NewCMDRunnerWithSudo()
 
 	// Create a new ComposeManager with the CMDRunner
 	manager := NewComposeManager(&cmdRunner)

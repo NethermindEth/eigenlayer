@@ -26,9 +26,7 @@ func TestRunCmd(t *testing.T) {
 		},
 	}
 
-	runner := NewCMDRunner(CMDRunnerOptions{
-		RunAsAdmin: false,
-	})
+	runner := NewCMDRunner()
 
 	for _, input := range inputs {
 		descr := fmt.Sprintf("RunCmd(%s,%t)", input.cmd, input.getOutput)
@@ -50,7 +48,7 @@ func TestRunCmd(t *testing.T) {
 }
 
 func ExampleCMDRunner_RunCMD() {
-	cmdRunner := NewCMDRunner(CMDRunnerOptions{RunAsAdmin: false})
+	cmdRunner := NewCMDRunner()
 	out, exitCode, err := cmdRunner.RunCMD(Command{Cmd: "echo hello", GetOutput: true})
 	if err != nil {
 		panic(err)
@@ -80,9 +78,7 @@ func TestRunBashScript(t *testing.T) {
 		},
 	}
 
-	runner := NewCMDRunner(CMDRunnerOptions{
-		RunAsAdmin: false,
-	})
+	runner := NewCMDRunner()
 
 	for _, input := range inputs {
 		descr := fmt.Sprintf("RunBashCmd(%s,%t)", input.cmd, input.getOutput)
@@ -109,7 +105,7 @@ func TestRunBashScript(t *testing.T) {
 }
 
 func ExampleCMDRunner_RunScript() {
-	cmdRunner := NewCMDRunner(CMDRunnerOptions{RunAsAdmin: false})
+	cmdRunner := NewCMDRunner()
 	tmp := template.Must(template.New("test").Parse("echo hello"))
 	out, err := cmdRunner.RunScript(ScriptFile{Tmp: tmp, GetOutput: true})
 	if err != nil {

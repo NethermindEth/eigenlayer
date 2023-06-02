@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrInvalidFilePath = errors.New("invalid file path")
+	ErrInvalidDirPath  = errors.New("invalid directory path")
 	ErrInvalidChecksum = errors.New("invalid checksum")
 )
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/NethermindEth/eigen-wiz/internal/package_manager/testdata"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,4 +37,76 @@ func FuzzHashFile(f *testing.F) {
 		assert.NoError(t, err)
 		assert.Equal(t, strings.Split(string(output), " ")[0], fileHash)
 	})
+}
+
+func TestCheckPackageFileExist(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "mock-avs", testDir)
+
+	ts := []struct {
+		name     string
+		filePath string
+		err      error
+	}{
+		{
+			name:     "file exists",
+			filePath: "pkg/manifest.yml",
+			err:      nil,
+		},
+		{
+			name:     "file does not exist",
+			filePath: "pkg/manifest2.yml",
+			err: PackageFileNotFoundError{
+				fileRelativePath: "pkg/manifest2.yml",
+				packagePath:      filepath.Join(testDir, "mock-avs"),
+			},
+		},
+		{
+			name:     "is not a file",
+			filePath: "pkg",
+			err:      ErrInvalidFilePath,
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkPackageFileExist(filepath.Join(testDir, "mock-avs"), tc.filePath)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
+
+func TestCheckPackageDirExist(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "mock-avs", testDir)
+
+	ts := []struct {
+		name    string
+		dirPath string
+		err     error
+	}{
+		{
+			name:    "dir exists",
+			dirPath: "pkg",
+			err:     nil,
+		},
+		{
+			name:    "does not exist",
+			dirPath: "pkg2",
+			err: PackageDirNotFoundError{
+				dirRelativePath: "pkg2",
+				packagePath:     filepath.Join(testDir, "mock-avs"),
+			},
+		},
+		{
+			name:    "is not a directory",
+			dirPath: "pkg/manifest.yml",
+			err:     ErrInvalidDirPath,
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkPackageDirExist(filepath.Join(testDir, "mock-avs"), tc.dirPath)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
 }

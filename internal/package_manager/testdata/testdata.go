@@ -3,7 +3,6 @@ package testdata
 import (
 	"embed"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +11,8 @@ import (
 //go:embed *
 var TestData embed.FS
 
+// SetupDir copies the testdata directory to the dest directory. testDataPath
+// is a relative path to the testdata directory.
 func SetupDir(t *testing.T, testDataPath string, dest string) {
 	t.Helper()
 	err := fs.WalkDir(TestData, testDataPath, func(path string, d fs.DirEntry, err error) error {
@@ -28,7 +29,11 @@ func SetupDir(t *testing.T, testDataPath string, dest string) {
 			if err != nil {
 				return err
 			}
-			if err := ioutil.WriteFile(filepath.Join(dest, path), data, 0644); err != nil {
+			destFile, err := os.Create(filepath.Join(dest, path))
+			if err != nil {
+				return err
+			}
+			if _, err := destFile.Write(data); err != nil {
 				return err
 			}
 		}

@@ -3,11 +3,9 @@ package commands
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,16 +16,6 @@ type Command struct {
 	Cmd string
 	// GetOutput indicates whether the output of the command should be returned.
 	GetOutput bool
-}
-
-// ScriptFile represents a bash script to be executed.
-type ScriptFile struct {
-	// Tmp is the script template.
-	Tmp *template.Template
-	// GetOutput indicates whether the output of the script should be returned.
-	GetOutput bool
-	// Data is the data object for the template.
-	Data interface{}
 }
 
 // CMDRunner is a command runner that can run commands with or without sudo.
@@ -54,11 +42,6 @@ func (cr *CMDRunner) RunCMD(cmd Command) (out string, exitCode int, err error) {
 		log.Debug(`Running command without sudo.`)
 	}
 	return runCmd(cmd.Cmd, cmd.GetOutput)
-}
-
-// RunScript executes a bash script.
-func (cr *CMDRunner) RunScript(script ScriptFile) (string, error) {
-	return executeBashScript(script, cr.runWithSudo)
 }
 
 // TODO: Refactor to be able to opt for show output to stdout/stderr, and by default show output to stdout/stderr and return output
@@ -94,74 +77,4 @@ func runCmd(cmd string, getOutput bool) (out string, exitCode int, err error) {
 	}
 
 	return
-}
-
-// executeBashScript executes a bash script defined in a given template. If runWithSudo is true, the script is run with sudo. The function returns the output of the script and any error that occurred during execution.
-func executeBashScript(script ScriptFile, runWithSudo bool) (out string, err error) {
-	var scriptBuffer, combinedOut bytes.Buffer
-	if err = script.Tmp.Execute(&scriptBuffer, script.Data); err != nil {
-		return
-	}
-
-	var cmd *exec.Cmd
-	if runWithSudo {
-		cmd = exec.Command("sudo", "bash")
-	} else {
-		cmd = exec.Command("bash")
-	}
-
-	// Prepare pipes for stdin, stdout and stderr
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return
-	}
-
-	wait := sync.WaitGroup{}
-
-	// Prepare channel to receive errors from goroutines
-	errChans := make([]<-chan error, 0)
-	// cmd executes any instructions coming from stdin
-	errChans = append(errChans, goCopy(&wait, stdin, &scriptBuffer, true))
-
-	if script.GetOutput {
-		// If the script is to get the output, then use an unified buffer to combine stdout and stderr
-		cmd.Stdout = &combinedOut
-		cmd.Stderr = &combinedOut
-	} else {
-		// If the script is not to get the output, then pipe the output to stdout and stderr
-		errChans = append(errChans, goCopy(&wait, os.Stdout, stdout, false))
-		errChans = append(errChans, goCopy(&wait, os.Stderr, stderr, false))
-	}
-
-	if err = cmd.Start(); err != nil {
-		return
-	}
-
-	// Check for errors from goroutines
-	for _, errChan := range errChans {
-		err = <-errChan
-		if err != nil {
-			return
-		}
-	}
-
-	wait.Wait()
-
-	if err = cmd.Wait(); err != nil {
-		return
-	}
-
-	if script.GetOutput {
-		out = combinedOut.String()
-	}
-
-	return out, nil
 }

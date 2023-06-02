@@ -84,7 +84,7 @@ func TestCheck(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgManager := NewPackageManager(tc.pkgFolder)
+			pkgManager := NewPackageHandler(tc.pkgFolder)
 			err := pkgManager.Check()
 			assert.ErrorIs(t, err, tc.err)
 		})

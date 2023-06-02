@@ -56,7 +56,7 @@ func (i *Installer) Install(url, version, dest string) error {
 		return err
 	}
 
-	pkgMngr := package_manager.NewPackageManager(dest)
+	pkgMngr := package_manager.NewPackageHandler(dest)
 	return pkgMngr.Check()
 }
 

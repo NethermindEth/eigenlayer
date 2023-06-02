@@ -64,7 +64,7 @@ func TestImageNotFound(t *testing.T) {
 	assert.Equal(t, "", image)
 }
 
-func ExampleImage() {
+func ExampleDockerManager_Image() {
 	// Create a new Docker client
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {

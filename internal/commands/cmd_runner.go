@@ -18,10 +18,6 @@ type Command struct {
 	Cmd string
 	// GetOutput indicates whether the output of the command should be returned.
 	GetOutput bool
-	// ForceNoSudo forces the command to be run without sudo.
-	ForceNoSudo bool
-	// IgnoreTerminal indicates whether the command can be executed without using a terminal. This is useful for Windows.
-	IgnoreTerminal bool
 }
 
 // ScriptFile represents a bash script to be executed.
@@ -51,7 +47,7 @@ func NewCMDRunnerWithSudo() CMDRunner {
 
 // RunCMD runs a command. If the command runner is configured to run with sudo and the command is not forced to run without sudo, the command is run with sudo.
 func (cr *CMDRunner) RunCMD(cmd Command) (out string, exitCode int, err error) {
-	if cr.runWithSudo && !cmd.ForceNoSudo {
+	if cr.runWithSudo {
 		log.Debug(`Running command with sudo.`)
 		cmd.Cmd = fmt.Sprintf("sudo %s", cmd.Cmd)
 	} else {

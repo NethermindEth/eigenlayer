@@ -110,3 +110,59 @@ func TestCheckPackageDirExist(t *testing.T) {
 		})
 	}
 }
+
+func TestParseChecksumFile(t *testing.T) {
+	testFile := t.TempDir()
+	ts := []struct {
+		name    string
+		content string
+		out     map[string]string
+		err     error
+	}{
+		{
+			name:    "valid checksum file",
+			content: "9e9d08613004818012fb1b72b427581d8e00c4e09f13e8899c00e8b6228608ed  pkg/manifest.yml\n6f9cf01b1996cdb179ac7a0776ddf907871197afe10d19b9d10cbb5faa141c56  pkg/sepolia/.env\n",
+			out: map[string]string{
+				"pkg/manifest.yml": "9e9d08613004818012fb1b72b427581d8e00c4e09f13e8899c00e8b6228608ed",
+				"pkg/sepolia/.env": "6f9cf01b1996cdb179ac7a0776ddf907871197afe10d19b9d10cbb5faa141c56",
+			},
+			err: nil,
+		},
+		{
+			name:    "invalid checksum file, invalid separator in line",
+			content: "9e9d08613004818012fb1b72b427581d8e00c4e09f13e8899c00e8b6228608ed pkg/manifest.yml\n6f9cf01b1996cdb179ac7a0776ddf907871197afe10d19b9d10cbb 5faa141c56 pkg/sepolia/.env\n",
+			out:     nil,
+			err:     fmt.Errorf("invalid checksum file format"),
+		},
+		{
+			name:    "invalid checksum file, invalid separator in line",
+			content: "9e9d08613004818012fb1b72b427581d8e00c4e09f13e8899c00e8b6228608ed pkg/manifest.yml\n6f9cf01b1996cdb179ac7a0776ddf907871197afe10d19b9d10cbb\n",
+			out:     nil,
+			err:     fmt.Errorf("invalid checksum file format"),
+		},
+	}
+
+	for i, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			filePath := filepath.Join(testFile, fmt.Sprintf("checksum_%d.txt", i))
+			file, err := os.Create(filePath)
+			if err != nil {
+				t.Fatalf("failed to create temp file: %v", err)
+			}
+			defer file.Close()
+			if _, err := file.Write([]byte(tc.content)); err != nil {
+				t.Fatal("failed to write to temp file: " + err.Error())
+			}
+			out, err := parseChecksumFile(filePath)
+			if tc.err == nil {
+				assert.NoError(t, err)
+				assert.Len(t, out, len(tc.out))
+				for k, v := range tc.out {
+					assert.Equal(t, v, out[k])
+				}
+			} else {
+				assert.EqualError(t, err, tc.err.Error())
+			}
+		})
+	}
+}

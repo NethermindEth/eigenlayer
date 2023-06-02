@@ -1,6 +1,7 @@
 package package_manager
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -87,16 +88,19 @@ func parseChecksumFile(path string) (map[string]string, error) {
 	}
 	defer file.Close()
 
-	for {
-		var filePath, hash string
-		_, err := fmt.Fscanf(file, "%s  %s\n", &hash, &filePath)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return checksums, err
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Fields(line)
+		if len(parts) != 2 {
+			return checksums, fmt.Errorf("invalid checksum file format")
 		}
-		checksums[filePath] = hash
+		checksums[parts[1]] = parts[0]
 	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
 	return checksums, nil
 }

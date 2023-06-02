@@ -1,4 +1,4 @@
-package package_manager
+package package_handler
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NethermindEth/eigen-wiz/internal/package_manager/testdata"
+	"github.com/NethermindEth/eigen-wiz/internal/package_handler/testdata"
 	"github.com/stretchr/testify/assert"
 )
 

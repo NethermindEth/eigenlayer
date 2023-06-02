@@ -1,4 +1,4 @@
-package package_manager
+package package_handler
 
 import (
 	"bufio"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/NethermindEth/eigen-wiz/internal/package_manager"
+	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -56,8 +56,8 @@ func (i *Installer) Install(url, version, dest string) error {
 		return err
 	}
 
-	pkgMngr := package_manager.NewPackageHandler(dest)
-	return pkgMngr.Check()
+	pkgHandler := package_handler.NewPackageHandler(dest)
+	return pkgHandler.Check()
 }
 
 func (g *Installer) getAuth() *http.BasicAuth {

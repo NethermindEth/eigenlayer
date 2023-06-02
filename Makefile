@@ -36,6 +36,8 @@ codecov-test: generate ## Run tests with coverage
 	@go test -coverprofile=coverage/coverage.out -covermode=count ./...
 	@go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
+pre-commit: generate format staticcheck build test
+
 install-deps: install-gofumpt install-mockgen install-staticcheck ## Install dependencies
 
 install-gofumpt: ## Install gofumpt for formatting

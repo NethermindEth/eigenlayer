@@ -41,7 +41,7 @@ func TestInstall(t *testing.T) {
 				Install(tc.options.URL, tc.options.Version, tc.options.DestDir).
 				Return(tc.err)
 
-			d := NewDaemon(installer)
+			d := NewWizDaemon(installer)
 			response, err := d.Install(tc.options)
 			if tc.err != nil {
 				assert.EqualError(t, err, tc.err.Error())

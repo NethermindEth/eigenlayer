@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/eigen-wiz/internal/package_handler/testdata"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -104,4 +105,46 @@ func setupPackage(t *testing.T) string {
 		t.Fatal("error cloning the mock tap repo: " + err.Error())
 	}
 	return pkgFolder
+}
+
+func TestGetProfiles(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "manifests", testDir)
+
+	ts := []struct {
+		name       string
+		folderPath string
+		profiles   []Profile
+		wantError  bool
+	}{
+		{
+			name:       "valid manifest with one",
+			folderPath: "full-ok",
+			profiles:   []Profile{{Name: "profile1"}},
+		},
+		{
+			name:       "valid manifest with multiple profiles",
+			folderPath: "minimal",
+			profiles:   []Profile{{Name: "profile1"}, {Name: "profile2"}},
+		},
+		{
+			name:       "invalid manifest",
+			folderPath: "invalid-fields",
+			profiles:   nil,
+			wantError:  true,
+		},
+	}
+
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "manifests", tc.folderPath))
+			profiles, err := pkgHandler.GetProfiles()
+			if tc.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.profiles, profiles)
+			}
+		})
+	}
 }

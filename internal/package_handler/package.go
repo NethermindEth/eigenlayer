@@ -3,7 +3,10 @@ package package_handler
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -59,4 +62,37 @@ func (p *PackageHandler) checkSum() error {
 		}
 	}
 	return nil
+}
+
+func (p *PackageHandler) parseManifest() (*Manifest, error) {
+	manifestPath := filepath.Join(p.path, "manifest.yml")
+	// Read the manifest file
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var manifest Manifest
+	err = yaml.Unmarshal(data, &manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &manifest, nil
+}
+
+// GetProfiles reads and parses the manifest file located in the package path,
+// and returns a list of profiles defined in the manifest.
+// It returns an error if the manifest file can't be read or parsed, or if it is invalid.
+func (p *PackageHandler) GetProfiles() ([]Profile, error) {
+	manifest, err := p.parseManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := manifest.validate(); err != nil {
+		return nil, err
+	}
+
+	return manifest.Profiles, nil
 }

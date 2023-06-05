@@ -1,0 +1,13 @@
+version: "v1.0.0"
+node_version: "v0.1.0"
+name: sample-avs
+upgrade: required
+hardware_requirements: 
+  min_cpu_cores: -1
+  min_ram: -1
+  min_free_space: -1
+plugin: 
+  image: "http://your-organization/plugin-service"
+  git:   "github.com/NethermindEth/el-node-spec"
+profiles:
+  - name: "profile1"

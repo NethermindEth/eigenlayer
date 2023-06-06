@@ -5,6 +5,9 @@ type Installer interface {
 	Install(url, version, destDir string) error
 }
 
+// Checks that WizDaemon implements Daemon.
+var _ = Daemon(&WizDaemon{})
+
 // WizDaemon is the main entrypoint for all the functionalities of the daemon.
 type WizDaemon struct {
 	installer Installer

@@ -11,6 +11,7 @@ var (
 	ErrInvalidChecksum = errors.New("invalid checksum")
 )
 
+// PackageFileNotFoundError is returned when a package file is not found.
 type PackageFileNotFoundError struct {
 	fileRelativePath string
 	packagePath      string
@@ -20,6 +21,7 @@ func (e PackageFileNotFoundError) Error() string {
 	return "package file not found: " + e.fileRelativePath + " in package " + e.packagePath
 }
 
+// PackageDirNotFoundError is returned when a package directory is not found.
 type PackageDirNotFoundError struct {
 	dirRelativePath string
 	packagePath     string
@@ -29,13 +31,14 @@ func (e PackageDirNotFoundError) Error() string {
 	return "package directory not found: " + e.dirRelativePath + " in package " + e.packagePath
 }
 
-type InvalidManifestError struct {
+// InvalidConfError is returned when a manifest or profile file is invalid or incomplete.
+type InvalidConfError struct {
 	message       string
 	invalidFields []string
 	missingFields []string
 }
 
-func (e InvalidManifestError) Error() string {
+func (e InvalidConfError) Error() string {
 	// Nil error
 	if e.message == "" {
 		return ""
@@ -49,4 +52,40 @@ func (e InvalidManifestError) Error() string {
 		msg += "missing fields: " + strings.Join(e.missingFields, ", ") + ". "
 	}
 	return msg
+}
+
+// ReadingProfileError is returned when a profile cannot be read.
+type ReadingProfileError struct {
+	profileName string
+}
+
+func (e ReadingProfileError) Error() string {
+	return "error reading profile " + e.profileName
+}
+
+// ParsingProfileError is returned when a profile cannot be parsed.
+type ParsingProfileError struct {
+	profileName string
+}
+
+func (e ParsingProfileError) Error() string {
+	return "error parsing profile " + e.profileName
+}
+
+// ReadingManifestError is returned when a manifest cannot be read.
+type ReadingManifestError struct {
+	pkgPath string
+}
+
+func (e ReadingManifestError) Error() string {
+	return "error reading manifest in package " + e.pkgPath
+}
+
+// ParsingManifestError is returned when a manifest cannot be parsed.
+type ParsingManifestError struct {
+	pkgPath string
+}
+
+func (e ParsingManifestError) Error() string {
+	return "error parsing manifest in package " + e.pkgPath
 }

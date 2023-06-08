@@ -12,6 +12,8 @@ import (
 const (
 	pkgDirName       = "pkg"
 	checksumFileName = "checksum.txt"
+	manifestFileName = "manifest.yml"
+	profileFileName  = "profile.yml"
 )
 
 // PackageHandler is used to interact with an AVS node software package at the given
@@ -65,26 +67,51 @@ func (p *PackageHandler) checkSum() error {
 }
 
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
-	manifestPath := filepath.Join(p.path, "manifest.yml")
+	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
 	// Read the manifest file
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ReadingManifestError{
+			pkgPath: p.path,
+		}, err)
 	}
 
 	var manifest Manifest
 	err = yaml.Unmarshal(data, &manifest)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ParsingManifestError{
+			pkgPath: p.path,
+		}, err)
 	}
 
 	return &manifest, nil
 }
 
-// GetProfiles reads and parses the manifest file located in the package path,
-// and returns a list of profiles defined in the manifest.
-// It returns an error if the manifest file can't be read or parsed, or if it is invalid.
-func (p *PackageHandler) GetProfiles() ([]Profile, error) {
+// Profiles returns the list of profiles defined in the package.
+func (p *PackageHandler) Profiles() ([]Profile, error) {
+	names, err := p.profilesNames()
+	if err != nil {
+		return nil, err
+	}
+
+	profiles := make([]Profile, 0)
+	for _, profileName := range names {
+		profile, err := p.parseProfile(profileName)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := profile.Validate(); err != nil {
+			return nil, err
+		}
+
+		profiles = append(profiles, *profile)
+	}
+
+	return profiles, nil
+}
+
+func (p *PackageHandler) profilesNames() ([]string, error) {
 	manifest, err := p.parseManifest()
 	if err != nil {
 		return nil, err
@@ -94,5 +121,29 @@ func (p *PackageHandler) GetProfiles() ([]Profile, error) {
 		return nil, err
 	}
 
-	return manifest.Profiles, nil
+	names := make([]string, len(manifest.Profiles))
+	for i, profile := range manifest.Profiles {
+		names[i] = profile.Name
+	}
+
+	return names, nil
+}
+
+func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
+	data, err := os.ReadFile(filepath.Join(p.path, pkgDirName, profileName, profileFileName))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ReadingProfileError{
+			profileName: profileName,
+		}, err)
+	}
+
+	var profile Profile
+	err = yaml.Unmarshal(data, &profile)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ParsingProfileError{
+			profileName: profileName,
+		}, err)
+	}
+
+	return &profile, nil
 }

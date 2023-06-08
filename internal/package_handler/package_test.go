@@ -107,25 +107,25 @@ func setupPackage(t *testing.T) string {
 	return pkgFolder
 }
 
-func TestGetProfiles(t *testing.T) {
+func TestProfilesNames(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "manifests", testDir)
 
 	ts := []struct {
 		name       string
 		folderPath string
-		profiles   []Profile
+		profiles   []string
 		wantError  bool
 	}{
 		{
 			name:       "valid manifest with one",
 			folderPath: "full-ok",
-			profiles:   []Profile{{Name: "profile1"}},
+			profiles:   []string{"profile1"},
 		},
 		{
 			name:       "valid manifest with multiple profiles",
 			folderPath: "minimal",
-			profiles:   []Profile{{Name: "profile1"}, {Name: "profile2"}},
+			profiles:   []string{"profile1", "profile2"},
 		},
 		{
 			name:       "invalid manifest",
@@ -138,12 +138,132 @@ func TestGetProfiles(t *testing.T) {
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
 			pkgHandler := NewPackageHandler(filepath.Join(testDir, "manifests", tc.folderPath))
-			profiles, err := pkgHandler.GetProfiles()
+			profiles, err := pkgHandler.profilesNames()
 			if tc.wantError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.profiles, profiles)
+			}
+		})
+	}
+}
+
+func TestParseProfile(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "packages", testDir)
+
+	ts := []struct {
+		name    string
+		pkgPath string
+		profile string
+		err     error
+	}{
+		{
+			name:    "valid profile",
+			pkgPath: "good-profiles",
+			profile: "ok",
+		},
+		{
+			name:    "profile without options",
+			pkgPath: "no-options",
+			profile: "no-options",
+		},
+		{
+			name:    "invalid yml file",
+			pkgPath: "bad-profiles",
+			profile: "invalid-yml",
+			err:     ParsingProfileError{profileName: "invalid-yml"},
+		},
+		{
+			name:    "no profile",
+			pkgPath: "bad-profiles",
+			profile: "no-profile",
+			err:     ReadingProfileError{profileName: "no-profile"},
+		},
+		{
+			name:    "invalid format",
+			pkgPath: "bad-profiles",
+			profile: "not-yml",
+			err:     ReadingProfileError{profileName: "not-yml"},
+		},
+	}
+
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
+			profile, err := pkgHandler.parseProfile(tc.profile)
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, profile)
+			}
+		})
+	}
+}
+
+func TestProfiles(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "packages", testDir)
+
+	ts := []struct {
+		name    string
+		pkgPath string
+		want    []Profile
+		err     error
+	}{
+		{
+			name:    "good profiles",
+			pkgPath: "good-profiles",
+			want: []Profile{
+				{
+					Options: []Option{
+						{
+							Name:    "el-port",
+							Target:  "PORT",
+							Type:    "port",
+							Default: "8080",
+							Help:    "Port of the harbor bay crocodile in the horse window within upside Coca Cola",
+						},
+						{
+							Name:   "graffiti",
+							Target: "GRAFFITI",
+							Type:   "id",
+							Help:   "Graffiti code of Donatello tattoo in DevCon restroom while hanging out with a Bored Ape",
+						},
+					},
+				},
+				{
+					Options: []Option{},
+				},
+			},
+		},
+		{
+			name:    "bad profiles",
+			pkgPath: "bad-profiles",
+			want:    []Profile{},
+			err:     ParsingProfileError{profileName: "invalid-yml"},
+		},
+		{
+			name:    "no options",
+			pkgPath: "no-options",
+			want:    []Profile{},
+			err:     InvalidConfError{message: "Invalid profile.yml", missingFields: []string{"options"}},
+		},
+	}
+
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
+			profiles, err := pkgHandler.Profiles()
+			if tc.err != nil {
+				assert.ErrorContains(t, err, tc.err.Error())
+			} else {
+				assert.NoError(t, err)
+				for i, profile := range profiles {
+					assert.Equal(t, tc.want[i].Options, profile.Options)
+				}
 			}
 		})
 	}

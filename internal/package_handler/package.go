@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -66,27 +67,6 @@ func (p *PackageHandler) checkSum() error {
 	return nil
 }
 
-func (p *PackageHandler) parseManifest() (*Manifest, error) {
-	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
-	// Read the manifest file
-	data, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ReadingManifestError{
-			pkgPath: p.path,
-		}, err)
-	}
-
-	var manifest Manifest
-	err = yaml.Unmarshal(data, &manifest)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ParsingManifestError{
-			pkgPath: p.path,
-		}, err)
-	}
-
-	return &manifest, nil
-}
-
 // Profiles returns the list of profiles defined in the package.
 func (p *PackageHandler) Profiles() ([]Profile, error) {
 	names, err := p.profilesNames()
@@ -109,6 +89,27 @@ func (p *PackageHandler) Profiles() ([]Profile, error) {
 	}
 
 	return profiles, nil
+}
+
+func (p *PackageHandler) parseManifest() (*Manifest, error) {
+	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
+	// Read the manifest file
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ReadingManifestError{
+			pkgPath: p.path,
+		}, err)
+	}
+
+	var manifest Manifest
+	err = yaml.Unmarshal(data, &manifest)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ParsingManifestError{
+			pkgPath: p.path,
+		}, err)
+	}
+
+	return &manifest, nil
 }
 
 func (p *PackageHandler) profilesNames() ([]string, error) {
@@ -146,4 +147,32 @@ func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
 	}
 
 	return &profile, nil
+}
+
+// DotEnv returns the .env file for the given profile.
+// Assumes the package has been checked and is valid.
+func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
+	env := make(map[string]string)
+	envPath := filepath.Join(p.path, pkgDirName, profile, ".env")
+
+	data, err := os.ReadFile(envPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ReadingDotEnvError{
+			pkgPath:     p.path,
+			profileName: profile,
+		}, err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.Split(line, "=")
+		if len(parts) != 2 {
+			continue
+		}
+		env[parts[0]] = parts[1]
+	}
+	return env, nil
 }

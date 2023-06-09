@@ -89,3 +89,13 @@ type ParsingManifestError struct {
 func (e ParsingManifestError) Error() string {
 	return "error parsing manifest in package " + e.pkgPath
 }
+
+// ReadingDotEnvError is returned when a .env file cannot be read.
+type ReadingDotEnvError struct {
+	pkgPath     string
+	profileName string
+}
+
+func (e ReadingDotEnvError) Error() string {
+	return "error reading .env file of profile " + e.profileName + " in package " + e.pkgPath
+}

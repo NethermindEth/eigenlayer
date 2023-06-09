@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/NethermindEth/eigen-wiz/internal/package_handler/testdata"
@@ -264,6 +265,62 @@ func TestProfiles(t *testing.T) {
 				for i, profile := range profiles {
 					assert.Equal(t, tc.want[i].Options, profile.Options)
 				}
+			}
+		})
+	}
+}
+
+func TestDotEnv(t *testing.T) {
+	testDir := t.TempDir()
+	testdata.SetupDir(t, "packages", testDir)
+
+	ts := []struct {
+		name    string
+		pkgPath string
+		profile string
+		want    map[string]string
+		err     error
+	}{
+		{
+			name:    "good dot env",
+			pkgPath: "good-profiles",
+			profile: "ok",
+			want: map[string]string{
+				"KEY1": "8000",
+				"KEY2": "false",
+				"KEY3": "foo",
+			},
+		},
+		{
+			name:    "empty dot env",
+			pkgPath: "bad-profiles",
+			profile: "no-profile",
+		},
+		{
+			name:    "invalid dot env",
+			pkgPath: "bad-profiles",
+			profile: "invalid-yml",
+			want: map[string]string{
+				"$$FACADE": "trueAvocado666%!",
+			},
+		},
+		{
+			name:    "no dot env",
+			pkgPath: "bad-profiles",
+			profile: "not-yml",
+			err:     ReadingDotEnvError{profileName: "not-yml"},
+		},
+	}
+
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
+			dotEnv, err := pkgHandler.DotEnv(tc.profile)
+			if tc.err != nil {
+				assert.ErrorContains(t, err, tc.err.Error())
+			} else {
+				assert.NoError(t, err)
+				reflect.DeepEqual(tc.want, dotEnv)
 			}
 		})
 	}

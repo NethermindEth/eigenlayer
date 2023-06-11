@@ -2,6 +2,7 @@ package package_handler
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 )
 
@@ -38,17 +39,15 @@ func (m *Manifest) validate() error {
 	pluErr := m.Plugin.validate()
 
 	var proErr InvalidConfError
-	if len(m.Profiles) > 0 {
-		for i, profile := range m.Profiles {
-			profileErr := profile.validate()
-			if profileErr.message != "" {
-				proErr = InvalidConfError{
-					message:       fmt.Sprintf("Invalid profile %d", i+1),
-					missingFields: profileErr.missingFields,
-					invalidFields: profileErr.invalidFields,
-				}
-				break
+	for i, profile := range m.Profiles {
+		profileErr := profile.validate()
+		if profileErr.message != "" {
+			proErr = InvalidConfError{
+				message:       fmt.Sprintf("Invalid profile %d", i+1),
+				missingFields: profileErr.missingFields,
+				invalidFields: profileErr.invalidFields,
 			}
+			break
 		}
 	}
 
@@ -108,8 +107,8 @@ func (p *plugin) validate() InvalidConfError {
 	var invalidFields []string
 	// Validate plugin git field is a valid git url
 	if p.Git != "" {
-		re := regexp.MustCompile(`^(https:\/\/github\.com\/|https:\/\/gitlab\.com\/|git@github\.com:|git@gitlab\.com:)[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(\.git)?$`)
-		if !re.MatchString(p.Git) {
+		uri, err := url.ParseRequestURI(p.Git)
+		if err != nil || uri.Scheme == "" || uri.Host == "" || (uri.Scheme != "https" && uri.Scheme != "http") {
 			invalidFields = append(invalidFields, "plugin.git -> (invalid git url)")
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/NethermindEth/eigen-wiz/internal/package_handler/testdata"
@@ -288,20 +287,21 @@ func TestDotEnv(t *testing.T) {
 			want: map[string]string{
 				"KEY1": "8000",
 				"KEY2": "false",
-				"KEY3": "foo",
+				"KEY3": "\"foo\"",
 			},
 		},
 		{
 			name:    "empty dot env",
 			pkgPath: "bad-profiles",
 			profile: "no-profile",
+			want:    map[string]string{},
 		},
 		{
 			name:    "invalid dot env",
 			pkgPath: "bad-profiles",
 			profile: "invalid-yml",
 			want: map[string]string{
-				"$$FACADE": "trueAvocado666%!",
+				"$$$FACADE": "trueAvocado666%!",
 			},
 		},
 		{
@@ -320,7 +320,7 @@ func TestDotEnv(t *testing.T) {
 				assert.ErrorContains(t, err, tc.err.Error())
 			} else {
 				assert.NoError(t, err)
-				reflect.DeepEqual(tc.want, dotEnv)
+				assert.EqualValues(t, tc.want, dotEnv)
 			}
 		})
 	}

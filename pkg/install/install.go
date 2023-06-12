@@ -99,17 +99,13 @@ func cloneGitRepo(url, tagName, dest string, auth *http.BasicAuth) error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	worktree, err := gitRepo.Worktree()
 	if err != nil {
 		return fmt.Errorf("error getting worktree: %w", err)
 	}
-	worktree.Checkout(&git.CheckoutOptions{
-		Hash: tag.Hash(),
+	return worktree.Checkout(&git.CheckoutOptions{
+		Branch: tag.Name(),
 	})
-	return nil
 }
 
 func getTag(gitRepo *git.Repository, tag string) (*plumbing.Reference, error) {

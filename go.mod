@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/go-git/go-git/v5 v5.7.0
+	github.com/gofrs/flock v0.8.1
 	github.com/golang/mock v1.6.0
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/sirupsen/logrus v1.7.0

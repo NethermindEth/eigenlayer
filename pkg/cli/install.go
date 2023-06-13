@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/NethermindEth/eigen-wiz/internal/prompter"
 	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
 	"github.com/spf13/cobra"
 )
@@ -11,6 +13,7 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 	var (
 		url     string
 		version string
+		tag     string
 	)
 	cmd := cobra.Command{
 		Use:   "install [URL]",
@@ -22,19 +25,33 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 			return validatePkgURL(url)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			destDir := os.TempDir() // TODO: change this to the proper directory inside the data directory of the daemon
-			_, err := d.Install(&daemon.InstallOptions{
-				PullOptions: daemon.PullOptions{
-					URL:     url,
-					Version: version,
-					DestDir: destDir,
-				},
+			destDir, err := os.MkdirTemp(os.TempDir(), "egn-install")
+			if err != nil {
+				return err
+			}
+			fmt.Println("Pulling package...")
+			pullResponse, err := d.Pull(&daemon.PullOptions{
+				URL:     url,
+				Version: version,
+				DestDir: destDir,
 			})
-			return err
+			if err != nil {
+				return err
+			}
+			profileNames := make([]string, 0, len(pullResponse.Profiles))
+			for k := range pullResponse.Profiles {
+				profileNames = append(profileNames, k)
+			}
+			selectedProfile, err := prompter.SelectProfile(profileNames)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Selected profile: %s\n", selectedProfile)
+			return nil
 		},
 	}
 
 	cmd.Flags().StringVarP(&version, "version", "v", "", "version to install. If not specified, the latest version will be installed.")
-
+	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name")
 	return &cmd
 }

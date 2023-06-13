@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInstall_ValidateArguments(t *testing.T) {
+func TestPull_ValidateArguments(t *testing.T) {
 	ts := []struct {
 		name string
 		args []string
@@ -30,13 +30,12 @@ func TestInstall_ValidateArguments(t *testing.T) {
 			err:  fmt.Errorf("%w: parse \"invalid-url\": invalid URI for request", ErrInvalidURL),
 		},
 	}
-
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			installCmd := InstallCmd(nil)
+			pullCmd := PullCmd(nil)
 
-			installCmd.SetArgs(tc.args)
-			err := installCmd.Execute()
+			pullCmd.SetArgs(tc.args)
+			err := pullCmd.Execute()
 
 			if tc.err == nil {
 				assert.NoError(t, err)
@@ -47,7 +46,7 @@ func TestInstall_ValidateArguments(t *testing.T) {
 	}
 }
 
-// func TestInstall_ExecutesInstall(t *testing.T) {
+// func TestPull_ExecutesPull(t *testing.T) {
 // 	ts := []struct {
 // 		name string
 // 		d    daemon.Daemon
@@ -87,9 +86,9 @@ func TestInstall_ValidateArguments(t *testing.T) {
 // 	}
 // 	for _, tc := range ts {
 // 		t.Run(tc.name, func(t *testing.T) {
-// 			installCmd := InstallCmd(tc.d)
-// 			installCmd.SetArgs(tc.args)
-// 			err := installCmd.Execute()
+// 			pullCmd := PullCmd(tc.d)
+// 			pullCmd.SetArgs(tc.args)
+// 			err := pullCmd.Execute()
 // 			assert.NoError(t, err)
 // 		})
 // 	}

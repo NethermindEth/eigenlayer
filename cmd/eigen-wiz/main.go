@@ -5,12 +5,11 @@ import (
 
 	"github.com/NethermindEth/eigen-wiz/pkg/cli"
 	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
-	"github.com/NethermindEth/eigen-wiz/pkg/install"
 )
 
 func main() {
 	// Initialize daemon
-	daemon := daemon.NewWizDaemon(install.NewInstaller())
+	daemon := daemon.NewWizDaemon()
 	// Build CLI
 	cmd := cli.RootCmd(daemon)
 	// Execute CLI

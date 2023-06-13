@@ -12,6 +12,7 @@ var pathRe = regexp.MustCompile(`^(/|./|../|[^/ ]([^/ ]*/)*[^/ ]*$)`)
 
 // Profile represents a profile file of a package
 type Profile struct {
+	Name                          string                        `yaml:"-"`
 	HardwareRequirementsOverrides HardwareRequirementsOverrides `yaml:"hardware_requirements_overrides"`
 	PluginOverrides               PluginOverrides               `yaml:"plugin_overrides"`
 	Options                       []Option                      `yaml:"options"`
@@ -119,7 +120,7 @@ func (o *Option) Validate() InvalidConfError {
 			_, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
 		case "id":
-			invalidDefault = true
+			invalidDefault = false
 		}
 	}
 	if invalidDefault {

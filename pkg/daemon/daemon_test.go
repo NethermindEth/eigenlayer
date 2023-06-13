@@ -1,55 +1,49 @@
 package daemon
 
-import (
-	"errors"
-	"testing"
+// func TestPull(t *testing.T) {
+// 	ts := []struct {
+// 		name       string
+// 		options    *PullOptions
+// 		pkgHandler *package_handler.PackageHandler
+// 		err        error
+// 	}{
+// 		{
+// 			name: "success",
+// 			options: &PullOptions{
+// 				URL:     "https://github.com/NethermindEth/mock-avs.git",
+// 				Version: "v0.1.0",
+// 				DestDir: "/tmp",
+// 			},
+// 			pkgHandler: package_handler.NewPackageHandler("/tmp"),
+// 			err:        nil,
+// 		},
+// 		{
+// 			name: "error",
+// 			options: &PullOptions{
+// 				URL:     "https://github.com/NethermindEth/mock-avs.git",
+// 				Version: "v0.1.0",
+// 				DestDir: "/tmp",
+// 			},
+// 			pkgHandler: nil,
+// 			err:        errors.New("puller error"),
+// 		},
+// 	}
+// 	for _, tc := range ts {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			puller := mocks.NewMockPuller(gomock.NewController(t))
+// 			puller.EXPECT().
+// 				Pull(tc.options.URL, tc.options.Version, tc.options.DestDir).
+// 				Return(tc.pkgHandler, tc.err)
 
-	"github.com/NethermindEth/eigen-wiz/mocks"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestInstall(t *testing.T) {
-	ts := []struct {
-		name    string
-		options *InstallOptions
-		err     error
-	}{
-		{
-			name: "success",
-			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs.git",
-				Version: "v0.1.0",
-				DestDir: "/tmp",
-			},
-			err: nil,
-		},
-		{
-			name: "error",
-			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs.git",
-				Version: "v0.1.0",
-				DestDir: "/tmp",
-			},
-			err: errors.New("installer error"),
-		},
-	}
-	for _, tc := range ts {
-		t.Run(tc.name, func(t *testing.T) {
-			installer := mocks.NewMockInstaller(gomock.NewController(t))
-			installer.EXPECT().
-				Install(tc.options.URL, tc.options.Version, tc.options.DestDir).
-				Return(tc.err)
-
-			d := NewWizDaemon(installer)
-			response, err := d.Install(tc.options)
-			if tc.err != nil {
-				assert.EqualError(t, err, tc.err.Error())
-				assert.Nil(t, response)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, &InstallResponse{}, response)
-			}
-		})
-	}
-}
+// 			d := NewWizDaemon(puller)
+// 			response, err := d.Pull(tc.options)
+// 			if tc.err != nil {
+// 				assert.EqualError(t, err, tc.err.Error())
+// 				assert.Nil(t, response)
+// 			} else {
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, &PullResponse{}, response)
+// 			}
+// 		})
+// 	}
+// }

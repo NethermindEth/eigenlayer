@@ -1,6 +1,8 @@
-package install
+package pull
 
 import "fmt"
+
+var ErrLatestVersionNotFound = fmt.Errorf("latest version not found")
 
 // RepositoryNotFoundError is returned when the given repository URL is not found.
 type RepositoryNotFoundError struct {

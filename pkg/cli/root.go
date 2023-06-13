@@ -9,6 +9,9 @@ func RootCmd(d daemon.Daemon) *cobra.Command {
 	cmd := cobra.Command{
 		Use: "eigen-wiz",
 	}
-	cmd.AddCommand(InstallCmd(d))
+	cmd.AddCommand(
+		PullCmd(d),
+		InstallCmd(d),
+	)
 	return &cmd
 }

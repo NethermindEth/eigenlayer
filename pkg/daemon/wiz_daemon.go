@@ -26,11 +26,7 @@ type PullOptions struct {
 type PullResponse struct {
 	CurrentVersion string
 	LatestVersion  string
-	Profiles       []Profile
-}
-type Profile struct {
-	Name    string
-	Options []string
+	Profiles       map[string][]Option
 }
 
 func (d *WizDaemon) Pull(options *PullOptions) (*PullResponse, error) {
@@ -50,16 +46,39 @@ func (d *WizDaemon) Pull(options *PullOptions) (*PullResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var profiles []Profile
+	profiles := make(map[string][]Option, len(pkgProfiles))
 	for _, pkgProfile := range pkgProfiles {
-		options := make([]string, len(pkgProfile.Options))
-		for i, option := range pkgProfile.Options {
-			options[i] = option.Name
+		options := make([]Option, len(pkgProfile.Options))
+		for i, o := range pkgProfile.Options {
+			switch o.Type {
+			case "str":
+				options[i] = NewOptionString(o)
+			case "int":
+				options[i], err = NewOptionInt(o)
+			case "float":
+				options[i], err = NewOptionFloat(o)
+			case "bool":
+				options[i], err = NewOptionBool(o)
+			case "path_dir":
+				options[i] = NewOptionPathDir(o)
+			case "path_file":
+				options[i] = NewOptionPathFile(o)
+			case "uri":
+				options[i] = NewOptionURI(o)
+			case "enum":
+				options[i] = NewOptionEnum(o)
+			case "port":
+				options[i], err = NewOptionPort(o)
+			case "id":
+				options[i] = NewOptionID(o)
+			default:
+				return nil, errors.New("unknown option type: " + o.Type)
+			}
 		}
-		profiles = append(profiles, Profile{
-			Name:    pkgProfile.Name,
-			Options: options,
-		})
+		if err != nil {
+			return nil, err
+		}
+		profiles[pkgProfile.Name] = options
 	}
 	return &PullResponse{
 		CurrentVersion: currentVersion,

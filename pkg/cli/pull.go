@@ -37,8 +37,8 @@ func PullCmd(d daemon.Daemon) *cobra.Command {
 			fmt.Printf("Pulled version: %s\n", pullResponse.CurrentVersion)
 			fmt.Printf("Latest version: %s\n", pullResponse.LatestVersion)
 			fmt.Println("Available profiles for pulled version:")
-			for _, p := range pullResponse.Profiles {
-				fmt.Printf("  - %s\n", p.Name)
+			for k := range pullResponse.Profiles {
+				fmt.Printf("  - %s\n", k)
 			}
 			return nil
 		},

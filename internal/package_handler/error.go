@@ -2,6 +2,7 @@ package package_handler
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -98,4 +99,24 @@ type ReadingDotEnvError struct {
 
 func (e ReadingDotEnvError) Error() string {
 	return "error reading .env file of profile " + e.profileName + " in package " + e.pkgPath
+}
+
+// RepositoryNotFoundOrPrivateError is returned when the specified repository URL
+// cannot be found or accessed due to its private status. This error typically occurs
+// when no credentials are provided and the repository is either private or does not exist.
+type RepositoryNotFoundOrPrivateError struct {
+	URL string
+}
+
+func (e RepositoryNotFoundOrPrivateError) Error() string {
+	return fmt.Sprintf("repository %s not found or private", e.URL)
+}
+
+// RepositoryNotFoundError is returned when the given repository URL is not found.
+type RepositoryNotFoundError struct {
+	URL string
+}
+
+func (e RepositoryNotFoundError) Error() string {
+	return fmt.Sprintf("repository %s not found", e.URL)
 }

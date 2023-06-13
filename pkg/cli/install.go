@@ -38,6 +38,7 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			fmt.Println("Package pulled successfully.")
 			profileNames := make([]string, 0, len(pullResponse.Profiles))
 			for k := range pullResponse.Profiles {
 				profileNames = append(profileNames, k)
@@ -47,6 +48,16 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 				return err
 			}
 			fmt.Printf("Selected profile: %s\n", selectedProfile)
+			profileOptions := pullResponse.Profiles[selectedProfile]
+			for _, option := range profileOptions {
+				_, err := prompter.InputString(option.Name(), func(s string) error {
+					return option.Set(s)
+				})
+				if err != nil {
+					return err
+				}
+			}
+			fmt.Printf("%+v\n", profileOptions)
 			return nil
 		},
 	}

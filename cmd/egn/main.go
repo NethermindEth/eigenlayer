@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/NethermindEth/eigen-wiz/pkg/cli"
+	"github.com/NethermindEth/eigen-wiz/cli"
 	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
 )
 

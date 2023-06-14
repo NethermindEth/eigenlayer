@@ -14,7 +14,7 @@ var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 // downloaded, but if the repo doesn't have any tags that match the version format, an
 // error will be returned.
 func Pull(url, version, dest string) (*package_handler.PackageHandler, error) {
-	if !tagVersionRegex.MatchString(version) {
+	if version != "" && !tagVersionRegex.MatchString(version) {
 		return nil, errors.New("invalid version format")
 	}
 

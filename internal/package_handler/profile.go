@@ -68,12 +68,12 @@ type PluginOverrides struct {
 
 // Option represents an option within the options field of a profile
 type Option struct {
-	Name        string   `yaml:"name"`
-	Target      string   `yaml:"target"`
-	Type        string   `yaml:"type"`
-	Default     string   `yaml:"default"`
-	Help        string   `yaml:"help"`
-	ValidateDef Validate `yaml:"validate"`
+	Name        string    `yaml:"name"`
+	Target      string    `yaml:"target"`
+	Type        string    `yaml:"type"`
+	Default     string    `yaml:"default"`
+	Help        string    `yaml:"help"`
+	ValidateDef *Validate `yaml:"validate,omitempty"`
 }
 
 // Validate validates the option

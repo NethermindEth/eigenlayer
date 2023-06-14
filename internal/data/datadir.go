@@ -6,10 +6,12 @@ import (
 	"path/filepath"
 )
 
+// DataDir is the directory where all the data is stored.
 type DataDir struct {
 	path string
 }
 
+// NewDataDir creates a new DataDir instance with the given path as root.
 func NewDataDir(path string) (*DataDir, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -18,11 +20,23 @@ func NewDataDir(path string) (*DataDir, error) {
 	return &DataDir{path: absPath}, nil
 }
 
+// NewDataDirDefault creates a new DataDir instance with the default path as root,
+// which is the .eigen folder on the user's home directory.
+func NewDataDirDefault() (*DataDir, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	return NewDataDir(filepath.Join(homeDir, ".eigen"))
+}
+
+// Instance returns the instance with the given id.
 func (d *DataDir) Instance(instanceId string) (*Instance, error) {
 	instancePath := filepath.Join(d.path, "nodes", instanceId)
 	return NewInstance(instancePath)
 }
 
+// AddInstance adds a new instance to the data directory.
 func (d *DataDir) AddInstance(name, url, version, profile, tag string) (*Instance, error) {
 	instanceDirName := name + "-" + tag
 	ok, err := d.instanceDirExist(instanceDirName)
@@ -48,6 +62,7 @@ func (d *DataDir) AddInstance(name, url, version, profile, tag string) (*Instanc
 	return &instance, instance.Init(filepath.Join(d.path, "nodes", instanceDirName))
 }
 
+// RemoveInstance removes the instance with the given id.
 func (d *DataDir) RemoveInstance(instanceId string) error {
 	instancePath := filepath.Join(d.path, "nodes", instanceId)
 	instanceDir, err := os.Stat(instancePath)

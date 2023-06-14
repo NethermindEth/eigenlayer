@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -15,7 +14,7 @@ func TestNewInstance(t *testing.T) {
 		name     string
 		path     string
 		instance *Instance
-		errStr   string
+		err      error
 	}
 	ts := []testCase{
 		func() testCase {
@@ -24,7 +23,7 @@ func TestNewInstance(t *testing.T) {
 				name:     "empty directory",
 				path:     testDir,
 				instance: nil,
-				errStr:   fmt.Sprintf("open %s: no such file or directory", testDir+"/state.json"),
+				err:      ErrInvalidInstanceDir,
 			}
 		}(),
 		func() testCase {
@@ -37,7 +36,7 @@ func TestNewInstance(t *testing.T) {
 				name:     "empty state file",
 				path:     testDir,
 				instance: &Instance{path: testDir},
-				errStr:   "unexpected end of JSON input",
+				err:      ErrInvalidInstance,
 			}
 		}(),
 		func() testCase {
@@ -55,7 +54,7 @@ func TestNewInstance(t *testing.T) {
 				name:     "valid state file (empty state)",
 				path:     testDir,
 				instance: &Instance{path: testDir},
-				errStr:   "",
+				err:      ErrInvalidInstance,
 			}
 		}(),
 		func() testCase {
@@ -80,19 +79,20 @@ func TestNewInstance(t *testing.T) {
 					Profile: "mainnet",
 					path:    testDir,
 				},
-				errStr: "",
+				err: nil,
 			}
 		}(),
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
 			instance, err := NewInstance(tc.path)
-			if tc.errStr != "" {
-				assert.EqualError(t, err, tc.errStr)
+			if tc.err != nil {
+				assert.Nil(t, instance)
+				assert.ErrorIs(t, err, tc.err)
 			} else {
+				assert.Equal(t, *tc.instance, *instance)
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tc.instance, instance)
 		})
 	}
 }
@@ -106,8 +106,11 @@ func TestInstance_Init(t *testing.T) {
 		{
 			name: ".lock is created as regular file",
 			instance: &Instance{
-				Name: "test_name",
-				Tag:  "test_tag",
+				Name:    "test_name",
+				Tag:     "test_tag",
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: "v0.1.0",
+				Profile: "mainnet",
 			},
 			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
 				assert.NoError(t, initErr)
@@ -122,8 +125,11 @@ func TestInstance_Init(t *testing.T) {
 		{
 			name: "state.json is created as regular file",
 			instance: &Instance{
-				Name: "test_name",
-				Tag:  "test_tag",
+				Name:    "test_name",
+				Tag:     "test_tag",
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: "v0.1.0",
+				Profile: "mainnet",
 			},
 			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
 				assert.NoError(t, initErr)

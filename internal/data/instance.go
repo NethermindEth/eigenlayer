@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -28,6 +29,9 @@ func NewInstance(path string) (*Instance, error) {
 	}
 	stateFile, err := os.Open(filepath.Join(i.path, "state.json"))
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("%w %s: state.json not found", ErrInvalidInstanceDir, path)
+		}
 		return nil, err
 	}
 	defer func() {
@@ -41,11 +45,23 @@ func NewInstance(path string) (*Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &i, json.Unmarshal(stateData, &i)
+	err = json.Unmarshal(stateData, &i)
+	if err != nil {
+		return nil, fmt.Errorf("%w %s: invalid state.json file: %s", ErrInvalidInstance, path, err)
+	}
+	err = i.validate()
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
 }
 
 // Init initializes a new instance with the given path as root.
-func (i *Instance) Init(instancePath string) (err error) {
+func (i *Instance) Init(instancePath string) error {
+	err := i.validate()
+	if err != nil {
+		return err
+	}
 	i.path = instancePath
 	// Create the lock file
 	_, err = os.Create(filepath.Join(i.path, ".lock"))
@@ -86,4 +102,23 @@ func (i *Instance) Unlock() error {
 		return errors.New("instance is not locked")
 	}
 	return i.lock.Unlock()
+}
+
+func (i *Instance) validate() error {
+	if i.Name == "" {
+		return fmt.Errorf("%w: name is empty", ErrInvalidInstance)
+	}
+	if i.URL == "" {
+		return fmt.Errorf("%w: url is empty", ErrInvalidInstance)
+	}
+	if i.Version == "" {
+		return fmt.Errorf("%w: version is empty", ErrInvalidInstance)
+	}
+	if i.Profile == "" {
+		return fmt.Errorf("%w: profile is empty", ErrInvalidInstance)
+	}
+	if i.Tag == "" {
+		return fmt.Errorf("%w: tag is empty", ErrInvalidInstance)
+	}
+	return nil
 }

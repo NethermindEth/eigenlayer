@@ -20,14 +20,24 @@ func NewDataDir(path string) (*DataDir, error) {
 	return &DataDir{path: absPath}, nil
 }
 
-// NewDataDirDefault creates a new DataDir instance with the default path as root,
-// which is the .eigen folder on the user's home directory.
+// NewDataDirDefault creates a new DataDir instance with the default path as root.
+// Default path is $XDG_DATA_HOME/.eigen or $HOME/.local/share/.eigen if $XDG_DATA_HOME is not set
+// as defined in the XDG Base Directory Specification
 func NewDataDirDefault() (*DataDir, error) {
-	homeDir, err := os.UserHomeDir()
+	userDataHome := os.Getenv("XDG_DATA_HOME")
+	if userDataHome == "" {
+		userHome, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		userDataHome = filepath.Join(userHome, ".local", "share")
+	}
+	dataDir := filepath.Join(userDataHome, ".eigen")
+	err := os.MkdirAll(dataDir, 0o755)
 	if err != nil {
 		return nil, err
 	}
-	return NewDataDir(filepath.Join(homeDir, ".eigen"))
+	return NewDataDir(dataDir)
 }
 
 // Instance returns the instance with the given id.

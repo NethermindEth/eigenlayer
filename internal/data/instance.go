@@ -23,6 +23,7 @@ type Instance struct {
 	lockMutex sync.Mutex
 }
 
+// NewInstance creates a new instance with the given path as root.
 func NewInstance(path string) (*Instance, error) {
 	i := Instance{
 		path: path,
@@ -45,9 +46,9 @@ func NewInstance(path string) (*Instance, error) {
 	return &i, json.Unmarshal(stateData, &i)
 }
 
+// Init initializes a new instance with the given path as root.
 func (i *Instance) Init(instancePath string) (err error) {
 	i.path = instancePath
-	// TODO: Validate instance properties, like name and tag that are required
 	// Create the lock file
 	_, err = os.Create(filepath.Join(i.path, ".lock"))
 	if err != nil {
@@ -73,6 +74,7 @@ func (i *Instance) Init(instancePath string) (err error) {
 	return err
 }
 
+// Lock locks the .lock file of the instance.
 func (i *Instance) Lock() error {
 	i.lockMutex.Lock()
 	defer i.lockMutex.Unlock()
@@ -82,6 +84,7 @@ func (i *Instance) Lock() error {
 	return i.lock.Lock()
 }
 
+// Unlock unlocks the .lock file of the instance.
 func (i *Instance) Unlock() error {
 	i.lockMutex.Lock()
 	defer i.lockMutex.Unlock()

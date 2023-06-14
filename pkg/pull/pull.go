@@ -2,6 +2,7 @@ package pull
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
@@ -31,6 +32,7 @@ func Pull(url, version, dest string) (*package_handler.PackageHandler, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("No version specified, using latest version: %s\n", version)
 	}
 
 	if err = pkgHandler.CheckoutVersion(version); err != nil {

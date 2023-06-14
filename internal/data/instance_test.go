@@ -82,6 +82,24 @@ func TestNewInstance(t *testing.T) {
 				err: nil,
 			}
 		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := os.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0"}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return testCase{
+				name:     "invalid state file, missing fields",
+				path:     testDir,
+				instance: nil,
+				err:      ErrInvalidInstance,
+			}
+		}(),
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 
 func RootCmd(d daemon.Daemon) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "eigen-wiz",
+		Use: "egn",
 	}
 	cmd.AddCommand(
 		PullCmd(d),

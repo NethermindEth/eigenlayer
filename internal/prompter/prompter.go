@@ -28,6 +28,15 @@ func InputString(prompt, defValue, help string, validator func(string) error) (s
 	return result, err
 }
 
+func Confirm(prompt string) (bool, error) {
+	result := false
+	p := &survey.Confirm{
+		Message: prompt,
+	}
+	err := survey.AskOne(p, &result)
+	return result, err
+}
+
 func selectString(prompt string, options []string) (string, error) {
 	selected := ""
 	p := &survey.Select{

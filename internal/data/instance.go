@@ -6,21 +6,19 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/gofrs/flock"
 )
 
 // Instance represents the data stored about a node software instance
 type Instance struct {
-	Name      string `json:"name"`
-	URL       string `json:"url"`
-	Version   string `json:"version"`
-	Profile   string `json:"profile"`
-	Tag       string `json:"tag"`
-	path      string
-	lock      *flock.Flock
-	lockMutex sync.Mutex
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	Version string `json:"version"`
+	Profile string `json:"profile"`
+	Tag     string `json:"tag"`
+	path    string
+	lock    *flock.Flock
 }
 
 // NewInstance creates a new instance with the given path as root.
@@ -76,8 +74,6 @@ func (i *Instance) Init(instancePath string) (err error) {
 
 // Lock locks the .lock file of the instance.
 func (i *Instance) Lock() error {
-	i.lockMutex.Lock()
-	defer i.lockMutex.Unlock()
 	if i.lock == nil {
 		i.lock = flock.New(filepath.Join(i.path, ".lock"))
 	}
@@ -86,8 +82,6 @@ func (i *Instance) Lock() error {
 
 // Unlock unlocks the .lock file of the instance.
 func (i *Instance) Unlock() error {
-	i.lockMutex.Lock()
-	defer i.lockMutex.Unlock()
 	if i.lock == nil || !i.lock.Locked() {
 		return errors.New("instance is not locked")
 	}

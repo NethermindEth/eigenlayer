@@ -50,7 +50,7 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 			fmt.Printf("Selected profile: %s\n", selectedProfile)
 			profileOptions := pullResponse.Profiles[selectedProfile]
 			for _, option := range profileOptions {
-				_, err := prompter.InputString(option.Name(), func(s string) error {
+				_, err := prompter.InputString(option.Name(), option.Default(), option.Help(), func(s string) error {
 					return option.Set(s)
 				})
 				if err != nil {

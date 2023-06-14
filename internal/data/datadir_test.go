@@ -2,6 +2,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -139,6 +140,19 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 		err        error
 	}
 	ts := []testCase{
+		func() testCase {
+			testDir := t.TempDir()
+			dataDir, err := NewDataDir(testDir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return testCase{
+				name:       "instance dir not found",
+				dataDir:    dataDir,
+				instanceId: "mock_avs-latest",
+				err:        fmt.Errorf("%w: mock_avs-latest", ErrInstanceNotFound),
+			}
+		}(),
 		func() testCase {
 			testDir := t.TempDir()
 			err := os.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)

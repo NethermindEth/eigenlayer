@@ -77,6 +77,9 @@ func (d *DataDir) RemoveInstance(instanceId string) error {
 	instancePath := filepath.Join(d.path, "nodes", instanceId)
 	instanceDir, err := os.Stat(instancePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceId)
+		}
 		return err
 	}
 	if !instanceDir.IsDir() {

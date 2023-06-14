@@ -26,12 +26,15 @@ type Option interface {
 	Value() string
 	// Default returns the default value of the option.
 	Default() string
+	// Target returns the target docker-compose environment variable for the option.
+	Target() string
 }
 
 // option is a struct representing a generic profile option. It includes fields for the option's name, target, and help text.
 type option struct {
-	name string
-	help string
+	name   string
+	target string
+	help   string
 }
 
 // OptionInt is a struct representing an integer option. It implements the Option interface.
@@ -52,8 +55,9 @@ func NewOptionInt(pkgOption package_handler.Option) (*OptionInt, error) {
 	}
 	o := &OptionInt{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defaultValue: defaultValue,
 		validate:     pkgOption.ValidateDef != nil,
@@ -112,6 +116,10 @@ func (oi *OptionInt) Default() string {
 	return strconv.Itoa(oi.defaultValue)
 }
 
+func (oi *OptionInt) Target() string {
+	return oi.target
+}
+
 // OptionFloat is a struct representing a floating-point option. It implements the Option interface.
 type OptionFloat struct {
 	option
@@ -129,8 +137,9 @@ func NewOptionFloat(pkgOption package_handler.Option) (*OptionFloat, error) {
 	}
 	o := &OptionFloat{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: defaultValue,
 		validate: pkgOption.ValidateDef != nil,
@@ -183,6 +192,10 @@ func (of *OptionFloat) Default() string {
 	return strconv.FormatFloat(of.defValue, 'f', -1, 64)
 }
 
+func (of *OptionFloat) Target() string {
+	return of.target
+}
+
 // OptionBool is a struct representing a boolean option. It implements the Option interface.
 type OptionBool struct {
 	option
@@ -197,8 +210,9 @@ func NewOptionBool(pkgOption package_handler.Option) (*OptionBool, error) {
 	}
 	return &OptionBool{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: defaultValue,
 	}, nil
@@ -231,6 +245,10 @@ func (ob *OptionBool) Default() string {
 	return strconv.FormatBool(ob.defValue)
 }
 
+func (ob *OptionBool) Target() string {
+	return ob.target
+}
+
 // OptionString is a struct representing a string option. It implements the Option interface.
 type OptionString struct {
 	option
@@ -243,8 +261,9 @@ type OptionString struct {
 func NewOptionString(pkgOption package_handler.Option) *OptionString {
 	o := &OptionString{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -293,6 +312,10 @@ func (os *OptionString) Default() string {
 	return os.defValue
 }
 
+func (os *OptionString) Target() string {
+	return os.target
+}
+
 // OptionPathDir is a struct representing a directory path option. It implements the Option interface.
 type OptionPathDir struct {
 	option
@@ -303,8 +326,9 @@ type OptionPathDir struct {
 func NewOptionPathDir(pkgOption package_handler.Option) *OptionPathDir {
 	return &OptionPathDir{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 	}
@@ -340,6 +364,10 @@ func (opd *OptionPathDir) Default() string {
 	return opd.defValue
 }
 
+func (opd *OptionPathDir) Target() string {
+	return opd.target
+}
+
 // OptionPathFile is a struct representing a file path option. It implements the Option interface.
 type OptionPathFile struct {
 	option
@@ -352,8 +380,9 @@ type OptionPathFile struct {
 func NewOptionPathFile(pkgOption package_handler.Option) *OptionPathFile {
 	o := &OptionPathFile{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -403,6 +432,10 @@ func (opf *OptionPathFile) Default() string {
 	return opf.defValue
 }
 
+func (opf *OptionPathFile) Target() string {
+	return opf.target
+}
+
 // OptionURI is a struct representing a uri option. It implements the Option interface.
 type OptionURI struct {
 	option
@@ -415,8 +448,9 @@ type OptionURI struct {
 func NewOptionURI(pkgOption package_handler.Option) *OptionURI {
 	o := OptionURI{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -470,6 +504,10 @@ func (ou *OptionURI) Default() string {
 	return ou.defValue
 }
 
+func (ou *OptionURI) Target() string {
+	return ou.target
+}
+
 // OptionSelect is a struct representing an enum option. It implements the Option interface.
 type OptionSelect struct {
 	option
@@ -482,8 +520,9 @@ type OptionSelect struct {
 func NewOptionSelect(pkgOption package_handler.Option) *OptionSelect {
 	o := OptionSelect{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -526,6 +565,10 @@ func (oe *OptionSelect) Default() string {
 	return oe.defValue
 }
 
+func (oe *OptionSelect) Target() string {
+	return oe.target
+}
+
 // OptionPort is a struct representing a port option. It implements the Option interface.
 type OptionPort struct {
 	option
@@ -540,8 +583,9 @@ func NewOptionPort(pkgOption package_handler.Option) (*OptionPort, error) {
 	}
 	return &OptionPort{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: defaultValue,
 	}, nil
@@ -587,6 +631,10 @@ func (op *OptionPort) Default() string {
 	return strconv.Itoa(op.defValue)
 }
 
+func (op *OptionPort) Target() string {
+	return op.target
+}
+
 // OptionID is a struct representing an id option. It implements the Option interface.
 type OptionID struct {
 	option
@@ -597,8 +645,9 @@ type OptionID struct {
 func NewOptionID(pkgOption package_handler.Option) *OptionID {
 	return &OptionID{
 		option: option{
-			name: pkgOption.Name,
-			help: pkgOption.Help,
+			name:   pkgOption.Name,
+			target: pkgOption.Target,
+			help:   pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
 	}
@@ -625,4 +674,8 @@ func (oi *OptionID) Value() string {
 
 func (oi *OptionID) Default() string {
 	return oi.defValue
+}
+
+func (oi *OptionID) Target() string {
+	return oi.target
 }

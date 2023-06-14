@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 var pathRe = regexp.MustCompile(`^(/|./|../|[^/ ]([^/ ]*/)*[^/ ]*$)`)
@@ -113,9 +112,12 @@ func (o *Option) Validate() InvalidConfError {
 		case "uri":
 			_, err := url.Parse(o.Default)
 			invalidDefault = err != nil
-		case "enum":
-			values := strings.Split(o.Default, ",")
-			invalidDefault = len(values) == 0
+		case "select":
+			if o.ValidateDef == nil {
+				missingFields = append(missingFields, "options.validate")
+			} else {
+				invalidDefault = !contains(o.ValidateDef.Options, o.Default)
+			}
 		case "port":
 			_, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
@@ -144,6 +146,7 @@ type Validate struct {
 	UriScheme []string `yaml:"uri_scheme"`
 	MinValue  float64  `yaml:"min_value"`
 	MaxValue  float64  `yaml:"max_value"`
+	Options   []string `yaml:"options"`
 }
 
 // Monitoring represents the monitoring field of a profile

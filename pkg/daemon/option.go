@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -38,6 +39,7 @@ type OptionInt struct {
 	option
 	value        int
 	defaultValue int
+	validate     bool
 	MinValue     int
 	MaxValue     int
 }
@@ -48,15 +50,19 @@ func NewOptionInt(pkgOption package_handler.Option) (*OptionInt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &OptionInt{
+	o := &OptionInt{
 		option: option{
 			name: pkgOption.Name,
 			help: pkgOption.Help,
 		},
 		defaultValue: defaultValue,
-		MinValue:     int(pkgOption.ValidateDef.MinValue),
-		MaxValue:     int(pkgOption.ValidateDef.MaxValue),
-	}, nil
+		validate:     pkgOption.ValidateDef != nil,
+	}
+	if o.validate {
+		o.MinValue = int(pkgOption.ValidateDef.MinValue)
+		o.MaxValue = int(pkgOption.ValidateDef.MaxValue)
+	}
+	return o, nil
 }
 
 var _ Option = (*OptionInt)(nil)
@@ -72,20 +78,26 @@ func (oi *OptionInt) Help() string {
 func (oi *OptionInt) Set(value string) error {
 	v, err := strconv.Atoi(value)
 	if err != nil {
-		return err
-	}
-	if oi.MinValue != 0 && v < oi.MinValue {
 		return InvalidOptionValueError{
 			optionName: oi.name,
-			value:      oi.Value(),
-			msg:        oi.Value() + " is too low",
+			value:      value,
+			msg:        "it is not an integer",
 		}
 	}
-	if oi.MaxValue != 0 && v > oi.MaxValue {
-		return InvalidOptionValueError{
-			optionName: oi.name,
-			value:      oi.Value(),
-			msg:        oi.Value() + " is too high",
+	if oi.validate {
+		if v < oi.MinValue {
+			return InvalidOptionValueError{
+				optionName: oi.name,
+				value:      value,
+				msg:        fmt.Sprintf("should be greater than %d", oi.MinValue),
+			}
+		}
+		if v > oi.MaxValue {
+			return InvalidOptionValueError{
+				optionName: oi.name,
+				value:      value,
+				msg:        fmt.Sprintf("should be less than %d", oi.MaxValue),
+			}
 		}
 	}
 	oi.value = v
@@ -105,24 +117,29 @@ type OptionFloat struct {
 	option
 	value    float64
 	defValue float64
+	validate bool
 	MinValue float64
 	MaxValue float64
 }
 
-func NewOptionFloat(pkgOptions package_handler.Option) (*OptionFloat, error) {
-	defaultValue, err := strconv.ParseFloat(pkgOptions.Default, 64)
+func NewOptionFloat(pkgOption package_handler.Option) (*OptionFloat, error) {
+	defaultValue, err := strconv.ParseFloat(pkgOption.Default, 64)
 	if err != nil {
 		return nil, err
 	}
-	return &OptionFloat{
+	o := &OptionFloat{
 		option: option{
-			name: pkgOptions.Name,
-			help: pkgOptions.Help,
+			name: pkgOption.Name,
+			help: pkgOption.Help,
 		},
 		defValue: defaultValue,
-		MinValue: pkgOptions.ValidateDef.MinValue,
-		MaxValue: pkgOptions.ValidateDef.MaxValue,
-	}, nil
+		validate: pkgOption.ValidateDef != nil,
+	}
+	if o.validate {
+		o.MinValue = pkgOption.ValidateDef.MinValue
+		o.MaxValue = pkgOption.ValidateDef.MaxValue
+	}
+	return o, nil
 }
 
 var _ Option = (*OptionFloat)(nil)
@@ -143,15 +160,15 @@ func (of *OptionFloat) Set(value string) error {
 	if v < of.MinValue {
 		return InvalidOptionValueError{
 			optionName: of.name,
-			value:      of.Value(),
-			msg:        of.Value() + " is too low",
+			value:      value,
+			msg:        value + " is too low",
 		}
 	}
 	if v > of.MaxValue {
 		return InvalidOptionValueError{
 			optionName: of.name,
-			value:      of.Value(),
-			msg:        of.Value() + " is too high",
+			value:      value,
+			msg:        value + " is too high",
 		}
 	}
 	of.value = v
@@ -219,18 +236,23 @@ type OptionString struct {
 	option
 	value    string
 	defValue string
+	validate bool
 	Re2Regex string
 }
 
 func NewOptionString(pkgOption package_handler.Option) *OptionString {
-	return &OptionString{
+	o := &OptionString{
 		option: option{
 			name: pkgOption.Name,
 			help: pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
-		Re2Regex: pkgOption.ValidateDef.Re2Regex,
+		validate: pkgOption.ValidateDef != nil,
 	}
+	if o.validate {
+		o.Re2Regex = pkgOption.ValidateDef.Re2Regex
+	}
+	return o
 }
 
 var _ Option = (*OptionString)(nil)
@@ -251,11 +273,11 @@ func (os *OptionString) Set(value string) error {
 				regex: os.Re2Regex,
 			}
 		}
-		if !regex.MatchString(os.value) {
+		if !regex.MatchString(value) {
 			return InvalidOptionValueError{
 				optionName: os.name,
-				value:      os.Value(),
-				msg:        os.Value() + " does not match regex",
+				value:      value,
+				msg:        "does not match with regex: " + os.Re2Regex,
 			}
 		}
 	}
@@ -303,7 +325,7 @@ func (opd *OptionPathDir) Set(value string) error {
 		return InvalidOptionValueError{
 			optionName: opd.name,
 			value:      value,
-			msg:        value + " is not a valid path",
+			msg:        "it is not a valid path",
 		}
 	}
 	opd.value = value
@@ -322,19 +344,24 @@ func (opd *OptionPathDir) Default() string {
 type OptionPathFile struct {
 	option
 	value    string
+	validate bool
 	defValue string
 	Format   string
 }
 
 func NewOptionPathFile(pkgOption package_handler.Option) *OptionPathFile {
-	return &OptionPathFile{
+	o := &OptionPathFile{
 		option: option{
 			name: pkgOption.Name,
 			help: pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
-		Format:   pkgOption.ValidateDef.Format,
+		validate: pkgOption.ValidateDef != nil,
 	}
+	if o.validate {
+		o.Format = pkgOption.ValidateDef.Format
+	}
+	return o
 }
 
 var _ Option = (*OptionPathFile)(nil)
@@ -348,12 +375,12 @@ func (opf *OptionPathFile) Help() string {
 }
 
 func (opf *OptionPathFile) Set(value string) error {
-	if opf.Format != "" {
-		if filepath.Ext(opf.value) != opf.Format {
+	if opf.validate {
+		if filepath.Ext(value) != "."+opf.Format {
 			return InvalidOptionValueError{
 				optionName: opf.name,
-				value:      opf.Value(),
-				msg:        opf.Value() + " has an invalid format. Required format is " + opf.Format,
+				value:      value,
+				msg:        "it has an invalid format. Required format is " + opf.Format,
 			}
 		}
 	}
@@ -361,7 +388,7 @@ func (opf *OptionPathFile) Set(value string) error {
 		return InvalidOptionValueError{
 			optionName: opf.name,
 			value:      value,
-			msg:        value + " is not a valid path",
+			msg:        "is not a valid path",
 		}
 	}
 	opf.value = value
@@ -380,19 +407,24 @@ func (opf *OptionPathFile) Default() string {
 type OptionURI struct {
 	option
 	value     string
+	validate  bool
 	defValue  string
 	UriScheme []string
 }
 
 func NewOptionURI(pkgOption package_handler.Option) *OptionURI {
-	return &OptionURI{
+	o := OptionURI{
 		option: option{
 			name: pkgOption.Name,
 			help: pkgOption.Help,
 		},
-		defValue:  pkgOption.Default,
-		UriScheme: pkgOption.ValidateDef.UriScheme,
+		defValue: pkgOption.Default,
+		validate: pkgOption.ValidateDef != nil,
 	}
+	if o.validate {
+		o.UriScheme = pkgOption.ValidateDef.UriScheme
+	}
+	return &o
 }
 
 var _ Option = (*OptionURI)(nil)
@@ -410,25 +442,24 @@ func (ou *OptionURI) Set(value string) error {
 		return InvalidOptionValueError{
 			optionName: ou.name,
 			value:      value,
-			msg:        value + " is not a valid uri",
+			msg:        "it is not a valid uri",
 		}
 	}
-	if len(ou.UriScheme) != 0 {
+	if ou.validate && len(ou.UriScheme) != 0 {
 		for _, scheme := range ou.UriScheme {
-			if strings.HasPrefix(ou.value, scheme) {
+			if strings.HasPrefix(value, scheme) {
 				ou.value = value
 				return nil
 			}
 		}
 		return InvalidOptionValueError{
 			optionName: ou.name,
-			value:      ou.Value(),
-			msg:        ou.Value() + " is not a valid uri, must be one of " + strings.Join(ou.UriScheme, ", "),
+			value:      value,
+			msg:        "it is not a valid uri, must be one of [" + strings.Join(ou.UriScheme, ", ") + "]",
 		}
-	} else {
-		ou.value = value
-		return nil
 	}
+	ou.value = value
+	return nil
 }
 
 func (ou *OptionURI) Value() string {
@@ -439,46 +470,59 @@ func (ou *OptionURI) Default() string {
 	return ou.defValue
 }
 
-// OptionEnum is a struct representing an enum option. It implements the Option interface.
-type OptionEnum struct {
+// OptionSelect is a struct representing an enum option. It implements the Option interface.
+type OptionSelect struct {
 	option
 	value    string
 	defValue string
+	validate bool
 	Options  []string
 }
 
-func NewOptionEnum(pkgOption package_handler.Option) *OptionEnum {
-	return &OptionEnum{
+func NewOptionSelect(pkgOption package_handler.Option) *OptionSelect {
+	o := OptionSelect{
 		option: option{
 			name: pkgOption.Name,
 			help: pkgOption.Help,
 		},
 		defValue: pkgOption.Default,
-		// TODO: add Options
+		validate: pkgOption.ValidateDef != nil,
 	}
+	if o.validate {
+		o.Options = pkgOption.ValidateDef.Options
+	}
+	return &o
 }
 
-var _ Option = (*OptionEnum)(nil)
+var _ Option = (*OptionSelect)(nil)
 
-func (oe *OptionEnum) Name() string {
+func (oe *OptionSelect) Name() string {
 	return oe.option.name
 }
 
-func (oe *OptionEnum) Help() string {
+func (oe *OptionSelect) Help() string {
 	return oe.option.help
 }
 
-func (oe *OptionEnum) Set(value string) error {
-	// TODO: add validation. Check if value is one of the possible values
-	oe.value = value
-	return nil
+func (oe *OptionSelect) Set(value string) error {
+	for _, option := range oe.Options {
+		if option == value {
+			oe.value = value
+			return nil
+		}
+	}
+	return InvalidOptionValueError{
+		optionName: oe.name,
+		value:      value,
+		msg:        "must be one of " + strings.Join(oe.Options, ", "),
+	}
 }
 
-func (oe *OptionEnum) Value() string {
+func (oe *OptionSelect) Value() string {
 	return oe.value
 }
 
-func (oe *OptionEnum) Default() string {
+func (oe *OptionSelect) Default() string {
 	return oe.defValue
 }
 
@@ -519,7 +563,7 @@ func (op *OptionPort) Set(value string) error {
 		return InvalidOptionValueError{
 			optionName: op.name,
 			value:      value,
-			msg:        value + " is not a valid port number",
+			msg:        "it is not a valid port number",
 		}
 	}
 
@@ -527,7 +571,7 @@ func (op *OptionPort) Set(value string) error {
 		return InvalidOptionValueError{
 			optionName: op.name,
 			value:      value,
-			msg:        value + " is not a valid port. Port must be between 0 and 65535",
+			msg:        "it is not a valid port. Port must be between 0 and 65535",
 		}
 	}
 

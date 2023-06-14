@@ -65,8 +65,8 @@ func (d *WizDaemon) Pull(options *PullOptions) (*PullResponse, error) {
 				options[i] = NewOptionPathFile(o)
 			case "uri":
 				options[i] = NewOptionURI(o)
-			case "enum":
-				options[i] = NewOptionEnum(o)
+			case "select":
+				options[i] = NewOptionSelect(o)
 			case "port":
 				options[i], err = NewOptionPort(o)
 			case "id":

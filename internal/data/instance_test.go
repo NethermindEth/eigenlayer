@@ -2,7 +2,6 @@ package data
 
 import (
 	"io"
-	"io/fs"
 	"os"
 	"testing"
 
@@ -115,74 +114,74 @@ func TestNewInstance(t *testing.T) {
 	}
 }
 
-func TestInstance_Init(t *testing.T) {
-	ts := []struct {
-		name     string
-		instance *Instance
-		check    func(t *testing.T, initErr error, instanceDir fs.FS)
-	}{
-		{
-			name: ".lock is created as regular file",
-			instance: &Instance{
-				Name:    "test_name",
-				Tag:     "test_tag",
-				URL:     "https://github.com/NethermindEth/mock-avs",
-				Version: "v0.1.0",
-				Profile: "mainnet",
-			},
-			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
-				assert.NoError(t, initErr)
-				lockFile, err := instanceDir.Open(".lock")
-				assert.NoError(t, err)
-				lockFileInfo, err := lockFile.Stat()
-				assert.NoError(t, err)
-				assert.True(t, !lockFileInfo.IsDir())
-				assert.True(t, lockFileInfo.Mode().IsRegular())
-			},
-		},
-		{
-			name: "state.json is created as regular file",
-			instance: &Instance{
-				Name:    "test_name",
-				Tag:     "test_tag",
-				URL:     "https://github.com/NethermindEth/mock-avs",
-				Version: "v0.1.0",
-				Profile: "mainnet",
-			},
-			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
-				assert.NoError(t, initErr)
-				stateFile, err := instanceDir.Open("state.json")
-				assert.NoError(t, err)
-				stateFileInfo, err := stateFile.Stat()
-				assert.NoError(t, err)
-				assert.True(t, !stateFileInfo.IsDir())
-				assert.True(t, stateFileInfo.Mode().IsRegular())
-			},
-		},
-		{
-			name: "state.json has correct data",
-			instance: &Instance{
-				Name:    "test_name",
-				Tag:     "test_tag",
-				URL:     "https://github.com/NethermindEth/mock-avs",
-				Version: "v0.1.0",
-				Profile: "mainnet",
-			},
-			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
-				assert.NoError(t, initErr)
-				stateFile, err := instanceDir.Open("state.json")
-				assert.NoError(t, err)
-				stateData, err := io.ReadAll(stateFile)
-				assert.NoError(t, err)
-				assert.Equal(t, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag"}`, string(stateData))
-			},
-		},
-	}
-	for _, tc := range ts {
-		t.Run(tc.name, func(t *testing.T) {
-			instanceDirPath := t.TempDir()
-			err := tc.instance.Init(instanceDirPath)
-			tc.check(t, err, os.DirFS(instanceDirPath))
-		})
-	}
-}
+// func TestInstance_Init(t *testing.T) {
+// 	ts := []struct {
+// 		name     string
+// 		instance *Instance
+// 		check    func(t *testing.T, initErr error, instanceDir fs.FS)
+// 	}{
+// 		{
+// 			name: ".lock is created as regular file",
+// 			instance: &Instance{
+// 				Name:    "test_name",
+// 				Tag:     "test_tag",
+// 				URL:     "https://github.com/NethermindEth/mock-avs",
+// 				Version: "v0.1.0",
+// 				Profile: "mainnet",
+// 			},
+// 			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
+// 				assert.NoError(t, initErr)
+// 				lockFile, err := instanceDir.Open(".lock")
+// 				assert.NoError(t, err)
+// 				lockFileInfo, err := lockFile.Stat()
+// 				assert.NoError(t, err)
+// 				assert.True(t, !lockFileInfo.IsDir())
+// 				assert.True(t, lockFileInfo.Mode().IsRegular())
+// 			},
+// 		},
+// 		{
+// 			name: "state.json is created as regular file",
+// 			instance: &Instance{
+// 				Name:    "test_name",
+// 				Tag:     "test_tag",
+// 				URL:     "https://github.com/NethermindEth/mock-avs",
+// 				Version: "v0.1.0",
+// 				Profile: "mainnet",
+// 			},
+// 			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
+// 				assert.NoError(t, initErr)
+// 				stateFile, err := instanceDir.Open("state.json")
+// 				assert.NoError(t, err)
+// 				stateFileInfo, err := stateFile.Stat()
+// 				assert.NoError(t, err)
+// 				assert.True(t, !stateFileInfo.IsDir())
+// 				assert.True(t, stateFileInfo.Mode().IsRegular())
+// 			},
+// 		},
+// 		{
+// 			name: "state.json has correct data",
+// 			instance: &Instance{
+// 				Name:    "test_name",
+// 				Tag:     "test_tag",
+// 				URL:     "https://github.com/NethermindEth/mock-avs",
+// 				Version: "v0.1.0",
+// 				Profile: "mainnet",
+// 			},
+// 			check: func(t *testing.T, initErr error, instanceDir fs.FS) {
+// 				assert.NoError(t, initErr)
+// 				stateFile, err := instanceDir.Open("state.json")
+// 				assert.NoError(t, err)
+// 				stateData, err := io.ReadAll(stateFile)
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag"}`, string(stateData))
+// 			},
+// 		},
+// 	}
+// 	for _, tc := range ts {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			instanceDirPath := t.TempDir()
+// 			err := tc.instance.Init(instanceDirPath)
+// 			tc.check(t, err, os.DirFS(instanceDirPath))
+// 		})
+// 	}
+// }

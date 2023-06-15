@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/NethermindEth/eigen-wiz/internal/commands"
+	"github.com/NethermindEth/eigen-wiz/internal/data"
 	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
 	"github.com/NethermindEth/eigen-wiz/internal/prompter"
 	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
@@ -40,8 +42,9 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 				return err
 			}
 			fmt.Println("Package pulled successfully.") // TODO: this is for debugging purpose, remove it later when we have a logger
+			var fillResult *fillOptionsResult
 			for {
-				fillResult, err := fillOptions(destDir, pullResponse.Profiles)
+				fillResult, err = fillOptions(destDir, pullResponse.Profiles)
 				if err != nil {
 					return err
 				}
@@ -59,7 +62,25 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 					break
 				}
 			}
-			return nil
+			dataDir, err := data.NewDataDirDefault()
+			if err != nil {
+				return err
+			}
+			instance, err := dataDir.AddInstance(data.AddInstanceOptions{
+				Profile:        fillResult.profile,
+				URL:            url,
+				Version:        pullResponse.CurrentVersion,
+				Tag:            tag,
+				PackageHandler: package_handler.NewPackageHandler(destDir),
+				Env:            fillResult.envVariables,
+			})
+			if err != nil {
+				return err
+			}
+			composeRunner := commands.NewDockerComposeRunner()
+			return composeRunner.Up(instance.ComposePath(), commands.DockerComposeRunnerOptions{
+				Out: os.Stdout,
+			})
 		},
 	}
 

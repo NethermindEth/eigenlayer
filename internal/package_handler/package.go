@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -344,4 +345,8 @@ func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
 		env[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
 	}
 	return env, nil
+}
+
+func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
+	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
 }

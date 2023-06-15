@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
 )
 
 // DataDir is the directory where all the data is stored.
@@ -46,9 +49,20 @@ func (d *DataDir) Instance(instanceId string) (*Instance, error) {
 	return NewInstance(instancePath)
 }
 
+type AddInstanceOptions struct {
+	URL            string
+	Version        string
+	Profile        string
+	Tag            string
+	PackageHandler *package_handler.PackageHandler
+	Env            map[string]string
+}
+
 // AddInstance adds a new instance to the data directory.
-func (d *DataDir) AddInstance(name, url, version, profile, tag string) (*Instance, error) {
-	instanceDirName := name + "-" + tag
+func (d *DataDir) AddInstance(opts AddInstanceOptions) (*Instance, error) {
+	splits := strings.Split(opts.URL, "/")
+	name := splits[len(splits)-1]
+	instanceDirName := name + "-" + opts.Tag
 	ok, err := d.instanceDirExist(instanceDirName)
 	if err != nil {
 		return nil, err
@@ -64,12 +78,17 @@ func (d *DataDir) AddInstance(name, url, version, profile, tag string) (*Instanc
 
 	instance := Instance{
 		Name:    name,
-		URL:     url,
-		Version: version,
-		Profile: profile,
-		Tag:     tag,
+		URL:     opts.URL,
+		Version: opts.Version,
+		Profile: opts.Profile,
+		Tag:     opts.Tag,
 	}
-	return &instance, instance.Init(filepath.Join(d.path, "nodes", instanceDirName))
+	err = instance.Init(filepath.Join(d.path, "nodes", instanceDirName), opts.Env, opts.PackageHandler.ProfileFS(instance.Profile))
+	if err != nil {
+		return nil, err
+	}
+
+	return &instance, nil
 }
 
 // RemoveInstance removes the instance with the given id.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -57,7 +58,7 @@ func NewInstance(path string) (*Instance, error) {
 }
 
 // Init initializes a new instance with the given path as root.
-func (i *Instance) Init(instancePath string) error {
+func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs.FS) error {
 	err := i.validate()
 	if err != nil {
 		return err
@@ -85,7 +86,65 @@ func (i *Instance) Init(instancePath string) error {
 		return err
 	}
 	_, err = stateFile.Write(stateData)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Create .env file
+	envFile, err := os.Create(filepath.Join(i.path, ".env"))
+	if err != nil {
+		return err
+	}
+	for k, v := range env {
+		envFile.WriteString(fmt.Sprintf("%s=%s\n", k, v))
+	}
+	defer envFile.Close()
+
+	// Copy docker-compose.yml
+	pkgComposeFile, err := profileFS.Open("docker-compose.yml")
+	if err != nil {
+		return err
+	}
+	defer pkgComposeFile.Close()
+	composeFile, err := os.Create(filepath.Join(i.path, "docker-compose.yml"))
+	if err != nil {
+		return err
+	}
+	defer composeFile.Close()
+	if _, err := io.Copy(composeFile, pkgComposeFile); err != nil {
+		return err
+	}
+
+	// Copy src directory
+	return fs.WalkDir(profileFS, "src", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.Join(i.path, path)
+		if d.IsDir() {
+			if err := os.MkdirAll(targetPath, 0o755); err != nil {
+				return err
+			}
+		} else {
+			pkgFile, err := profileFS.Open(path)
+			if err != nil {
+				return err
+			}
+			defer pkgFile.Close()
+			targetFile, err := os.Create(targetPath)
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(targetFile, pkgFile); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (i *Instance) ComposePath() string {
+	return filepath.Join(i.path, "docker-compose.yml")
 }
 
 // Lock locks the .lock file of the instance.

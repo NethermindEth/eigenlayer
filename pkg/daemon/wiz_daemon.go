@@ -2,8 +2,13 @@ package daemon
 
 import (
 	"errors"
+	"net/url"
+	"os"
+	"path"
 
+	"github.com/NethermindEth/eigen-wiz/internal/data"
 	"github.com/NethermindEth/eigen-wiz/pkg/pull"
+	"github.com/NethermindEth/eigen-wiz/pkg/run"
 )
 
 // Checks that WizDaemon implements Daemon.
@@ -17,36 +22,37 @@ func NewWizDaemon() *WizDaemon {
 	return &WizDaemon{}
 }
 
-type PullOptions struct {
-	URL     string
-	Version string
-	DestDir string
+// InstallOptions is a set of options for installing a node software package.
+type InstallOptions struct {
+	URL             string
+	Version         string
+	Tag             string
+	ProfileSelector func(profiles []string) (string, error)
+	OptionsFiller   func(opts []Option) ([]Option, error)
+	RunConfirmation func() (bool, error)
 }
 
-type PullResponse struct {
-	CurrentVersion string
-	LatestVersion  string
-	Profiles       map[string][]Option
-}
+// Install installs a node software package using the provided options.
+func (d *WizDaemon) Install(options InstallOptions) error {
+	// Check if instance already exists
+	dataDir, err := data.NewDataDirDefault()
+	if err != nil {
+		return err
+	}
 
-func (d *WizDaemon) Pull(options *PullOptions) (*PullResponse, error) {
-	pkgHandler, err := pull.Pull(options.URL, options.Version, options.DestDir)
+	destDir, err := os.MkdirTemp(os.TempDir(), "egn-install")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	currentVersion, err := pkgHandler.CurrentVersion()
+	// Pull package
+	pkgHandler, err := pull.Pull(options.URL, options.Version, destDir)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	latestVersion, err := pkgHandler.CurrentVersion()
-	if err != nil {
-		return nil, err
-	}
+	// Get profiles names and its options
 	pkgProfiles, err := pkgHandler.Profiles()
-	if err != nil {
-		return nil, err
-	}
 	profiles := make(map[string][]Option, len(pkgProfiles))
+	profileNames := make([]string, 0, len(pkgProfiles))
 	for _, pkgProfile := range pkgProfiles {
 		options := make([]Option, len(pkgProfile.Options))
 		for i, o := range pkgProfile.Options {
@@ -72,43 +78,67 @@ func (d *WizDaemon) Pull(options *PullOptions) (*PullResponse, error) {
 			case "id":
 				options[i] = NewOptionID(o)
 			default:
-				return nil, errors.New("unknown option type: " + o.Type)
+				return errors.New("unknown option type: " + o.Type)
 			}
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 		profiles[pkgProfile.Name] = options
+		profileNames = append(profileNames, pkgProfile.Name)
 	}
-	return &PullResponse{
-		CurrentVersion: currentVersion,
-		LatestVersion:  latestVersion,
-		Profiles:       profiles,
-	}, nil
-}
-
-type RunOptions struct{}
-
-type RunResponse struct{}
-
-func (d *WizDaemon) Run(options *RunOptions) (*RunResponse, error) {
-	return &RunResponse{}, errors.New("not implemented")
-}
-
-// InstallOptions is a set of options for installing a node software package.
-type InstallOptions struct {
-	PullOptions
-}
-
-// InstallResponse is a response from installing a node software package.
-type InstallResponse struct{}
-
-// Install installs a node software package using the provided options.
-func (d *WizDaemon) Install(options *InstallOptions) (*InstallResponse, error) {
-	_, err := pull.Pull(options.URL, options.Version, options.DestDir)
+	// Select profile
+	selectedProfile, err := options.ProfileSelector(profileNames)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// TODO: run package from the pkgHandler
-	return &InstallResponse{}, nil
+	// Fill profile options
+	filledOptions, err := options.OptionsFiller(profiles[selectedProfile])
+	if err != nil {
+		return err
+	}
+	// Install package
+	env := make(map[string]string, len(filledOptions))
+	for _, o := range filledOptions {
+		env[o.Target()] = o.Value()
+	}
+	version, err := pkgHandler.CurrentVersion()
+	if err != nil {
+		return err
+	}
+	instanceName, err := instanceNameFromURL(options.URL)
+	if err != nil {
+		return err
+	}
+	instance := &data.Instance{
+		Name:    instanceName,
+		Profile: selectedProfile,
+		URL:     options.URL,
+		Version: version,
+		Tag:     options.Tag,
+	}
+	err = dataDir.InitInstance(instance)
+	if err != nil {
+		return err
+	}
+	err = instance.Setup(env, pkgHandler.ProfileFS(selectedProfile))
+	if err != nil {
+		return err
+	}
+	doRun, err := options.RunConfirmation()
+	if err != nil {
+		return err
+	}
+	if doRun {
+		return run.Run(dataDir, instance.Id())
+	}
+	return nil
+}
+
+func instanceNameFromURL(u string) (string, error) {
+	parsedURL, err := url.ParseRequestURI(u)
+	if err != nil {
+		return "", err
+	}
+	return path.Base(parsedURL.Path), nil
 }

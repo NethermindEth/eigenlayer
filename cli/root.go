@@ -10,8 +10,8 @@ func RootCmd(d daemon.Daemon) *cobra.Command {
 		Use: "egn",
 	}
 	cmd.AddCommand(
-		PullCmd(d),
 		InstallCmd(d),
 	)
+	cmd.CompletionOptions.DisableDefaultCmd = true
 	return &cmd
 }

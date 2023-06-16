@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
 )
@@ -58,37 +57,20 @@ type AddInstanceOptions struct {
 	Env            map[string]string
 }
 
-// AddInstance adds a new instance to the data directory.
-func (d *DataDir) AddInstance(opts AddInstanceOptions) (*Instance, error) {
-	splits := strings.Split(opts.URL, "/")
-	name := splits[len(splits)-1]
-	instanceDirName := name + "-" + opts.Tag
-	ok, err := d.instanceDirExist(instanceDirName)
+func (d *DataDir) InitInstance(instance *Instance) error {
+	instancePath := filepath.Join(d.path, "nodes", instance.Id())
+	_, err := os.Stat(instancePath)
+	if err != nil && os.IsNotExist(err) {
+		err = os.MkdirAll(instancePath, 0o755)
+		if err != nil {
+			return err
+		}
+		return instance.Init(instancePath)
+	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if ok {
-		return nil, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceDirName)
-	}
-
-	err = os.MkdirAll(filepath.Join(d.path, "nodes", instanceDirName), 0o755)
-	if err != nil {
-		return nil, err
-	}
-
-	instance := Instance{
-		Name:    name,
-		URL:     opts.URL,
-		Version: opts.Version,
-		Profile: opts.Profile,
-		Tag:     opts.Tag,
-	}
-	err = instance.Init(filepath.Join(d.path, "nodes", instanceDirName), opts.Env, opts.PackageHandler.ProfileFS(instance.Profile))
-	if err != nil {
-		return nil, err
-	}
-
-	return &instance, nil
+	return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instance.Id())
 }
 
 // RemoveInstance removes the instance with the given id.
@@ -105,19 +87,4 @@ func (d *DataDir) RemoveInstance(instanceId string) error {
 		return fmt.Errorf("%s is not a directory", instanceId)
 	}
 	return os.RemoveAll(instancePath)
-}
-
-func (d *DataDir) instanceDirExist(instanceId string) (bool, error) {
-	instancePath := filepath.Join(d.path, "nodes", instanceId)
-	instanceDir, err := os.Stat(instancePath)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	if !instanceDir.IsDir() {
-		return false, fmt.Errorf("%s is not a directory", instanceId)
-	}
-	return true, nil
 }

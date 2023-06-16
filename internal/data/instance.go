@@ -58,7 +58,7 @@ func NewInstance(path string) (*Instance, error) {
 }
 
 // Init initializes a new instance with the given path as root.
-func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs.FS) error {
+func (i *Instance) Init(instancePath string) error {
 	err := i.validate()
 	if err != nil {
 		return err
@@ -86,10 +86,20 @@ func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs
 		return err
 	}
 	_, err = stateFile.Write(stateData)
+	return err
+}
+
+func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
+	err = i.Lock()
 	if err != nil {
 		return err
 	}
-
+	defer func() {
+		unlockErr := i.Unlock()
+		if err == nil {
+			err = unlockErr
+		}
+	}()
 	// Create .env file
 	envFile, err := os.Create(filepath.Join(i.path, ".env"))
 	if err != nil {
@@ -101,7 +111,7 @@ func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs
 	defer envFile.Close()
 
 	// Copy docker-compose.yml
-	pkgComposeFile, err := profileFS.Open("docker-compose.yml")
+	pkgComposeFile, err := profileFs.Open("docker-compose.yml")
 	if err != nil {
 		return err
 	}
@@ -116,7 +126,7 @@ func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs
 	}
 
 	// Copy src directory
-	return fs.WalkDir(profileFS, "src", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(profileFs, "src", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -126,7 +136,7 @@ func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs
 				return err
 			}
 		} else {
-			pkgFile, err := profileFS.Open(path)
+			pkgFile, err := profileFs.Open(path)
 			if err != nil {
 				return err
 			}
@@ -141,6 +151,10 @@ func (i *Instance) Init(instancePath string, env map[string]string, profileFS fs
 		}
 		return nil
 	})
+}
+
+func (i *Instance) Id() string {
+	return fmt.Sprintf("%s-%s", i.Name, i.Tag)
 }
 
 func (i *Instance) ComposePath() string {

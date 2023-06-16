@@ -212,10 +212,6 @@ func (p *PackageHandler) CurrentVersion() (string, error) {
 	return "", errors.New("no tag found for current version")
 }
 
-func (p *PackageHandler) Run() error {
-	return errors.New("not implemented")
-}
-
 func (p *PackageHandler) checkSum() error {
 	currentChecksums, err := parseChecksumFile(filepath.Join(p.path, checksumFileName))
 	if err != nil {

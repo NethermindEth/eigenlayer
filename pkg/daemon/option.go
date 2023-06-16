@@ -76,6 +76,9 @@ func (oi *OptionInt) Name() string {
 }
 
 func (oi *OptionInt) Help() string {
+	if oi.validate {
+		return fmt.Sprintf("%s (min: %d, max: %d)", oi.option.help, oi.MinValue, oi.MaxValue)
+	}
 	return oi.option.help
 }
 
@@ -158,6 +161,9 @@ func (of *OptionFloat) Name() string {
 }
 
 func (of *OptionFloat) Help() string {
+	if of.validate {
+		return fmt.Sprintf("%s (min: %f, max: %f)", of.option.help, of.MinValue, of.MaxValue)
+	}
 	return of.option.help
 }
 
@@ -281,6 +287,9 @@ func (os *OptionString) Name() string {
 }
 
 func (os *OptionString) Help() string {
+	if os.validate {
+		return fmt.Sprintf("%s (regex: %s)", os.option.help, os.Re2Regex)
+	}
 	return os.option.help
 }
 
@@ -540,7 +549,7 @@ func (oe *OptionSelect) Name() string {
 }
 
 func (oe *OptionSelect) Help() string {
-	return oe.option.help
+	return fmt.Sprintf("%s (options: %s)", oe.option.help, strings.Join(oe.Options, ", "))
 }
 
 func (oe *OptionSelect) Set(value string) error {
@@ -598,7 +607,7 @@ func (op *OptionPort) Name() string {
 }
 
 func (op *OptionPort) Help() string {
-	return op.option.help
+	return fmt.Sprintf("%s (min: 0, max: 65535)", op.option.help)
 }
 
 func (op *OptionPort) Set(value string) error {

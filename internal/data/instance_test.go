@@ -3,6 +3,7 @@ package data
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,6 +110,51 @@ func TestNewInstance(t *testing.T) {
 			} else {
 				assert.Equal(t, *tc.instance, *instance)
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestInstance_Init(t *testing.T) {
+	ts := []struct {
+		name      string
+		instance  *Instance
+		path      string
+		stateJSON []byte
+		err       error
+	}{
+		{
+			name:      "invalid instance",
+			instance:  &Instance{},
+			path:      t.TempDir(),
+			stateJSON: nil,
+			err:       ErrInvalidInstance,
+		},
+		{
+			name: "valid instance",
+			instance: &Instance{
+				Name:    "test_name",
+				Tag:     "test_tag",
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: "v2.0.1",
+				Profile: "option-returner",
+			},
+			path:      t.TempDir(),
+			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.0.1","profile":"option-returner","tag":"test_tag"}`),
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.instance.Init(tc.path)
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+				stateFile, err := os.Open(filepath.Join(tc.path, "state.json"))
+				assert.NoError(t, err)
+				stateData, err := io.ReadAll(stateFile)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.stateJSON, stateData)
 			}
 		})
 	}

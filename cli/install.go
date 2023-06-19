@@ -23,28 +23,12 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return d.Install(daemon.InstallOptions{
-				URL:     url,
-				Version: version,
-				Tag:     tag,
-				ProfileSelector: func(profiles []string) (string, error) {
-					return prompter.Select("Select a profile", profiles)
-				},
-				OptionsFiller: func(opts []daemon.Option) (outOpts []daemon.Option, err error) {
-					outOpts = make([]daemon.Option, len(opts))
-					for i, o := range opts {
-						_, err = prompter.InputString(o.Name(), o.Default(), o.Help(), func(s string) error {
-							return o.Set(s)
-						})
-						if err != nil {
-							break
-						}
-						outOpts[i] = o
-					}
-					return
-				},
-				RunConfirmation: func() (bool, error) {
-					return prompter.Confirm("Run the node now")
-				},
+				URL:             url,
+				Version:         version,
+				Tag:             tag,
+				ProfileSelector: profileSelector,
+				OptionsFiller:   optionsFiller,
+				RunConfirmation: runConfirmation,
 			})
 		},
 	}
@@ -52,4 +36,26 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 	cmd.Flags().StringVarP(&version, "version", "v", "", "version to install. If not specified, the latest version will be installed.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name")
 	return &cmd
+}
+
+func profileSelector(profiles []string) (string, error) {
+	return prompter.Select("Select a profile", profiles)
+}
+
+func optionsFiller(opts []daemon.Option) (outOpts []daemon.Option, err error) {
+	outOpts = make([]daemon.Option, len(opts))
+	for i, o := range opts {
+		_, err = prompter.InputString(o.Name(), o.Default(), o.Help(), func(s string) error {
+			return o.Set(s)
+		})
+		if err != nil {
+			break
+		}
+		outOpts[i] = o
+	}
+	return
+}
+
+func runConfirmation() (bool, error) {
+	return prompter.Confirm("Run the node now")
 }

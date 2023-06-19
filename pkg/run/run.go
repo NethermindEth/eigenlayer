@@ -1,9 +1,8 @@
 package run
 
 import (
-	"os"
-
 	"github.com/NethermindEth/eigen-wiz/internal/commands"
+	"github.com/NethermindEth/eigen-wiz/internal/compose"
 	"github.com/NethermindEth/eigen-wiz/internal/data"
 )
 
@@ -18,8 +17,10 @@ func Run(dataDir *data.DataDir, instance string) error {
 		return err
 	}
 	composePath := i.ComposePath()
-	dockerCompose := commands.NewDockerComposeRunner()
-	return dockerCompose.Up(composePath, commands.DockerComposeRunnerOptions{
-		Out: os.Stdout,
+
+	cmdRunner := commands.NewCMDRunner()
+	dockerCompose := compose.NewComposeManager(&cmdRunner)
+	return dockerCompose.Up(compose.DockerComposeUpOptions{
+		Path: composePath,
 	})
 }

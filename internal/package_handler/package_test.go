@@ -402,11 +402,6 @@ func TestPackageHandler_Versions(t *testing.T) {
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
 			path := t.TempDir()
-			// Initialize git repo
-			err := exec.Command("git", "-C", path, "init").Run()
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			// Add a readme file to create the first commit
 			readmeFile, err := os.Create(filepath.Join(path, "readme.txt"))
@@ -417,13 +412,17 @@ func TestPackageHandler_Versions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
-			if err != nil {
-				t.Fatal(err)
+			for _, cmd := range []*exec.Cmd{
+				exec.Command("git", "-C", path, "init"),
+				exec.Command("git", "-C", path, "add", "readme.txt"),
+				exec.Command("git", "-C", path, "config", "user.name", "user"),
+				exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
+				exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
+			} {
+				err := cmd.Run()
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			// Add tags
@@ -477,11 +476,6 @@ func TestPackageHandler_LatestVersion(t *testing.T) {
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
 			path := t.TempDir()
-			// Initialize git repo
-			err := exec.Command("git", "-C", path, "init").Run()
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			// Add a readme file to create the first commit
 			readmeFile, err := os.Create(filepath.Join(path, "readme.txt"))
@@ -492,13 +486,18 @@ func TestPackageHandler_LatestVersion(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
-			if err != nil {
-				t.Fatal(err)
+
+			for _, cmd := range []*exec.Cmd{
+				exec.Command("git", "-C", path, "init"),
+				exec.Command("git", "-C", path, "add", "readme.txt"),
+				exec.Command("git", "-C", path, "config", "user.name", "user"),
+				exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
+				exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
+			} {
+				err := cmd.Run()
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			// Add tags
@@ -559,7 +558,6 @@ func TestPackageHandler_CheckoutVersion(t *testing.T) {
 			// Add version tags
 			for i, tag := range tc.versions {
 				file := fmt.Sprintf("readme-%d.txt", i)
-				// Add a readme file to create the first commit
 				readmeFile, err := os.Create(filepath.Join(path, file))
 				if err != nil {
 					t.Fatal(err)
@@ -569,17 +567,17 @@ func TestPackageHandler_CheckoutVersion(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				err = exec.Command("git", "-C", path, "add", file).Run()
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = exec.Command("git", "-C", path, "commit", "-m", fmt.Sprintf("Commit %d", i)).Run()
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
-				if err != nil {
-					t.Fatal(err)
+				for _, cmd := range []*exec.Cmd{
+					exec.Command("git", "-C", path, "add", file),
+					exec.Command("git", "-C", path, "config", "user.name", "user"),
+					exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
+					exec.Command("git", "-C", path, "commit", "-m", fmt.Sprintf("Commit %d", i)),
+					exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag),
+				} {
+					err := cmd.Run()
+					if err != nil {
+						t.Fatal(err)
+					}
 				}
 			}
 
@@ -605,11 +603,6 @@ func TestPackageHandler_CurrentVersion(t *testing.T) {
 	}
 
 	prepareTest := func(t *testing.T, path string, tags []string) {
-		// Init test repo
-		err := exec.Command("git", "-C", path, "init").Run()
-		if err != nil {
-			t.Fatal(err)
-		}
 		tFile, err := os.Create(filepath.Join(path, "readme.txt"))
 		if err != nil {
 			t.Fatal(err)
@@ -619,13 +612,17 @@ func TestPackageHandler_CurrentVersion(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
-		if err != nil {
-			t.Fatal(err)
+		for _, cmd := range []*exec.Cmd{
+			exec.Command("git", "-C", path, "init"),
+			exec.Command("git", "-C", path, "add", "readme.txt"),
+			exec.Command("git", "-C", path, "config", "user.name", "user"),
+			exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
+			exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
+		} {
+			err := cmd.Run()
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
 		for _, tag := range tags {
 			err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", tag).Run()

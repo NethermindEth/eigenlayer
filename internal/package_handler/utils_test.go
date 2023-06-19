@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NethermindEth/eigen-wiz/internal/package_handler/testdata"
+	"github.com/NethermindEth/egn/internal/package_handler/testdata"
 	"github.com/stretchr/testify/assert"
 )
 

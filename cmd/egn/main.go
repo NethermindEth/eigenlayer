@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/NethermindEth/eigen-wiz/cli"
-	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
+	"github.com/NethermindEth/egn/cli"
+	"github.com/NethermindEth/egn/pkg/daemon"
 )
 
 func main() {

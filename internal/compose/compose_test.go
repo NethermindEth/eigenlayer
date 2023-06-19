@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NethermindEth/eigen-wiz/internal/commands"
-	"github.com/NethermindEth/eigen-wiz/mocks"
+	"github.com/NethermindEth/egn/internal/commands"
+	"github.com/NethermindEth/egn/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

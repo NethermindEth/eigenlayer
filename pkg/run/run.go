@@ -1,9 +1,9 @@
 package run
 
 import (
-	"github.com/NethermindEth/eigen-wiz/internal/commands"
-	"github.com/NethermindEth/eigen-wiz/internal/compose"
-	"github.com/NethermindEth/eigen-wiz/internal/data"
+	"github.com/NethermindEth/egn/internal/commands"
+	"github.com/NethermindEth/egn/internal/compose"
+	"github.com/NethermindEth/egn/internal/data"
 )
 
 // Run starts the package at the given path.

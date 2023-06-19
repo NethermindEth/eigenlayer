@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
+	"github.com/NethermindEth/egn/internal/package_handler"
 )
 
 // DataDir is the directory where all the data is stored.

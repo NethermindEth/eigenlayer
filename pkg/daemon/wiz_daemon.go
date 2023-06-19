@@ -7,9 +7,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/NethermindEth/eigen-wiz/internal/data"
-	"github.com/NethermindEth/eigen-wiz/pkg/pull"
-	"github.com/NethermindEth/eigen-wiz/pkg/run"
+	"github.com/NethermindEth/egn/internal/data"
+	"github.com/NethermindEth/egn/pkg/pull"
+	"github.com/NethermindEth/egn/pkg/run"
 )
 
 // Checks that WizDaemon implements Daemon.

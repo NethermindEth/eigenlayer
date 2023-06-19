@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NethermindEth/eigen-wiz/internal/commands"
+	"github.com/NethermindEth/egn/internal/commands"
 )
 
 // DockerComposeCmdError represents an error that occurs when running a Docker Compose command.

@@ -27,7 +27,7 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 				Version: version,
 				Tag:     tag,
 				ProfileSelector: func(profiles []string) (string, error) {
-					return prompter.SelectProfile(profiles)
+					return prompter.Select("Select a profile", profiles)
 				},
 				OptionsFiller: func(opts []daemon.Option) (outOpts []daemon.Option, err error) {
 					outOpts = make([]daemon.Option, len(opts))
@@ -43,7 +43,7 @@ func InstallCmd(d daemon.Daemon) *cobra.Command {
 					return
 				},
 				RunConfirmation: func() (bool, error) {
-					return prompter.Confirm("Run the node now?")
+					return prompter.Confirm("Run the node now")
 				},
 			})
 		},

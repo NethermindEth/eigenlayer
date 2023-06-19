@@ -39,9 +39,13 @@ func NewPackageHandler(path string) *PackageHandler {
 	return &PackageHandler{path: path}
 }
 
+// NewPackageHandlerOptions is used to provide options to the NewPackageHandlerFromURL
 type NewPackageHandlerOptions struct {
-	Path    string
-	URL     string
+	// Path is the path where the package will be cloned
+	Path string
+	// URL is the URL of the git repository
+	URL string
+	// GitAuth is used to provide authentication to a private git repository
 	GitAuth *GitAuth
 }
 
@@ -79,6 +83,8 @@ func (g *NewPackageHandlerOptions) getAuth() *http.BasicAuth {
 	}
 }
 
+// NewPackageHandlerFromURL clones the package from the given URL and returns. The GitAuth
+// field could be used to provide authentication to a private git repository.
 func NewPackageHandlerFromURL(opts NewPackageHandlerOptions) (*PackageHandler, error) {
 	_, err := git.PlainClone(opts.Path, false, &git.CloneOptions{
 		URL:  opts.URL,
@@ -118,6 +124,8 @@ func (p *PackageHandler) Check() error {
 	return p.checkSum()
 }
 
+// Versions returns the descending sorted list of available versions for the package.
+// A version is a git tag that matches the regex `^v\d+\.\d+\.\d+$`.
 func (p *PackageHandler) Versions() ([]string, error) {
 	pkgRepo, err := git.PlainOpen(p.path)
 	if err != nil {
@@ -135,12 +143,16 @@ func (p *PackageHandler) Versions() ([]string, error) {
 		}
 		return nil
 	})
+	if len(versions) == 0 {
+		return nil, ErrNoVersionsFound
+	}
 	sort.Slice(versions, func(i, j int) bool {
 		return strings.ToLower(versions[i]) > strings.ToLower(versions[j])
 	})
 	return versions, nil
 }
 
+// LatestVersion returns the latest version of the package.
 func (p *PackageHandler) LatestVersion() (string, error) {
 	versions, err := p.Versions()
 	if err != nil {
@@ -149,7 +161,11 @@ func (p *PackageHandler) LatestVersion() (string, error) {
 	return versions[0], nil
 }
 
+// CheckoutVersion checks out the cloned repository to the given version (tag).
 func (p *PackageHandler) CheckoutVersion(version string) error {
+	if !tagVersionRegex.MatchString(version) {
+		return ErrInvalidVersion
+	}
 	gitRepo, err := git.PlainOpen(p.path)
 	if err != nil {
 		return err
@@ -163,7 +179,7 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 		tag, err := tagIter.Next()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				return fmt.Errorf("version %s not found", version)
+				return ErrNoVersionsFound
 			}
 			return err
 		}
@@ -184,6 +200,8 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 	return nil
 }
 
+// CurrentVersion returns the current version of the package, which is tha latest
+// tag with version format that points to the current HEAD.
 func (p *PackageHandler) CurrentVersion() (string, error) {
 	gitRepo, err := git.PlainOpen(p.path)
 	if err != nil {
@@ -197,6 +215,7 @@ func (p *PackageHandler) CurrentVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var headVersions []string
 	for {
 		tag, err := tagIter.Next()
 		if err != nil {
@@ -205,34 +224,20 @@ func (p *PackageHandler) CurrentVersion() (string, error) {
 			}
 			return "", err
 		}
-		if head.Hash() == tag.Target {
-			return tag.Name, nil
+		if tagVersionRegex.MatchString(tag.Name) && head.Hash() == tag.Target {
+			headVersions = append(headVersions, tag.Name)
 		}
 	}
-	return "", errors.New("no tag found for current version")
+	if len(headVersions) == 0 {
+		return "", ErrNoVersionsFound
+	}
+	sort.Slice(headVersions, func(i, j int) bool {
+		return strings.ToLower(headVersions[i]) > strings.ToLower(headVersions[j])
+	})
+	return headVersions[0], nil
 }
 
-func (p *PackageHandler) checkSum() error {
-	currentChecksums, err := parseChecksumFile(filepath.Join(p.path, checksumFileName))
-	if err != nil {
-		return err
-	}
-	computedChecksums, err := packageHashes(p.path)
-	if err != nil {
-		return err
-	}
-	if len(currentChecksums) != len(computedChecksums) {
-		return fmt.Errorf("%w: expected %d files, got %d", ErrInvalidChecksum, len(currentChecksums), len(computedChecksums))
-	}
-	for file, hash := range currentChecksums {
-		if computedChecksums[file] != hash {
-			return fmt.Errorf("%w: checksum mismatch for file %s, expected %s, got %s", ErrInvalidChecksum, file, hash, computedChecksums[file])
-		}
-	}
-	return nil
-}
-
-// Profiles returns the list of profiles defined in the package.
+// Profiles returns the list of profiles defined in the package for the current version.
 func (p *PackageHandler) Profiles() ([]Profile, error) {
 	names, err := p.profilesNames()
 	if err != nil {
@@ -255,6 +260,39 @@ func (p *PackageHandler) Profiles() ([]Profile, error) {
 	}
 
 	return profiles, nil
+}
+
+// DotEnv returns the .env file for the given profile.
+// Assumes the package has been checked and is valid.
+func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
+	env := make(map[string]string)
+	envPath := filepath.Join(p.path, pkgDirName, profile, ".env")
+
+	data, err := os.ReadFile(envPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ReadingDotEnvError{
+			pkgPath:     p.path,
+			profileName: profile,
+		}, err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.Split(line, "=")
+		if len(parts) != 2 {
+			continue
+		}
+		env[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
+	}
+	return env, nil
+}
+
+// ProfileFS returns the filesystem for the given profile.
+func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
+	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
 }
 
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
@@ -315,34 +353,22 @@ func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
 	return &profile, nil
 }
 
-// DotEnv returns the .env file for the given profile.
-// Assumes the package has been checked and is valid.
-func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
-	env := make(map[string]string)
-	envPath := filepath.Join(p.path, pkgDirName, profile, ".env")
-
-	data, err := os.ReadFile(envPath)
+func (p *PackageHandler) checkSum() error {
+	currentChecksums, err := parseChecksumFile(filepath.Join(p.path, checksumFileName))
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ReadingDotEnvError{
-			pkgPath:     p.path,
-			profileName: profile,
-		}, err)
+		return err
 	}
-
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.Split(line, "=")
-		if len(parts) != 2 {
-			continue
-		}
-		env[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
+	computedChecksums, err := packageHashes(p.path)
+	if err != nil {
+		return err
 	}
-	return env, nil
-}
-
-func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
-	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
+	if len(currentChecksums) != len(computedChecksums) {
+		return fmt.Errorf("%w: expected %d files, got %d", ErrInvalidChecksum, len(currentChecksums), len(computedChecksums))
+	}
+	for file, hash := range currentChecksums {
+		if computedChecksums[file] != hash {
+			return fmt.Errorf("%w: checksum mismatch for file %s, expected %s, got %s", ErrInvalidChecksum, file, hash, computedChecksums[file])
+		}
+	}
+	return nil
 }

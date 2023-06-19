@@ -1,5 +1,9 @@
 package daemon
 
+import "errors"
+
+var ErrInstanceAlreadyExists = errors.New("instance already exists")
+
 // InvalidOptionValueError is returned when an Option's value is invalid.
 type InvalidOptionValueError struct {
 	optionName string

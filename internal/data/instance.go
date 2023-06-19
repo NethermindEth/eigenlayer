@@ -23,7 +23,8 @@ type Instance struct {
 	lock    *flock.Flock
 }
 
-// NewInstance creates a new instance with the given path as root.
+// NewInstance creates a new instance with the given path as root. It loads the
+// state.json file and validates it.
 func NewInstance(path string) (*Instance, error) {
 	i := Instance{
 		path: path,
@@ -57,7 +58,8 @@ func NewInstance(path string) (*Instance, error) {
 	return &i, nil
 }
 
-// Init initializes a new instance with the given path as root.
+// Init initializes a new instance with the given path as root. It creates the
+// .lock and state.json files. If the instance is invalid, an error is returned.
 func (i *Instance) Init(instancePath string) error {
 	err := i.validate()
 	if err != nil {
@@ -89,6 +91,9 @@ func (i *Instance) Init(instancePath string) error {
 	return err
 }
 
+// Setup creates the instance directory and copies the profile files into it from
+// the given fs.FS. It also creates the .env file with the given environment variables
+// on the env map.
 func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 	err = i.Lock()
 	if err != nil {
@@ -153,10 +158,13 @@ func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 	})
 }
 
+// Id returns the instance id, which is the name and tag concatenated with a dash
+// <name>-<tag>
 func (i *Instance) Id() string {
 	return fmt.Sprintf("%s-%s", i.Name, i.Tag)
 }
 
+// ComposePath returns the path to the docker-compose.yml file of the instance.
 func (i *Instance) ComposePath() string {
 	return filepath.Join(i.path, "docker-compose.yml")
 }

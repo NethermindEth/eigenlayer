@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -22,24 +23,28 @@ func NewWizDaemon() *WizDaemon {
 	return &WizDaemon{}
 }
 
-// InstallOptions is a set of options for installing a node software package.
-type InstallOptions struct {
-	URL             string
-	Version         string
-	Tag             string
-	ProfileSelector func(profiles []string) (string, error)
-	OptionsFiller   func(opts []Option) ([]Option, error)
-	RunConfirmation func() (bool, error)
-}
-
-// Install installs a node software package using the provided options.
+// Install installs a node software package using the provided options. If the instance
 func (d *WizDaemon) Install(options InstallOptions) error {
+	instanceName, err := instanceNameFromURL(options.URL)
+	if err != nil {
+		return err
+	}
+	instance := &data.Instance{
+		Name: instanceName,
+		URL:  options.URL,
+		Tag:  options.Tag,
+	}
+
 	// Check if instance already exists
 	dataDir, err := data.NewDataDirDefault()
 	if err != nil {
 		return err
 	}
+	if dataDir.HasInstance(instance.Id()) {
+		return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instance.Id())
+	}
 
+	// Pull package to a temporary directory
 	destDir, err := os.MkdirTemp(os.TempDir(), "egn-install")
 	if err != nil {
 		return err
@@ -88,12 +93,12 @@ func (d *WizDaemon) Install(options InstallOptions) error {
 		profileNames = append(profileNames, pkgProfile.Name)
 	}
 	// Select profile
-	selectedProfile, err := options.ProfileSelector(profileNames)
+	instance.Profile, err = options.ProfileSelector(profileNames)
 	if err != nil {
 		return err
 	}
 	// Fill profile options
-	filledOptions, err := options.OptionsFiller(profiles[selectedProfile])
+	filledOptions, err := options.OptionsFiller(profiles[instance.Profile])
 	if err != nil {
 		return err
 	}
@@ -102,26 +107,15 @@ func (d *WizDaemon) Install(options InstallOptions) error {
 	for _, o := range filledOptions {
 		env[o.Target()] = o.Value()
 	}
-	version, err := pkgHandler.CurrentVersion()
+	instance.Version, err = pkgHandler.CurrentVersion()
 	if err != nil {
 		return err
-	}
-	instanceName, err := instanceNameFromURL(options.URL)
-	if err != nil {
-		return err
-	}
-	instance := &data.Instance{
-		Name:    instanceName,
-		Profile: selectedProfile,
-		URL:     options.URL,
-		Version: version,
-		Tag:     options.Tag,
 	}
 	err = dataDir.InitInstance(instance)
 	if err != nil {
 		return err
 	}
-	err = instance.Setup(env, pkgHandler.ProfileFS(selectedProfile))
+	err = instance.Setup(env, pkgHandler.ProfileFS(instance.Profile))
 	if err != nil {
 		return err
 	}

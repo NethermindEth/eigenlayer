@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+
+	"github.com/NethermindEth/eigen-wiz/internal/utils"
 )
 
 var pathRe = regexp.MustCompile(`^(/|./|../|[^/ ]([^/ ]*/)*[^/ ]*$)`)
@@ -116,7 +118,7 @@ func (o *Option) Validate() InvalidConfError {
 			if o.ValidateDef == nil {
 				missingFields = append(missingFields, "options.validate")
 			} else {
-				invalidDefault = !contains(o.ValidateDef.Options, o.Default)
+				invalidDefault = !utils.Contains(o.ValidateDef.Options, o.Default)
 			}
 		case "port":
 			_, err := strconv.Atoi(o.Default)

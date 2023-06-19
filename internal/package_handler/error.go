@@ -10,6 +10,8 @@ var (
 	ErrInvalidFilePath = errors.New("invalid file path")
 	ErrInvalidDirPath  = errors.New("invalid directory path")
 	ErrInvalidChecksum = errors.New("invalid checksum")
+	ErrNoVersionsFound = errors.New("no versions found")
+	ErrInvalidVersion  = errors.New("invalid version")
 )
 
 // PackageFileNotFoundError is returned when a package file is not found.

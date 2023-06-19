@@ -1,6 +1,7 @@
 package package_handler
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,7 +11,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheck(t *testing.T) {
+func TestNewPackageHandlerFromURL(t *testing.T) {
+	type testCase struct {
+		name       string
+		path       string
+		url        string
+		pkgHandler *PackageHandler
+		err        error
+	}
+	// TODO: add test case for private repository
+	ts := []testCase{
+		func() testCase {
+			path := t.TempDir()
+			return testCase{
+				name: "valid package",
+				path: path,
+				url:  "https://github.com/NethermindEth/mock-avs",
+				pkgHandler: &PackageHandler{
+					path: path,
+				},
+				err: nil,
+			}
+		}(),
+		{
+			name:       "invalid url",
+			path:       t.TempDir(),
+			url:        "https://github.com/NethermindEth/mock-avs-invalid",
+			pkgHandler: nil,
+			err: RepositoryNotFoundOrPrivateError{
+				URL: "https://github.com/NethermindEth/mock-avs-invalid",
+			},
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler, err := NewPackageHandlerFromURL(NewPackageHandlerOptions{
+				Path:    tc.path,
+				URL:     tc.url,
+				GitAuth: nil,
+			})
+			assert.Equal(t, tc.pkgHandler, pkgHandler)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
+
+func TestPackageHandler_Check(t *testing.T) {
 	type testCase struct {
 		name      string
 		pkgFolder string
@@ -107,7 +153,7 @@ func setupPackage(t *testing.T) string {
 	return pkgFolder
 }
 
-func TestProfilesNames(t *testing.T) {
+func TestPackageHandler_ProfilesNames(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "manifests", testDir)
 
@@ -149,7 +195,7 @@ func TestProfilesNames(t *testing.T) {
 	}
 }
 
-func TestParseProfile(t *testing.T) {
+func TestPackageHandler_ParseProfile(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -203,7 +249,7 @@ func TestParseProfile(t *testing.T) {
 	}
 }
 
-func TestProfiles(t *testing.T) {
+func TestPackageHandler_Profiles(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -269,7 +315,7 @@ func TestProfiles(t *testing.T) {
 	}
 }
 
-func TestDotEnv(t *testing.T) {
+func TestPackageHandler_DotEnv(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -321,6 +367,345 @@ func TestDotEnv(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.EqualValues(t, tc.want, dotEnv)
+			}
+		})
+	}
+}
+
+func TestPackageHandler_Versions(t *testing.T) {
+	type testCase struct {
+		name     string
+		gitTags  []string
+		versions []string
+		err      error
+	}
+	ts := []testCase{
+		{
+			name:     "all tags are valid versions",
+			gitTags:  []string{"v0.0.0", "v0.2.0", "v4.3.0"},
+			versions: []string{"v4.3.0", "v0.2.0", "v0.0.0"},
+			err:      nil,
+		},
+		{
+			name:     "no versions",
+			gitTags:  []string{"v0.0", "some-tag", "0"},
+			versions: nil,
+			err:      ErrNoVersionsFound,
+		},
+		{
+			name:     "some tags are valid versions",
+			gitTags:  []string{"v0.0.0", "v0.2.0", "v4.3.0", "v0.0", "some-tag", "0"},
+			versions: []string{"v4.3.0", "v0.2.0", "v0.0.0"},
+			err:      nil,
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			path := t.TempDir()
+			// Initialize git repo
+			err := exec.Command("git", "-C", path, "init").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Add a readme file to create the first commit
+			readmeFile, err := os.Create(filepath.Join(path, "readme.txt"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = readmeFile.WriteString("Test file for test " + tc.name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Add tags
+			for _, tag := range tc.gitTags {
+				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			pkgHandler := NewPackageHandler(path)
+			versions, err := pkgHandler.Versions()
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+				assert.Len(t, versions, 0)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.versions, versions)
+			}
+		})
+	}
+}
+
+func TestPackageHandler_LatestVersion(t *testing.T) {
+	type testCase struct {
+		name          string
+		gitTags       []string
+		latestVersion string
+		err           error
+	}
+	ts := []testCase{
+		{
+			name:          "all tags are valid versions",
+			gitTags:       []string{"v0.0.0", "v0.2.0", "v4.3.0"},
+			latestVersion: "v4.3.0",
+			err:           nil,
+		},
+		{
+			name:          "no versions",
+			gitTags:       []string{"v0.0", "some-tag", "0"},
+			latestVersion: "",
+			err:           ErrNoVersionsFound,
+		},
+		{
+			name:          "some tags are valid versions",
+			gitTags:       []string{"v0.0.0", "v0.2.0", "v4.3.0", "v0.0", "some-tag", "0"},
+			latestVersion: "v4.3.0",
+			err:           nil,
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			path := t.TempDir()
+			// Initialize git repo
+			err := exec.Command("git", "-C", path, "init").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Add a readme file to create the first commit
+			readmeFile, err := os.Create(filepath.Join(path, "readme.txt"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = readmeFile.WriteString("Test file for test " + tc.name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Add tags
+			for _, tag := range tc.gitTags {
+				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			pkgHandler := NewPackageHandler(path)
+			latestVersion, err := pkgHandler.LatestVersion()
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.latestVersion, latestVersion)
+			}
+		})
+	}
+}
+
+func TestPackageHandler_CheckoutVersion(t *testing.T) {
+	ts := []struct {
+		name       string
+		versions   []string
+		checkoutTo string
+		err        error
+	}{
+		{
+			name:       "checkout to existing version",
+			versions:   []string{"v0.0.0", "v0.2.0", "v4.3.0"},
+			checkoutTo: "v4.3.0",
+			err:        nil,
+		},
+		{
+			name:       "checkout to non-existing version",
+			versions:   []string{"v1.0.0"},
+			checkoutTo: "v2.0.0",
+			err:        ErrNoVersionsFound,
+		},
+		{
+			name:       "checkout to invalid version format",
+			versions:   []string{"v1.0.0"},
+			checkoutTo: "v1.0",
+			err:        ErrInvalidVersion,
+		},
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			path := t.TempDir()
+			// Initialize git repo
+			err := exec.Command("git", "-C", path, "init").Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Add version tags
+			for i, tag := range tc.versions {
+				file := fmt.Sprintf("readme-%d.txt", i)
+				// Add a readme file to create the first commit
+				readmeFile, err := os.Create(filepath.Join(path, file))
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer readmeFile.Close()
+				_, err = readmeFile.WriteString("Test file for test " + tc.name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = exec.Command("git", "-C", path, "add", file).Run()
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = exec.Command("git", "-C", path, "commit", "-m", fmt.Sprintf("Commit %d", i)).Run()
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			pkgHandler := NewPackageHandler(path)
+			err = pkgHandler.CheckoutVersion(tc.checkoutTo)
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+				err = exec.Command("git", "-C", path, "describe", "--exact-match", "--tags", tc.checkoutTo).Run()
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPackageHandler_CurrentVersion(t *testing.T) {
+	type testCase struct {
+		name    string
+		path    string
+		version string
+		err     error
+	}
+
+	prepareTest := func(t *testing.T, path string, tags []string) {
+		// Init test repo
+		err := exec.Command("git", "-C", path, "init").Run()
+		if err != nil {
+			t.Fatal(err)
+		}
+		tFile, err := os.Create(filepath.Join(path, "readme.txt"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tFile.Close()
+		_, err = tFile.WriteString("Test file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = exec.Command("git", "-C", path, "add", "readme.txt").Run()
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = exec.Command("git", "-C", path, "commit", "-m", "Initial commit").Run()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, tag := range tags {
+			err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", tag).Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	ts := []testCase{
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{"v1.0.0"})
+			return testCase{
+				name:    "HEAD has a only one tag, which is a version tag",
+				path:    path,
+				version: "v1.0.0",
+				err:     nil,
+			}
+		}(),
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{"some-tag", "v1.0.1", "v1.2"})
+			return testCase{
+				name:    "HEAD has many tags, which one is a version tag",
+				path:    path,
+				version: "v1.0.1",
+				err:     nil,
+			}
+		}(),
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{"v1.0.1", "v1.0.0", "some-tag"})
+			return testCase{
+				name:    "HEAD has many tags, which more than one is a version tag",
+				path:    path,
+				version: "v1.0.1",
+				err:     nil,
+			}
+		}(),
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{"v1.0.1", "v1.0.0", "v2.0.0"})
+			return testCase{
+				name:    "HEAD has many tags, and all of them are version tags",
+				path:    path,
+				version: "v2.0.0",
+				err:     nil,
+			}
+		}(),
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{})
+			return testCase{
+				name:    "HEAD has no tags",
+				path:    path,
+				version: "",
+				err:     ErrNoVersionsFound,
+			}
+		}(),
+		func() testCase {
+			path := t.TempDir()
+			prepareTest(t, path, []string{"some-tag", "another-tag"})
+			return testCase{
+				name:    "HEAD has tags, but none of them are version tags",
+				path:    path,
+				version: "",
+				err:     ErrNoVersionsFound,
+			}
+		}(),
+	}
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(tc.path)
+			version, err := pkgHandler.CurrentVersion()
+			if tc.err != nil {
+				assert.ErrorIs(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.version, version)
 			}
 		})
 	}

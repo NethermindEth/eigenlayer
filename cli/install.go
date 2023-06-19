@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/NethermindEth/eigen-wiz/internal/prompter"
-	"github.com/NethermindEth/eigen-wiz/pkg/daemon"
+	"github.com/NethermindEth/egn/internal/prompter"
+	"github.com/NethermindEth/egn/pkg/daemon"
 	"github.com/spf13/cobra"
 )
 

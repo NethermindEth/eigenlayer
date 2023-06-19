@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/NethermindEth/eigen-wiz/internal/utils"
+	"github.com/NethermindEth/egn/internal/utils"
 	"github.com/docker/docker/api/types"
 	dockerCt "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"

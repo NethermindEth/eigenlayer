@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/NethermindEth/eigen-wiz/internal/package_handler"
+	"github.com/NethermindEth/egn/internal/package_handler"
 )
 
 var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)

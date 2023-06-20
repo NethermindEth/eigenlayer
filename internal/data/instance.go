@@ -65,6 +65,10 @@ func (i *Instance) Init(instancePath string) error {
 	if err != nil {
 		return err
 	}
+	err = os.MkdirAll(instancePath, 0o755)
+	if err != nil {
+		return err
+	}
 	i.path = instancePath
 	// Create the lock file
 	_, err = os.Create(filepath.Join(i.path, ".lock"))

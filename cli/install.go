@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/NethermindEth/egn/internal/prompter"
+	"github.com/NethermindEth/egn/cli/prompter"
 	"github.com/NethermindEth/egn/pkg/daemon"
 	"github.com/spf13/cobra"
 )

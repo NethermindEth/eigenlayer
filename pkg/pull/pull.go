@@ -1,14 +1,17 @@
 package pull
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 
 	"github.com/NethermindEth/egn/internal/package_handler"
 )
 
-var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+var (
+	ErrInvalidVersionTag = fmt.Errorf("invalid version tag")
+
+	tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+)
 
 // Pull downloads the AVS node software from the given git repository URL and version to
 // the given destination directory. If the version is empty, the latest version will be
@@ -16,7 +19,7 @@ var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 // error will be returned.
 func Pull(url, version, dest string) (*package_handler.PackageHandler, error) {
 	if version != "" && !tagVersionRegex.MatchString(version) {
-		return nil, errors.New("invalid version format")
+		return nil, ErrInvalidVersionTag
 	}
 
 	pkgHandler, err := package_handler.NewPackageHandlerFromURL(package_handler.NewPackageHandlerOptions{

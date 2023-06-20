@@ -409,6 +409,9 @@ func (opf *OptionPathFile) Name() string {
 }
 
 func (opf *OptionPathFile) Help() string {
+	if opf.validate {
+		return fmt.Sprintf("%s (format: %s)", opf.option.help, opf.Format)
+	}
 	return opf.option.help
 }
 

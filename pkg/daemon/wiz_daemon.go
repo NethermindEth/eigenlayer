@@ -24,6 +24,7 @@ func NewWizDaemon() *WizDaemon {
 }
 
 // Install installs a node software package using the provided options. If the instance
+// already exists, it returns an error.
 func (d *WizDaemon) Install(options InstallOptions) error {
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {

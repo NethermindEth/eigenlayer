@@ -23,9 +23,9 @@ type Instance struct {
 	lock    *flock.Flock
 }
 
-// NewInstance creates a new instance with the given path as root. It loads the
+// newInstance creates a new instance with the given path as root. It loads the
 // state.json file and validates it.
-func NewInstance(path string) (*Instance, error) {
+func newInstance(path string) (*Instance, error) {
 	i := Instance{
 		path: path,
 	}
@@ -58,9 +58,9 @@ func NewInstance(path string) (*Instance, error) {
 	return &i, nil
 }
 
-// Init initializes a new instance with the given path as root. It creates the
+// init initializes a new instance with the given path as root. It creates the
 // .lock and state.json files. If the instance is invalid, an error is returned.
-func (i *Instance) Init(instancePath string) error {
+func (i *Instance) init(instancePath string) error {
 	err := i.validate()
 	if err != nil {
 		return err

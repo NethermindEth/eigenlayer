@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/commands"
-	"github.com/NethermindEth/egn/mocks"
+	"github.com/NethermindEth/egn/internal/compose/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

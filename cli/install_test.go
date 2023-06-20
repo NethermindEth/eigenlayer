@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NethermindEth/egn/pkg/daemon/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInstall_ValidateArguments(t *testing.T) {
 	ts := []struct {
-		name string
-		args []string
-		err  error
+		name       string
+		args       []string
+		err        error
+		daemonMock func(d *mocks.MockDaemon)
 	}{
 		{
 			name: "no arguments",
@@ -29,11 +32,24 @@ func TestInstall_ValidateArguments(t *testing.T) {
 			args: []string{"invalid-url"},
 			err:  fmt.Errorf("%w: parse \"invalid-url\": invalid URI for request", ErrInvalidURL),
 		},
+		{
+			name: "valid arguments",
+			args: []string{"-v", "v2.0.2", "https://github.com/NethermindEth/mock-avs"},
+			err:  nil,
+			daemonMock: func(d *mocks.MockDaemon) {
+				d.EXPECT().Install(gomock.Any()).Return(nil).Times(1)
+			},
+		},
 	}
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			installCmd := InstallCmd(nil)
+			d := mocks.NewMockDaemon(gomock.NewController(t))
+			if tc.daemonMock != nil {
+				tc.daemonMock(d)
+			}
+
+			installCmd := InstallCmd(d)
 
 			installCmd.SetArgs(tc.args)
 			err := installCmd.Execute()

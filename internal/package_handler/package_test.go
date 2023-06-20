@@ -56,7 +56,7 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_Check(t *testing.T) {
+func TestCheck(t *testing.T) {
 	type testCase struct {
 		name      string
 		pkgFolder string
@@ -153,7 +153,7 @@ func setupPackage(t *testing.T) string {
 	return pkgFolder
 }
 
-func TestPackageHandler_ProfilesNames(t *testing.T) {
+func TestProfilesNames(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "manifests", testDir)
 
@@ -195,7 +195,7 @@ func TestPackageHandler_ProfilesNames(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_ParseProfile(t *testing.T) {
+func TestParseProfile(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -249,7 +249,7 @@ func TestPackageHandler_ParseProfile(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_Profiles(t *testing.T) {
+func TestProfiles(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -315,7 +315,7 @@ func TestPackageHandler_Profiles(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_DotEnv(t *testing.T) {
+func TestDotEnv(t *testing.T) {
 	testDir := t.TempDir()
 	testdata.SetupDir(t, "packages", testDir)
 
@@ -372,7 +372,7 @@ func TestPackageHandler_DotEnv(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_Versions(t *testing.T) {
+func TestVersions(t *testing.T) {
 	type testCase struct {
 		name     string
 		gitTags  []string
@@ -446,7 +446,7 @@ func TestPackageHandler_Versions(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_LatestVersion(t *testing.T) {
+func TestLatestVersion(t *testing.T) {
 	type testCase struct {
 		name          string
 		gitTags       []string
@@ -520,7 +520,7 @@ func TestPackageHandler_LatestVersion(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_CheckoutVersion(t *testing.T) {
+func TestCheckoutVersion(t *testing.T) {
 	ts := []struct {
 		name       string
 		versions   []string
@@ -594,7 +594,7 @@ func TestPackageHandler_CheckoutVersion(t *testing.T) {
 	}
 }
 
-func TestPackageHandler_CurrentVersion(t *testing.T) {
+func TestCurrentVersion(t *testing.T) {
 	type testCase struct {
 		name    string
 		path    string

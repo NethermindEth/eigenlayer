@@ -63,10 +63,6 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 	instancePath := filepath.Join(d.path, "nodes", instance.Id())
 	_, err := os.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
-		err = os.MkdirAll(instancePath, 0o755)
-		if err != nil {
-			return err
-		}
 		return instance.Init(instancePath)
 	}
 	if err != nil {

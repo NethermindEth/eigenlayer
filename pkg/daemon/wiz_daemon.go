@@ -16,11 +16,19 @@ import (
 var _ = Daemon(&WizDaemon{})
 
 // WizDaemon is the main entrypoint for all the functionalities of the daemon.
-type WizDaemon struct{}
+type WizDaemon struct {
+	dataDir *data.DataDir
+}
 
 // NewDaemon create a new daemon instance.
-func NewWizDaemon() *WizDaemon {
-	return &WizDaemon{}
+func NewWizDaemon() (*WizDaemon, error) {
+	dataDir, err := data.NewDataDirDefault()
+	if err != nil {
+		return nil, err
+	}
+	return &WizDaemon{
+		dataDir: dataDir,
+	}, nil
 }
 
 // Install installs a node software package using the provided options. If the instance
@@ -37,11 +45,7 @@ func (d *WizDaemon) Install(options InstallOptions) error {
 	}
 
 	// Check if instance already exists
-	dataDir, err := data.NewDataDirDefault()
-	if err != nil {
-		return err
-	}
-	if dataDir.HasInstance(instance.Id()) {
+	if d.dataDir.HasInstance(instance.Id()) {
 		return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instance.Id())
 	}
 
@@ -112,7 +116,7 @@ func (d *WizDaemon) Install(options InstallOptions) error {
 	if err != nil {
 		return err
 	}
-	err = dataDir.InitInstance(instance)
+	err = d.dataDir.InitInstance(instance)
 	if err != nil {
 		return err
 	}
@@ -125,7 +129,7 @@ func (d *WizDaemon) Install(options InstallOptions) error {
 		return err
 	}
 	if doRun {
-		return run.Run(dataDir, instance.Id())
+		return run.Run(d.dataDir, instance.Id())
 	}
 	return nil
 }

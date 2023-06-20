@@ -9,7 +9,10 @@ import (
 
 func main() {
 	// Initialize daemon
-	daemon := daemon.NewWizDaemon()
+	daemon, err := daemon.NewWizDaemon()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Build CLI
 	cmd := cli.RootCmd(daemon)
 	// Execute CLI

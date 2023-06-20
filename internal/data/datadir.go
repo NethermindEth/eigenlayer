@@ -45,7 +45,7 @@ func NewDataDirDefault() (*DataDir, error) {
 // Instance returns the instance with the given id.
 func (d *DataDir) Instance(instanceId string) (*Instance, error) {
 	instancePath := filepath.Join(d.path, "nodes", instanceId)
-	return NewInstance(instancePath)
+	return newInstance(instancePath)
 }
 
 type AddInstanceOptions struct {
@@ -63,7 +63,7 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 	instancePath := filepath.Join(d.path, "nodes", instance.Id())
 	_, err := os.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
-		return instance.Init(instancePath)
+		return instance.init(instancePath)
 	}
 	if err != nil {
 		return err

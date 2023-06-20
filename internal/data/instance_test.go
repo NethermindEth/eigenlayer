@@ -103,7 +103,7 @@ func TestNewInstance(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			instance, err := NewInstance(tc.path)
+			instance, err := newInstance(tc.path)
 			if tc.err != nil {
 				assert.Nil(t, instance)
 				assert.ErrorIs(t, err, tc.err)
@@ -145,7 +145,7 @@ func TestInstance_Init(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.instance.Init(tc.path)
+			err := tc.instance.init(tc.path)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
 			} else {

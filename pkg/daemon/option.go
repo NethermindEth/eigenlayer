@@ -480,6 +480,9 @@ func (ou *OptionURI) Name() string {
 }
 
 func (ou *OptionURI) Help() string {
+	if ou.validate {
+		return fmt.Sprintf("%s (uri scheme: %s)", ou.option.help, strings.Join(ou.UriScheme, ", "))
+	}
 	return ou.option.help
 }
 

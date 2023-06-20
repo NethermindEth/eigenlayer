@@ -487,7 +487,8 @@ func (ou *OptionURI) Help() string {
 }
 
 func (ou *OptionURI) Set(value string) error {
-	if _, err := url.Parse(value); err != nil {
+	url, err := url.Parse(value)
+	if err != nil {
 		return InvalidOptionValueError{
 			optionName: ou.name,
 			value:      value,
@@ -496,7 +497,7 @@ func (ou *OptionURI) Set(value string) error {
 	}
 	if ou.validate && len(ou.UriScheme) != 0 {
 		for _, scheme := range ou.UriScheme {
-			if strings.HasPrefix(value, scheme) {
+			if url.Scheme == scheme {
 				ou.value = value
 				return nil
 			}

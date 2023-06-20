@@ -2,4 +2,5 @@ bin/
 coverage/*
 .DS_Store
 .vscode/
-mocks/*
+# Ignore all mocks packages
+**/mocks/

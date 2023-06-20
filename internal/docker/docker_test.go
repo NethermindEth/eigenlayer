@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/egn/mocks"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -18,6 +17,7 @@ import (
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/NethermindEth/egn/internal/docker/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

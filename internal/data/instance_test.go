@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/egn/internal/data/testdata"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -158,4 +159,37 @@ func TestInstance_Init(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInstance_Setup(t *testing.T) {
+	i := Instance{
+		Name:    "mock-avs",
+		URL:     "https://github.com/NethermindEth/mock-avs",
+		Version: "v2.0.2",
+		Profile: "option-returner",
+		Tag:     "test-tag",
+	}
+	instancePath := t.TempDir()
+	err := i.init(instancePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{
+		"VAR_1": "value-1",
+	}
+	profileFs := testdata.SetupProfileFS(t, "option-returner")
+
+	err = i.Setup(env, profileFs)
+	assert.NoError(t, err)
+
+	assert.NoFileExists(t, filepath.Join(instancePath, "profile.yml"))
+	assert.FileExists(t, filepath.Join(instancePath, ".env"))
+	assert.FileExists(t, filepath.Join(instancePath, "docker-compose.yml"))
+	assert.DirExists(t, filepath.Join(instancePath, "src"))
+
+	envFile, err := os.Open(filepath.Join(instancePath, ".env"))
+	assert.NoError(t, err)
+	envData, err := io.ReadAll(envFile)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("VAR_1=value-1\n"), envData)
 }

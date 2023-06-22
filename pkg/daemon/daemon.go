@@ -1,34 +1,33 @@
 package daemon
 
-/* TODO: The Install feature could be split into multiple steps:
-1. 	Pull the package to a temporary directory inside the data directory.
-2. 	Ask the user to select a profile from the available profiles in the package
-	and fill all the options.
-3. 	Copy the selected profile and the .env resulting from the options filling
-    to the instances directory.
-4. 	Run the instance if the user confirms it.
-
-This way, the daemon will have multiple methods that can be used together to
-implement the Install feature. Those methods will be:
-
-- Pull: clone the package to a temporary directory inside the data directory,
-		the `tmp` directory at the root of the data directory. Each pull stores
-		the package in a directory with the package hash as the name to facilitate
-		the cache of the packages.
-- Install: checks if the package is already pulled, searching by the package hash
-		on the `tmp` directory. If it is not pulled returns an error, otherwise, it asks
-		the user to select a profile and fill the options. Then, it copies the selected
-		profile and the .env file resulting from the options filling to the instances directory.
-		At the end of the installation removes the package from the `tmp` directory.
-- Run: checks if the instance is already installed on the instances directory. If
-		it is not installed returns an error, otherwise, it runs the docker-compose up -d
-		command on the instance directory.*/
-
 // Daemon is the interface for the egn daemon. It should be used as the entrypoint
 // for all the functionalities of egn.
 type Daemon interface {
-	// Install downloads and installs a node software package using the provided options.
-	Install(options InstallOptions) error
+	// Pull downloads a node software package from the given URL and returns the
+	// version and options of each profile in the package. If force is true and
+	// the package already exists, it will be removed and re-downloaded. After
+	// calling Pull all is ready to call Install.
+	Pull(url string, version string, force bool) (PullResult, error)
+
+	// Install downloads and installs a node software package using the provided options,
+	// and returns the instance ID of the installed package. Make sure to call Pull
+	// before calling Install to ensure that the package is downloaded.
+	Install(options InstallOptions) (string, error)
+
+	// Run starts the instance with the given ID running docker compose in the
+	// instance directory. If there is no installed instance with the given ID,
+	// an error will be returned.
+	Run(instanceId string) error
+}
+
+// PullResult is the result of a Pull operation, containing all the necessary
+// information from the package.
+type PullResult struct {
+	// Version is the version of the pulled package.
+	Version string
+
+	// Options is map of profile names to their options.
+	Options map[string][]Option
 }
 
 // InstallOptions is a set of options for installing a node software package.
@@ -41,20 +40,13 @@ type InstallOptions struct {
 	// regex `^v\d+\.\d+\.\d+$`.
 	Version string
 
-	// Tag is the tag to use for the instance. If empty, the `default` tag will
-	// be used. Tag is used to differentiate between multiple instances of the
-	// same package name.
+	// Profile is the name of the profile to use for the instance.
+	Profile string
+
+	// Options is the list of options to use for the instance.
+	Options []Option
+
+	// Tag is the tag to use for the instance, required to build the instance id
+	// with the format <package_name>-<tag>
 	Tag string
-
-	// ProfileSelector is used by the daemon to ask the user to select a profile
-	// from the available profiles in the package.
-	ProfileSelector func(profiles []string) (string, error)
-
-	// OptionsFiller is used by the daemon to ask the user to fill the options
-	// for the selected profile.
-	OptionsFiller func(opts []Option) ([]Option, error)
-
-	// RunConfirmation is used by the daemon to ask the user to confirm the run
-	// of the instance after the installation.
-	RunConfirmation func() (bool, error)
 }

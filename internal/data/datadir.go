@@ -65,7 +65,7 @@ type AddInstanceOptions struct {
 // InitInstance initializes a new instance. If an instance with the same id already
 // exists, an error is returned.
 func (d *DataDir) InitInstance(instance *Instance) error {
-	instancePath := filepath.Join(d.path, instancesDir, instance.Id())
+	instancePath := filepath.Join(d.path, instancesDir, InstanceId(instance.Name, instance.Tag))
 	_, err := os.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
 		return instance.init(instancePath)
@@ -73,7 +73,7 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instance.Id())
+	return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, InstanceId(instance.Name, instance.Tag))
 }
 
 // HasInstance returns true if an instance with the given id already exists in the

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInstall_ValidateArguments(t *testing.T) {
+func TestInstall(t *testing.T) {
 	ts := []struct {
 		name       string
 		args       []string

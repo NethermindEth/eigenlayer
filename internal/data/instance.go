@@ -20,7 +20,7 @@ type Instance struct {
 	Profile string `json:"profile"`
 	Tag     string `json:"tag"`
 	path    string
-	lock    *flock.Flock
+	locker  *flock.Flock
 }
 
 // newInstance creates a new instance with the given path as root. It loads the
@@ -99,12 +99,12 @@ func (i *Instance) init(instancePath string) error {
 // the given fs.FS. It also creates the .env file with the given environment variables
 // on the env map.
 func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
-	err = i.Lock()
+	err = i.lock()
 	if err != nil {
 		return err
 	}
 	defer func() {
-		unlockErr := i.Unlock()
+		unlockErr := i.unlock()
 		if err == nil {
 			err = unlockErr
 		}
@@ -173,20 +173,20 @@ func (i *Instance) ComposePath() string {
 	return filepath.Join(i.path, "docker-compose.yml")
 }
 
-// Lock locks the .lock file of the instance.
-func (i *Instance) Lock() error {
-	if i.lock == nil {
-		i.lock = flock.New(filepath.Join(i.path, ".lock"))
+// lock locks the .lock file of the instance.
+func (i *Instance) lock() error {
+	if i.locker == nil {
+		i.locker = flock.New(filepath.Join(i.path, ".lock"))
 	}
-	return i.lock.Lock()
+	return i.locker.Lock()
 }
 
-// Unlock unlocks the .lock file of the instance.
-func (i *Instance) Unlock() error {
-	if i.lock == nil || !i.lock.Locked() {
+// unlock unlocks the .lock file of the instance.
+func (i *Instance) unlock() error {
+	if i.locker == nil || !i.locker.Locked() {
 		return errors.New("instance is not locked")
 	}
-	return i.lock.Unlock()
+	return i.locker.Unlock()
 }
 
 func (i *Instance) validate() error {

@@ -168,3 +168,44 @@ func (d *DockerManager) ContainerStatus(container string) (common.Status, error)
 		return common.Unknown, fmt.Errorf("unknown container status: %s", ctInfo.State.Status)
 	}
 }
+
+// PS returns the list of running containers
+func (d *DockerManager) PS() ([]ContainerInfo, error) {
+	log.Debugf("Listing containers")
+	containerList, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	ctInfo := make([]ContainerInfo, len(containerList))
+	for i, ct := range containerList {
+		ctInfo[i] = ContainerInfo{
+			ID:      ct.ID,
+			Names:   ct.Names,
+			Image:   ct.Image,
+			Command: ct.Command,
+			Created: ct.Created,
+			Ports:   ConvertPorts(ct.Ports),
+			Status:  ct.Status,
+		}
+	}
+	return ctInfo, nil
+}
+
+// ContainerIP returns the IP address of the specified Docker container.
+func (d *DockerManager) ContainerIP(container string) (string, error) {
+	log.Debugf("Getting container's IP: %s", container)
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
+	if err != nil {
+		return "", err
+	}
+	networks := ctInfo.NetworkSettings.Networks
+	if len(networks) == 0 {
+		return "", fmt.Errorf("%w: in %s", ErrNetworksNotFound, container)
+	}
+	var ipAddress string
+	for _, network := range networks {
+		ipAddress = network.IPAddress
+		break // Use the first IP address found.
+	}
+	return ipAddress, nil
+}

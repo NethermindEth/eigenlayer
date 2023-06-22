@@ -69,12 +69,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := os.MkdirAll(filepath.Join(path, "nodes", "mock-avs-default"), 0o755)
+			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := os.Create(filepath.Join(path, "nodes", "mock-avs-default", "state.json"))
+			stateFile, err := os.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -92,7 +92,7 @@ func TestDataDir_Instance(t *testing.T) {
 					Version: "v2.0.2",
 					Tag:     "default",
 					Profile: "option-returner",
-					path:    filepath.Join(path, "nodes", "mock-avs-default"),
+					path:    filepath.Join(path, instancesDir, "mock-avs-default"),
 				},
 				err: nil,
 			}
@@ -100,12 +100,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := os.MkdirAll(filepath.Join(path, "nodes", "mock-avs-default"), 0o755)
+			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := os.Create(filepath.Join(path, "nodes", "mock-avs-default", "state.json"))
+			stateFile, err := os.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -124,7 +124,7 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create nodes dir
-			err := os.MkdirAll(filepath.Join(path, "nodes"), 0o755)
+			err := os.MkdirAll(filepath.Join(path, instancesDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -164,7 +164,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 	ts := []testCase{
 		func() testCase {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, "nodes", "mock-avs-default"), 0o755)
+			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -194,7 +194,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 				},
 				err: ErrInvalidInstance,
 				afterCheck: func(t *testing.T) {
-					assert.NoDirExists(t, filepath.Join(path, "nodes", "mock-avs-default"))
+					assert.NoDirExists(t, filepath.Join(path, instancesDir, "mock-avs-default"))
 				},
 			}
 		}(),
@@ -212,9 +212,9 @@ func TestDataDir_InitInstance(t *testing.T) {
 				},
 				err: nil,
 				afterCheck: func(t *testing.T) {
-					assert.DirExists(t, filepath.Join(path, "nodes", "mock-avs-default"))
-					assert.FileExists(t, filepath.Join(path, "nodes", "mock-avs-default", "state.json"))
-					assert.FileExists(t, filepath.Join(path, "nodes", "mock-avs-default", ".lock"))
+					assert.DirExists(t, filepath.Join(path, instancesDir, "mock-avs-default"))
+					assert.FileExists(t, filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
+					assert.FileExists(t, filepath.Join(path, instancesDir, "mock-avs-default", ".lock"))
 				},
 			}
 		}(),
@@ -259,7 +259,7 @@ func TestDataDir_HasInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)
+			err := os.MkdirAll(filepath.Join(testDir, instancesDir, "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -302,7 +302,7 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)
+			err := os.MkdirAll(filepath.Join(testDir, instancesDir, "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -319,11 +319,11 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, "nodes"), 0o755)
+			err := os.MkdirAll(filepath.Join(testDir, instancesDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = os.Create(filepath.Join(testDir, "nodes", "mock_avs-test"))
+			_, err = os.Create(filepath.Join(testDir, instancesDir, "mock_avs-test"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -346,6 +346,256 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tc.err.Error())
+			}
+		})
+	}
+}
+
+func TestDataDir_InstancePath(t *testing.T) {
+	type testCase struct {
+		name       string
+		path       string
+		instanceId string
+		want       string
+		wantErr    error
+	}
+	tests := []testCase{
+		func() testCase {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return testCase{
+				name:       "instance dir exists",
+				path:       path,
+				instanceId: "mock-avs-default",
+				want:       filepath.Join(path, instancesDir, "mock-avs-default"),
+				wantErr:    nil,
+			}
+		}(),
+		{
+			name:       "instance not found",
+			path:       t.TempDir(),
+			instanceId: "mock-avs-default",
+			want:       "",
+			wantErr:    ErrInstanceNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := NewDataDir(tt.path)
+			assert.NoError(t, err)
+			got, err := d.InstancePath(tt.instanceId)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestDataDir_InitTemp(t *testing.T) {
+	type tc struct {
+		name    string
+		path    string
+		id      string
+		want    string
+		wantErr error
+		check   func(t *testing.T)
+	}
+	tests := []tc{
+		func() tc {
+			path := t.TempDir()
+			return tc{
+				name: "empty data dir",
+				path: path,
+				id:   "temp-dir-id",
+				want: filepath.Join(path, tempDir, "temp-dir-id"),
+				check: func(t *testing.T) {
+					assert.DirExists(t, filepath.Join(path, tempDir, "temp-dir-id"))
+				},
+			}
+		}(),
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name: "empty temp dir",
+				path: path,
+				id:   "temp-dir-id",
+				want: filepath.Join(path, tempDir, "temp-dir-id"),
+				check: func(t *testing.T) {
+					assert.DirExists(t, filepath.Join(path, tempDir, "temp-dir-id"))
+				},
+			}
+		}(),
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name:    "already exists",
+				path:    path,
+				id:      "temp-dir-id",
+				want:    "",
+				wantErr: ErrTempDirAlreadyExists,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dataDir, err := NewDataDir(tt.path)
+			assert.NoError(t, err)
+			got, err := dataDir.InitTemp(tt.id)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+			if tt.check != nil {
+				tt.check(t)
+			}
+		})
+	}
+}
+
+func TestDataDir_RemoveTemp(t *testing.T) {
+	type tc struct {
+		name  string
+		path  string
+		id    string
+		check func(t *testing.T)
+	}
+	tests := []tc{
+		{
+			name: "empty data dir",
+			path: t.TempDir(),
+			id:   "mock-avs-default",
+		},
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name: "empty temp dir",
+				path: path,
+				id:   "mock-avs-default",
+			}
+		}(),
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name: "temp dir exists",
+				path: path,
+				id:   "temp-dir-id",
+				check: func(t *testing.T) {
+					assert.NoDirExists(t, filepath.Join(path, tempDir, "temp-dir-id"))
+				},
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dataDir, err := NewDataDir(tt.path)
+			assert.NoError(t, err)
+			gotErr := dataDir.RemoveTemp(tt.id)
+			assert.NoError(t, gotErr)
+			if tt.check != nil {
+				tt.check(t)
+			}
+		})
+	}
+}
+
+func TestDataDir_TempPath(t *testing.T) {
+	type tc struct {
+		name    string
+		path    string
+		id      string
+		want    string
+		wantErr error
+	}
+	tests := []tc{
+		{
+			name:    "empty data dir",
+			path:    t.TempDir(),
+			id:      "temp-dir-id",
+			want:    "",
+			wantErr: ErrTempDirDoesNotExist,
+		},
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name:    "empty temp dir",
+				path:    path,
+				id:      "temp-dir-id",
+				want:    "",
+				wantErr: ErrTempDirDoesNotExist,
+			}
+		}(),
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name:    "temp dir exists",
+				path:    path,
+				id:      "temp-dir-id",
+				want:    filepath.Join(path, tempDir, "temp-dir-id"),
+				wantErr: nil,
+			}
+		}(),
+		func() tc {
+			path := t.TempDir()
+			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = os.Create(filepath.Join(path, tempDir, "temp-dir-id"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			return tc{
+				name:    "not a directory",
+				path:    path,
+				id:      "temp-dir-id",
+				want:    "",
+				wantErr: ErrTempIsNotDir,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dataDir, err := NewDataDir(tt.path)
+			assert.NoError(t, err)
+			gotPath, gotErr := dataDir.TempPath(tt.id)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, gotErr, tt.wantErr)
+			} else {
+				assert.NoError(t, gotErr)
+				assert.Equal(t, tt.want, gotPath)
 			}
 		})
 	}

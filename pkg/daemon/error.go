@@ -2,7 +2,10 @@ package daemon
 
 import "errors"
 
-var ErrInstanceAlreadyExists = errors.New("instance already exists")
+var (
+	ErrInstanceAlreadyExists = errors.New("instance already exists")
+	ErrProfileDoesNotExist   = errors.New("profile does not exist")
+)
 
 // InvalidOptionValueError is returned when an Option's value is invalid.
 type InvalidOptionValueError struct {

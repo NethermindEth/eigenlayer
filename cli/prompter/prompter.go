@@ -4,24 +4,41 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 )
 
-func Select(prompt string, options []string) (string, error) {
+// Prompter is an interface for prompting the user for input.
+type Prompter interface {
+	Select(prompt string, options []string) (string, error)
+	InputString(prompt, defValue, help string, validator func(string) error) (string, error)
+	Confirm(prompt string) (bool, error)
+}
+
+type prompter struct{}
+
+// NewPrompter returns a new Prompter instance.
+func NewPrompter() Prompter {
+	return &prompter{}
+}
+
+// Select prompts the user to select one of the options provided.
+func (p *prompter) Select(prompt string, options []string) (string, error) {
 	selected := ""
-	p := &survey.Select{
+	s := &survey.Select{
 		Message: prompt,
 		Options: options,
 	}
-	err := survey.AskOne(p, &selected)
+	err := survey.AskOne(s, &selected)
 	return selected, err
 }
 
-func InputString(prompt, defValue, help string, validator func(string) error) (string, error) {
+// InputString prompts the user to input a string. The default value is used if the user does not provide any input.
+// The validator is used to validate the input. The help text is displayed to the user when they ask for help.
+func (p *prompter) InputString(prompt, defValue, help string, validator func(string) error) (string, error) {
 	var result string
-	p := &survey.Input{
+	i := &survey.Input{
 		Message: prompt,
 		Default: defValue,
 		Help:    help,
 	}
-	err := survey.AskOne(p, &result, survey.WithValidator(func(ans interface{}) error {
+	err := survey.AskOne(i, &result, survey.WithValidator(func(ans interface{}) error {
 		if err := validator(ans.(string)); err != nil {
 			return err
 		}
@@ -30,11 +47,12 @@ func InputString(prompt, defValue, help string, validator func(string) error) (s
 	return result, err
 }
 
-func Confirm(prompt string) (bool, error) {
+// Confirm prompts the user to confirm an action with a yes/no question.
+func (p *prompter) Confirm(prompt string) (bool, error) {
 	result := false
-	p := &survey.Confirm{
+	c := &survey.Confirm{
 		Message: prompt,
 	}
-	err := survey.AskOne(p, &result)
+	err := survey.AskOne(c, &result)
 	return result, err
 }

@@ -152,6 +152,20 @@ func (p *PackageHandler) Versions() ([]string, error) {
 	return versions, nil
 }
 
+// HasVersion returns an error if the given version is not available for the package.
+func (p *PackageHandler) HasVersion(version string) error {
+	versions, err := p.Versions()
+	if err != nil {
+		return err
+	}
+	for _, v := range versions {
+		if v == version {
+			return nil
+		}
+	}
+	return fmt.Errorf("%w: %s", ErrVersionNotFound, version)
+}
+
 // LatestVersion returns the latest version of the package.
 func (p *PackageHandler) LatestVersion() (string, error) {
 	versions, err := p.Versions()

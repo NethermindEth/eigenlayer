@@ -8,6 +8,11 @@ import (
 	"github.com/NethermindEth/egn/internal/package_handler"
 )
 
+const (
+	instancesDir = "nodes"
+	tempDir      = "temp"
+)
+
 // DataDir is the directory where all the data is stored.
 type DataDir struct {
 	path string
@@ -44,7 +49,7 @@ func NewDataDirDefault() (*DataDir, error) {
 
 // Instance returns the instance with the given id.
 func (d *DataDir) Instance(instanceId string) (*Instance, error) {
-	instancePath := filepath.Join(d.path, "nodes", instanceId)
+	instancePath := filepath.Join(d.path, instancesDir, instanceId)
 	return newInstance(instancePath)
 }
 
@@ -60,7 +65,7 @@ type AddInstanceOptions struct {
 // InitInstance initializes a new instance. If an instance with the same id already
 // exists, an error is returned.
 func (d *DataDir) InitInstance(instance *Instance) error {
-	instancePath := filepath.Join(d.path, "nodes", instance.Id())
+	instancePath := filepath.Join(d.path, instancesDir, instance.Id())
 	_, err := os.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
 		return instance.init(instancePath)
@@ -74,14 +79,27 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 // HasInstance returns true if an instance with the given id already exists in the
 // data dir.
 func (d *DataDir) HasInstance(instanceId string) bool {
-	instancePath := filepath.Join(d.path, "nodes", instanceId)
+	instancePath := filepath.Join(d.path, instancesDir, instanceId)
 	_, err := os.Stat(instancePath)
 	return err == nil
 }
 
+// InstancePath return the path to the directory of the instance with the given id.
+func (d *DataDir) InstancePath(instanceId string) (string, error) {
+	instancePath := filepath.Join(d.path, instancesDir, instanceId)
+	_, err := os.Stat(instancePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrInstanceNotFound
+		}
+		return "", err
+	}
+	return instancePath, nil
+}
+
 // RemoveInstance removes the instance with the given id.
 func (d *DataDir) RemoveInstance(instanceId string) error {
-	instancePath := filepath.Join(d.path, "nodes", instanceId)
+	instancePath := filepath.Join(d.path, instancesDir, instanceId)
 	instanceDir, err := os.Stat(instancePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -93,4 +111,39 @@ func (d *DataDir) RemoveInstance(instanceId string) error {
 		return fmt.Errorf("%s is not a directory", instanceId)
 	}
 	return os.RemoveAll(instancePath)
+}
+
+// InitTemp creates a new temporary directory for the given id. If already exists,
+// an error is returned.
+func (d *DataDir) InitTemp(id string) (string, error) {
+	tempPath := filepath.Join(d.path, tempDir, id)
+	_, err := os.Stat(tempPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return tempPath, os.MkdirAll(tempPath, 0o755)
+		}
+		return "", err
+	}
+	return "", ErrTempDirAlreadyExists
+}
+
+// RemoveTemp removes the temporary directory with the given id.
+func (d *DataDir) RemoveTemp(id string) error {
+	return os.RemoveAll(filepath.Join(d.path, tempDir, id))
+}
+
+// TempPath returns the path to the temporary directory with the given id.
+func (d *DataDir) TempPath(id string) (string, error) {
+	tempPath := filepath.Join(d.path, tempDir, id)
+	tempStat, err := os.Stat(tempPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrTempDirDoesNotExist
+		}
+		return "", err
+	}
+	if !tempStat.IsDir() {
+		return "", ErrTempIsNotDir
+	}
+	return tempPath, nil
 }

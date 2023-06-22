@@ -12,6 +12,8 @@ var (
 	ErrInvalidChecksum = errors.New("invalid checksum")
 	ErrNoVersionsFound = errors.New("no versions found")
 	ErrInvalidVersion  = errors.New("invalid version")
+	ErrVersionNotFound = errors.New("version not found")
+	ErrProfileNotFound = errors.New("profile not found")
 )
 
 // PackageFileNotFoundError is returned when a package file is not found.

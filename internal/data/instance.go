@@ -12,6 +12,11 @@ import (
 	"github.com/gofrs/flock"
 )
 
+// InstanceId returns the instance ID for the given name and tag
+func InstanceId(name, tag string) string {
+	return fmt.Sprintf("%s-%s", name, tag)
+}
+
 // Instance represents the data stored about a node software instance
 type Instance struct {
 	Name    string `json:"name"`
@@ -160,12 +165,6 @@ func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 		}
 		return nil
 	})
-}
-
-// Id returns the instance id, which is the name and tag concatenated with a dash
-// <name>-<tag>
-func (i *Instance) Id() string {
-	return fmt.Sprintf("%s-%s", i.Name, i.Tag)
 }
 
 // ComposePath returns the path to the docker-compose.yml file of the instance.

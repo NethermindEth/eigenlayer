@@ -117,20 +117,15 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 		return "", err
 	}
 
-	// Init instance
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {
 		return "", err
 	}
-	instance := &data.Instance{
-		Name: instanceName,
-		URL:  options.URL,
-		Tag:  options.Tag,
-	}
+	instanceId := data.InstanceId(instanceName, options.Tag)
 
 	// Check if instance already exists
-	if d.dataDir.HasInstance(instance.Id()) {
-		return "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instance.Id())
+	if d.dataDir.HasInstance(instanceId) {
+		return "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
 
 	// Init package handler from temp path
@@ -142,7 +137,6 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 	if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
 		return "", err
 	}
-	instance.Version = options.Version
 
 	pkgProfiles, err := pkgHandler.Profiles()
 	if err != nil {
@@ -159,19 +153,23 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 	if selectedProfile == nil {
 		return "", fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
 	}
-	instance.Profile = selectedProfile.Name
-	// TODO: check profile options
 
 	// Install package
 	env := make(map[string]string, len(options.Options))
 	for _, o := range options.Options {
 		env[o.Target()] = o.Value()
 	}
-	err = d.dataDir.InitInstance(instance)
+	instance := data.Instance{
+		Name:    instanceName,
+		Profile: selectedProfile.Name,
+		Version: options.Version,
+		URL:     options.URL,
+	}
+	err = d.dataDir.InitInstance(&instance)
 	if err != nil {
 		return "", err
 	}
-	return instance.Id(), instance.Setup(env, pkgHandler.ProfileFS(instance.Profile))
+	return instanceId, instance.Setup(env, pkgHandler.ProfileFS(instance.Profile))
 }
 
 // Run implements Daemon.Run.

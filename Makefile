@@ -17,6 +17,7 @@ install: build ## compile the binary and copy it to PATH
 	@sudo cp bin/$(APP_NAME) /usr/local/bin
 
 run: build ## Compile and run the binary
+	@export DOCKER_API_VERSION=1.41
 	@./bin/$(APP_NAME)
 
 gomod_tidy: ## Run go mod tidy to clean up & install dependencies

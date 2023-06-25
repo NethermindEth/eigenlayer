@@ -752,9 +752,7 @@ func TestRemoveTarget(t *testing.T) {
 			err = yaml.Unmarshal(promYml, &prom)
 			assert.NoError(t, err)
 			// Add the targets
-			for _, target := range tt.toAdd {
-				prom.ScrapeConfigs[0].StaticConfigs[0].Targets = append(prom.ScrapeConfigs[0].StaticConfigs[0].Targets, target)
-			}
+			prom.ScrapeConfigs[0].StaticConfigs[0].Targets = append(prom.ScrapeConfigs[0].StaticConfigs[0].Targets, tt.toAdd...)
 			// Save the prom.yml file
 			promYml, err = yaml.Marshal(prom)
 			assert.NoError(t, err)

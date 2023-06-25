@@ -6,6 +6,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/NethermindEth/egn/internal/common"
 	"github.com/NethermindEth/egn/internal/utils"
 	"github.com/docker/docker/api/types"
 	dockerCt "github.com/docker/docker/api/types/container"
@@ -140,4 +141,30 @@ func (d *DockerManager) Wait(container string, condition WaitCondition) (<-chan 
 		close(wrChan)
 	}()
 	return wrChan, err
+}
+
+// ContainerStatus retrieves the status of a specified Docker container.
+func (d *DockerManager) ContainerStatus(container string) (common.Status, error) {
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
+	if err != nil {
+		return common.Unknown, err
+	}
+	switch ctInfo.State.Status {
+	case "created":
+		return common.Created, nil
+	case "running":
+		return common.Running, nil
+	case "paused":
+		return common.Paused, nil
+	case "restarting":
+		return common.Restarting, nil
+	case "removing":
+		return common.Removing, nil
+	case "exited":
+		return common.Exited, nil
+	case "dead":
+		return common.Dead, nil
+	default:
+		return common.Unknown, fmt.Errorf("unknown container status: %s", ctInfo.State.Status)
+	}
 }

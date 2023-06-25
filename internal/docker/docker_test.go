@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/egn/internal/common"
+	"github.com/NethermindEth/egn/internal/docker/mocks"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -17,7 +19,6 @@ import (
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/NethermindEth/egn/internal/docker/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -514,6 +515,101 @@ func TestWaitExitCh(t *testing.T) {
 				}
 			case <-errCh:
 				t.Fatal("unexpected value from error channel")
+			}
+		})
+	}
+}
+
+func TestContainerStatus(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   string
+		want     common.Status
+		errorMsg string
+		wantErr  bool
+	}{
+		{
+			name:   "container created",
+			status: "created",
+			want:   common.Created,
+		},
+		{
+			name:   "container running",
+			status: "running",
+			want:   common.Running,
+		},
+		{
+			name:   "container paused",
+			status: "paused",
+			want:   common.Paused,
+		},
+		{
+			name:   "container restarting",
+			status: "restarting",
+			want:   common.Restarting,
+		},
+		{
+			name:   "container removing",
+			status: "removing",
+			want:   common.Removing,
+		},
+		{
+			name:   "container exited",
+			status: "exited",
+			want:   common.Exited,
+		},
+		{
+			name:   "container dead",
+			status: "dead",
+			want:   common.Dead,
+		},
+		{
+			name:     "container unknown",
+			status:   "unknown",
+			want:     common.Unknown,
+			errorMsg: "unknown container status: unknown",
+		},
+		{
+			name:     "bad container",
+			want:     common.Unknown,
+			wantErr:  true,
+			errorMsg: "error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			defer ctrl.Finish()
+
+			container := types.ContainerJSON{
+				ContainerJSONBase: &types.ContainerJSONBase{
+					State: &types.ContainerState{
+						Status: tt.status,
+					},
+				},
+			}
+
+			if tt.wantErr {
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container.ID).
+					Return(container, errors.New("error")).
+					Times(1)
+			} else {
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container.ID).
+					Return(container, nil).
+					Times(1)
+			}
+
+			dockerManager := NewDockerManager(dockerClient)
+			status, err := dockerManager.ContainerStatus(container.ID)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, tt.errorMsg, err.Error())
+			} else {
+				assert.Equal(t, tt.want, status)
 			}
 		})
 	}

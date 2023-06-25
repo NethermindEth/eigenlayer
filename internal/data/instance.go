@@ -9,7 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gofrs/flock"
+	"github.com/NethermindEth/egn/internal/locker"
+	"github.com/spf13/afero"
 )
 
 // InstanceId returns the instance ID for the given name and tag
@@ -25,16 +26,19 @@ type Instance struct {
 	Profile string `json:"profile"`
 	Tag     string `json:"tag"`
 	path    string
-	locker  *flock.Flock
+	fs      afero.Fs
+	locker  locker.Locker
 }
 
 // newInstance creates a new instance with the given path as root. It loads the
 // state.json file and validates it.
-func newInstance(path string) (*Instance, error) {
+func newInstance(path string, fs afero.Fs, locker locker.Locker) (*Instance, error) {
 	i := Instance{
-		path: path,
+		path:   path,
+		fs:     fs,
+		locker: locker,
 	}
-	stateFile, err := os.Open(filepath.Join(i.path, "state.json"))
+	stateFile, err := i.fs.Open(filepath.Join(i.path, "state.json"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("%w %s: state.json not found", ErrInvalidInstanceDir, path)
@@ -70,18 +74,22 @@ func (i *Instance) init(instancePath string) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(instancePath, 0o755)
+	err = i.fs.MkdirAll(instancePath, 0o755)
 	if err != nil {
 		return err
 	}
 	i.path = instancePath
+
 	// Create the lock file
-	_, err = os.Create(filepath.Join(i.path, ".lock"))
+	_, err = i.fs.Create(filepath.Join(i.path, ".lock"))
 	if err != nil {
 		return err
 	}
+	// Set lock
+	i.locker = i.locker.New(filepath.Join(i.path, ".lock"))
+
 	// Create state file
-	stateFile, err := os.Create(filepath.Join(i.path, "state.json"))
+	stateFile, err := i.fs.Create(filepath.Join(i.path, "state.json"))
 	if err != nil {
 		return err
 	}
@@ -174,9 +182,6 @@ func (i *Instance) ComposePath() string {
 
 // lock locks the .lock file of the instance.
 func (i *Instance) lock() error {
-	if i.locker == nil {
-		i.locker = flock.New(filepath.Join(i.path, ".lock"))
-	}
 	return i.locker.Lock()
 }
 

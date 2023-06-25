@@ -7,10 +7,15 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/data/testdata"
+	"github.com/NethermindEth/egn/internal/locker/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewInstance(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name     string
 		path     string
@@ -29,7 +34,7 @@ func TestNewInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			_, err := os.Create(testDir + "/state.json")
+			_, err := fs.Create(testDir + "/state.json")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -42,7 +47,7 @@ func TestNewInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			stateFile, err := os.Create(testDir + "/state.json")
+			stateFile, err := fs.Create(testDir + "/state.json")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -60,7 +65,7 @@ func TestNewInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			stateFile, err := os.Create(testDir + "/state.json")
+			stateFile, err := fs.Create(testDir + "/state.json")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -69,6 +74,7 @@ func TestNewInstance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			return testCase{
 				name: "valid state file",
 				path: testDir,
@@ -85,7 +91,7 @@ func TestNewInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			testDir := t.TempDir()
-			stateFile, err := os.Create(testDir + "/state.json")
+			stateFile, err := fs.Create(testDir + "/state.json")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -104,7 +110,15 @@ func TestNewInstance(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			instance, err := newInstance(tc.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+			if tc.instance != nil {
+				tc.instance.fs = fs
+				tc.instance.locker = locker
+			}
+
+			instance, err := newInstance(tc.path, fs, locker)
 			if tc.err != nil {
 				assert.Nil(t, instance)
 				assert.ErrorIs(t, err, tc.err)
@@ -117,6 +131,12 @@ func TestNewInstance(t *testing.T) {
 }
 
 func TestInstance_Init(t *testing.T) {
+	fs := afero.NewOsFs()
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+
 	ts := []struct {
 		name      string
 		instance  *Instance
@@ -139,6 +159,8 @@ func TestInstance_Init(t *testing.T) {
 				URL:     "https://github.com/NethermindEth/mock-avs",
 				Version: "v2.0.1",
 				Profile: "option-returner",
+				fs:      fs,
+				locker:  locker,
 			},
 			path:      t.TempDir(),
 			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.0.1","profile":"option-returner","tag":"test_tag"}`),
@@ -146,6 +168,10 @@ func TestInstance_Init(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.instance.locker != nil {
+				locker.EXPECT().New(filepath.Join(tc.path, ".lock")).Return(locker)
+			}
+
 			err := tc.instance.init(tc.path)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
@@ -162,14 +188,28 @@ func TestInstance_Init(t *testing.T) {
 }
 
 func TestInstance_Setup(t *testing.T) {
+	instancePath := t.TempDir()
+	fs := afero.NewOsFs()
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+	gomock.InOrder(
+		locker.EXPECT().New(filepath.Join(instancePath, ".lock")).Return(locker),
+		locker.EXPECT().Lock().Return(nil),
+		locker.EXPECT().Locked().Return(true),
+		locker.EXPECT().Unlock().Return(nil),
+	)
+
 	i := Instance{
 		Name:    "mock-avs",
 		URL:     "https://github.com/NethermindEth/mock-avs",
 		Version: "v2.0.2",
 		Profile: "option-returner",
 		Tag:     "test-tag",
+		fs:      fs,
+		locker:  locker,
 	}
-	instancePath := t.TempDir()
 	err := i.init(instancePath)
 	if err != nil {
 		t.Fatal(err)

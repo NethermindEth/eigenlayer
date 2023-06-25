@@ -7,18 +7,28 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/egn/internal/locker/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewDataDir(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name    string
 		path    string
 		dataDir *DataDir
+		locker  *mocks.MockLocker
 		err     error
 	}
 	ts := []testCase{
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
 			wd, err := os.Getwd()
 			if err != nil {
@@ -36,16 +46,19 @@ func TestNewDataDir(t *testing.T) {
 				name: "path to absolute",
 				path: testDir,
 				dataDir: &DataDir{
-					path: absPath,
+					path:   absPath,
+					fs:     fs,
+					locker: locker,
 				},
-				err: nil,
+				locker: locker,
+				err:    nil,
 			}
 		}(),
 	}
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tc.path)
+			dataDir, err := NewDataDir(tc.path, fs, tc.locker)
 			if tc.err != nil {
 				assert.Nil(t, dataDir)
 				assert.ErrorIs(t, err, tc.err)
@@ -58,6 +71,8 @@ func TestNewDataDir(t *testing.T) {
 }
 
 func TestDataDir_Instance(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name       string
 		instanceId string
@@ -69,12 +84,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := os.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
+			stateFile, err := fs.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -93,6 +108,7 @@ func TestDataDir_Instance(t *testing.T) {
 					Tag:     "default",
 					Profile: "option-returner",
 					path:    filepath.Join(path, instancesDir, "mock-avs-default"),
+					fs:      fs,
 				},
 				err: nil,
 			}
@@ -100,12 +116,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := os.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
+			stateFile, err := fs.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -124,7 +140,7 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create nodes dir
-			err := os.MkdirAll(filepath.Join(path, instancesDir), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, instancesDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -139,7 +155,15 @@ func TestDataDir_Instance(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tc.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			if tc.instance != nil {
+				tc.instance.locker = locker
+			}
+
+			dataDir, err := NewDataDir(tc.path, fs, locker)
 			assert.NoError(t, err)
 			instance, err := dataDir.Instance(tc.instanceId)
 			if tc.err != nil {
@@ -154,20 +178,27 @@ func TestDataDir_Instance(t *testing.T) {
 }
 
 func TestDataDir_InitInstance(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name       string
 		path       string
 		instance   *Instance
 		err        error
+		locker     *mocks.MockLocker
 		afterCheck func(t *testing.T)
 	}
 	ts := []testCase{
 		func() testCase {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			return testCase{
 				name: "instance already exists",
 				path: path,
@@ -177,8 +208,11 @@ func TestDataDir_InitInstance(t *testing.T) {
 					URL:     "https://github.com/NethermindEth/mock-avs",
 					Version: "v2.0.2",
 					Profile: "option-returner",
+					fs:      fs,
+					locker:  locker,
 				},
-				err: ErrInstanceAlreadyExists,
+				err:    ErrInstanceAlreadyExists,
+				locker: locker,
 			}
 		}(),
 		func() testCase {
@@ -191,6 +225,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 					Tag:     "default",
 					Version: "v2.0.2",
 					Profile: "option-returner",
+					fs:      fs,
 				},
 				err: ErrInvalidInstance,
 				afterCheck: func(t *testing.T) {
@@ -200,6 +235,11 @@ func TestDataDir_InitInstance(t *testing.T) {
 		}(),
 		func() testCase {
 			path := t.TempDir()
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+			locker.EXPECT().New(filepath.Join(path, instancesDir, "mock-avs-default", ".lock")).Return(locker)
+
 			return testCase{
 				name: "valid instance",
 				path: path,
@@ -209,8 +249,11 @@ func TestDataDir_InitInstance(t *testing.T) {
 					URL:     "https://github.com/NethermindEth/mock-avs",
 					Version: "v2.0.2",
 					Profile: "option-returner",
+					fs:      fs,
+					locker:  locker,
 				},
-				err: nil,
+				err:    nil,
+				locker: locker,
 				afterCheck: func(t *testing.T) {
 					assert.DirExists(t, filepath.Join(path, instancesDir, "mock-avs-default"))
 					assert.FileExists(t, filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
@@ -221,7 +264,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tc.path)
+			dataDir, err := NewDataDir(tc.path, fs, tc.locker)
 			assert.NoError(t, err)
 			err = dataDir.InitInstance(tc.instance)
 			if tc.err != nil {
@@ -237,6 +280,8 @@ func TestDataDir_InitInstance(t *testing.T) {
 }
 
 func TestDataDir_HasInstance(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name       string
 		dataDir    *DataDir
@@ -245,8 +290,12 @@ func TestDataDir_HasInstance(t *testing.T) {
 	}
 	ts := []testCase{
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
-			dataDir, err := NewDataDir(testDir)
+			dataDir, err := NewDataDir(testDir, fs, locker)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -258,8 +307,16 @@ func TestDataDir_HasInstance(t *testing.T) {
 			}
 		}(),
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, instancesDir, "mock_avs-latest"), 0o755)
+			_, err := NewDataDir(testDir, fs, locker)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = os.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -280,6 +337,8 @@ func TestDataDir_HasInstance(t *testing.T) {
 }
 
 func TestDataDir_RemoveInstance(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name       string
 		dataDir    *DataDir
@@ -288,8 +347,12 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 	}
 	ts := []testCase{
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
-			dataDir, err := NewDataDir(testDir)
+			dataDir, err := NewDataDir(testDir, fs, locker)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -301,12 +364,16 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 			}
 		}(),
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
 			err := os.MkdirAll(filepath.Join(testDir, instancesDir, "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
-			dataDir, err := NewDataDir(testDir)
+			dataDir, err := NewDataDir(testDir, fs, locker)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -318,6 +385,10 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 			}
 		}(),
 		func() testCase {
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
 			testDir := t.TempDir()
 			err := os.MkdirAll(filepath.Join(testDir, instancesDir), 0o755)
 			if err != nil {
@@ -327,7 +398,7 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			dataDir, err := NewDataDir(testDir)
+			dataDir, err := NewDataDir(testDir, fs, locker)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -352,6 +423,8 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 }
 
 func TestDataDir_InstancePath(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type testCase struct {
 		name       string
 		path       string
@@ -362,7 +435,7 @@ func TestDataDir_InstancePath(t *testing.T) {
 	tests := []testCase{
 		func() testCase {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -385,7 +458,11 @@ func TestDataDir_InstancePath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d, err := NewDataDir(tt.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			d, err := NewDataDir(tt.path, fs, locker)
 			assert.NoError(t, err)
 			got, err := d.InstancePath(tt.instanceId)
 			if tt.wantErr != nil {
@@ -399,6 +476,8 @@ func TestDataDir_InstancePath(t *testing.T) {
 }
 
 func TestDataDir_InitTemp(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type tc struct {
 		name    string
 		path    string
@@ -422,7 +501,7 @@ func TestDataDir_InitTemp(t *testing.T) {
 		}(),
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -438,7 +517,7 @@ func TestDataDir_InitTemp(t *testing.T) {
 		}(),
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -453,7 +532,11 @@ func TestDataDir_InitTemp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tt.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			dataDir, err := NewDataDir(tt.path, fs, locker)
 			assert.NoError(t, err)
 			got, err := dataDir.InitTemp(tt.id)
 			if tt.wantErr != nil {
@@ -470,6 +553,8 @@ func TestDataDir_InitTemp(t *testing.T) {
 }
 
 func TestDataDir_RemoveTemp(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type tc struct {
 		name  string
 		path  string
@@ -484,7 +569,7 @@ func TestDataDir_RemoveTemp(t *testing.T) {
 		},
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -496,7 +581,7 @@ func TestDataDir_RemoveTemp(t *testing.T) {
 		}(),
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -512,7 +597,11 @@ func TestDataDir_RemoveTemp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tt.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			dataDir, err := NewDataDir(tt.path, fs, locker)
 			assert.NoError(t, err)
 			gotErr := dataDir.RemoveTemp(tt.id)
 			assert.NoError(t, gotErr)
@@ -524,6 +613,8 @@ func TestDataDir_RemoveTemp(t *testing.T) {
 }
 
 func TestDataDir_TempPath(t *testing.T) {
+	fs := afero.NewOsFs()
+
 	type tc struct {
 		name    string
 		path    string
@@ -541,7 +632,7 @@ func TestDataDir_TempPath(t *testing.T) {
 		},
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -555,7 +646,7 @@ func TestDataDir_TempPath(t *testing.T) {
 		}(),
 		func() tc {
 			path := t.TempDir()
-			err := os.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, tempDir, "temp-dir-id"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -588,7 +679,11 @@ func TestDataDir_TempPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, err := NewDataDir(tt.path)
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			dataDir, err := NewDataDir(tt.path, fs, locker)
 			assert.NoError(t, err)
 			gotPath, gotErr := dataDir.TempPath(tt.id)
 			if tt.wantErr != nil {

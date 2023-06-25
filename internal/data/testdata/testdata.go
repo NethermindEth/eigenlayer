@@ -9,6 +9,9 @@ import (
 //go:embed *
 var TestData embed.FS
 
+//go:embed empty
+var Empty embed.FS
+
 func SetupProfileFS(t *testing.T, instanceName string) fs.FS {
 	t.Helper()
 	instanceFs, err := fs.Sub(TestData, instanceName)

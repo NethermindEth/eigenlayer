@@ -18,6 +18,10 @@ type Daemon interface {
 	// instance directory. If there is no installed instance with the given ID,
 	// an error will be returned.
 	Run(instanceId string) error
+
+	// Init initializes the daemon, making sure that all the necessary components
+	// are installed and running.
+	Init() error
 }
 
 // PullResult is the result of a Pull operation, containing all the necessary

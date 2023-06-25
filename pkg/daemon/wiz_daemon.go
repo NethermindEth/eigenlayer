@@ -8,9 +8,13 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/NethermindEth/egn/internal/common"
 	"github.com/NethermindEth/egn/internal/compose"
 	"github.com/NethermindEth/egn/internal/data"
+	"github.com/NethermindEth/egn/internal/locker"
 	"github.com/NethermindEth/egn/internal/package_handler"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 )
 
 // Checks that WizDaemon implements Daemon.
@@ -20,18 +24,59 @@ var _ = Daemon(&WizDaemon{})
 type WizDaemon struct {
 	dataDir       *data.DataDir
 	dockerCompose compose.ComposeManager
+	monitoringMgr MonitoringManager
+	fs            afero.Fs
+	locker        locker.Locker
 }
 
 // NewDaemon create a new daemon instance.
-func NewWizDaemon(dockerCompose compose.ComposeManager) (*WizDaemon, error) {
-	dataDir, err := data.NewDataDirDefault()
+func NewWizDaemon(
+	cmpMgr compose.ComposeManager,
+	mtrMgr MonitoringManager,
+	fs afero.Fs,
+	locker locker.Locker,
+) (*WizDaemon, error) {
+	dataDir, err := data.NewDataDirDefault(fs, locker)
 	if err != nil {
 		return nil, err
 	}
 	return &WizDaemon{
 		dataDir:       dataDir,
-		dockerCompose: dockerCompose,
+		dockerCompose: cmpMgr,
+		monitoringMgr: mtrMgr,
+		fs:            fs,
+		locker:        locker,
 	}, nil
+}
+
+// Init initializes the daemon.
+func (d *WizDaemon) Init() error {
+	// *** Monitoring stack initialization. ***
+	// Check if the monitoring stack is installed.
+	installStatus, err := d.monitoringMgr.InstallationStatus()
+	if err != nil {
+		return err
+	}
+	log.Infof("Monitoring stack installation status: %v", installStatus == common.Installed)
+	// If the monitoring stack is not installed, install it.
+	if installStatus == common.NotInstalled {
+		if err := d.monitoringMgr.InitStack(); err != nil {
+			return err
+		}
+	}
+	// Check if the monitoring stack is running.
+	status, err := d.monitoringMgr.Status()
+	if err != nil {
+		return err
+	}
+	// If the monitoring stack is not running, start it.
+	if status != common.Running && status != common.Restarting {
+		if err := d.monitoringMgr.Run(); err != nil {
+			return err
+		}
+	}
+	// *** Monitoring stack initialization. ***
+	return nil
 }
 
 // Pull implements Daemon.Pull.

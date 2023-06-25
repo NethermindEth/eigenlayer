@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NethermindEth/egn/internal/locker"
 	"github.com/NethermindEth/egn/internal/package_handler"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -13,24 +15,28 @@ const (
 	tempDir      = "temp"
 )
 
+const monitoringStackDirName = "monitoring"
+
 // DataDir is the directory where all the data is stored.
 type DataDir struct {
-	path string
+	path   string
+	fs     afero.Fs
+	locker locker.Locker
 }
 
 // NewDataDir creates a new DataDir instance with the given path as root.
-func NewDataDir(path string) (*DataDir, error) {
+func NewDataDir(path string, fs afero.Fs, locker locker.Locker) (*DataDir, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-	return &DataDir{path: absPath}, nil
+	return &DataDir{path: absPath, fs: fs, locker: locker}, nil
 }
 
 // NewDataDirDefault creates a new DataDir instance with the default path as root.
 // Default path is $XDG_DATA_HOME/.eigen or $HOME/.local/share/.eigen if $XDG_DATA_HOME is not set
 // as defined in the XDG Base Directory Specification
-func NewDataDirDefault() (*DataDir, error) {
+func NewDataDirDefault(fs afero.Fs, locker locker.Locker) (*DataDir, error) {
 	userDataHome := os.Getenv("XDG_DATA_HOME")
 	if userDataHome == "" {
 		userHome, err := os.UserHomeDir()
@@ -40,17 +46,18 @@ func NewDataDirDefault() (*DataDir, error) {
 		userDataHome = filepath.Join(userHome, ".local", "share")
 	}
 	dataDir := filepath.Join(userDataHome, ".eigen")
-	err := os.MkdirAll(dataDir, 0o755)
+	err := fs.MkdirAll(dataDir, 0o755)
 	if err != nil {
 		return nil, err
 	}
-	return NewDataDir(dataDir)
+
+	return NewDataDir(dataDir, fs, locker)
 }
 
 // Instance returns the instance with the given id.
 func (d *DataDir) Instance(instanceId string) (*Instance, error) {
 	instancePath := filepath.Join(d.path, instancesDir, instanceId)
-	return newInstance(instancePath)
+	return newInstance(instancePath, d.fs, d.locker)
 }
 
 type AddInstanceOptions struct {
@@ -146,4 +153,42 @@ func (d *DataDir) TempPath(id string) (string, error) {
 		return "", ErrTempIsNotDir
 	}
 	return tempPath, nil
+}
+
+// MonitoringStack checks if a monitoring stack directory exists in the data directory.
+// If the directory does not exist, it creates it and initializes a new MonitoringStack instance.
+// If the directory exists, it simply returns a new MonitoringStack instance.
+// It returns an error if there is any issue accessing or creating the directory, or initializing the MonitoringStack.
+func (d *DataDir) MonitoringStack() (*MonitoringStack, error) {
+	monitoringStackPath := filepath.Join(d.path, monitoringStackDirName)
+	_, err := d.fs.Stat(monitoringStackPath)
+	if os.IsNotExist(err) {
+		if err = d.fs.MkdirAll(monitoringStackPath, 0o755); err != nil {
+			return nil, err
+		}
+
+		monitoringStack := &MonitoringStack{path: monitoringStackPath, fs: d.fs, l: d.locker}
+		if err = monitoringStack.Init(); err != nil {
+			return nil, err
+		}
+		return monitoringStack, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return newMonitoringStack(monitoringStackPath, d.fs, d.locker), nil
+}
+
+// RemoveMonitoringStack removes the monitoring stack directory from the data directory.
+// It returns an error if there is any issue accessing or removing the directory.
+func (d *DataDir) RemoveMonitoringStack() error {
+	monitoringStackPath := filepath.Join(d.path, monitoringStackDirName)
+	_, err := os.Stat(monitoringStackPath)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("%w: %s", ErrMonitoringStackNotFound, monitoringStackPath)
+	} else if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(monitoringStackPath)
 }

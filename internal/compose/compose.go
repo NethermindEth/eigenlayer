@@ -14,7 +14,7 @@ type DockerComposeCmdError struct {
 
 // Error returns a string representation of the DockerComposeCmdError.
 func (e DockerComposeCmdError) Error() string {
-	return fmt.Sprintf("docker compose manager running docker compose %s", e.cmd)
+	return fmt.Sprintf("Docker Compose Manager running 'docker compose %s'", e.cmd)
 }
 
 // CMDRunner is an interface that defines a method for running commands.
@@ -41,8 +41,8 @@ func (cm *ComposeManager) Up(opts DockerComposeUpOptions) error {
 		upCmd += " " + strings.Join(opts.Services, " ")
 	}
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: upCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "up"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: upCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "up"}, err, out)
 	}
 	return nil
 }
@@ -54,8 +54,8 @@ func (cm *ComposeManager) Pull(opts DockerComposePullOptions) error {
 		pullCmd += " " + strings.Join(opts.Services, " ")
 	}
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: pullCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "pull"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: pullCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "pull"}, err, out)
 	}
 	return nil
 }
@@ -67,8 +67,8 @@ func (cm *ComposeManager) Create(opts DockerComposeCreateOptions) error {
 		createCmd += " " + strings.Join(opts.Services, " ")
 	}
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: createCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "create"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: createCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "create"}, err, out)
 	}
 	return nil
 }
@@ -80,8 +80,8 @@ func (cm *ComposeManager) Build(opts DockerComposeBuildOptions) error {
 		buildCmd += " " + strings.Join(opts.Services, " ")
 	}
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: buildCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "build"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: buildCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "build"}, err, out)
 	}
 	return nil
 }
@@ -107,9 +107,9 @@ func (cm *ComposeManager) PS(opts DockerComposePsOptions) (string, error) {
 		psCmd += " " + opts.ServiceName
 	}
 
-	out, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: psCmd, GetOutput: true})
-	if err != nil {
-		return "", fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "ps"}, err)
+	out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: psCmd, GetOutput: true})
+	if err != nil || exitCode != 0 {
+		return "", fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
 	}
 	return out, nil
 }
@@ -127,8 +127,8 @@ func (cm *ComposeManager) Logs(opts DockerComposeLogsOptions) error {
 		logsCmd += " " + strings.Join(opts.Services, " ")
 	}
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: logsCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "logs"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: logsCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "logs"}, err, out)
 	}
 	return nil
 }
@@ -137,8 +137,8 @@ func (cm *ComposeManager) Logs(opts DockerComposeLogsOptions) error {
 func (cm *ComposeManager) Down(opts DockerComposeDownOptions) error {
 	downCmd := fmt.Sprintf("docker compose -f %s down", opts.Path)
 
-	if _, _, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: downCmd}); err != nil {
-		return fmt.Errorf("%w: %s", DockerComposeCmdError{cmd: "down"}, err)
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: downCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "down"}, err, out)
 	}
 	return nil
 }

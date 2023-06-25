@@ -64,7 +64,11 @@ func TestUp(t *testing.T) {
 				expectedCmd = "docker compose -f " + tt.opts.Path + " up -d"
 			}
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Up(tt.opts)
 
@@ -147,7 +151,11 @@ func TestPull(t *testing.T) {
 				expectedCmd = "docker compose -f " + tt.opts.Path + " pull"
 			}
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Pull(tt.opts)
 
@@ -230,7 +238,11 @@ func TestCreate(t *testing.T) {
 				expectedCmd = "docker compose -f " + tt.opts.Path + " create"
 			}
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Create(tt.opts)
 
@@ -313,7 +325,11 @@ func TestBuild(t *testing.T) {
 				expectedCmd = "docker compose -f " + tt.opts.Path + " build"
 			}
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Build(tt.opts)
 
@@ -448,7 +464,11 @@ func TestPS(t *testing.T) {
 				expectedCmd += " " + tt.opts.ServiceName
 			}
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			_, err := manager.PS(tt.opts)
 
@@ -551,7 +571,11 @@ func TestLogs(t *testing.T) {
 			}
 			expectedCmd += " " + strings.Join(tt.opts.Services, " ")
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Logs(tt.opts)
 
@@ -620,7 +644,11 @@ func TestDown(t *testing.T) {
 
 			expectedCmd := "docker compose -f " + tt.opts.Path + " down"
 
-			mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd}).Return("", 0, tt.runCMDError)
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
 
 			err := manager.Down(tt.opts)
 

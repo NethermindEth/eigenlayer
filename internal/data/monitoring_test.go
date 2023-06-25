@@ -373,7 +373,6 @@ func TestCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Create an in-memory filesystem
 			afs := afero.NewMemMapFs()
 
@@ -382,7 +381,7 @@ func TestCreate(t *testing.T) {
 			require.NoError(t, err)
 
 			// Write some content to the file
-			err = afero.WriteFile(afs, "/existingfile", []byte("existing content"), 0644)
+			err = afero.WriteFile(afs, "/existingfile", []byte("existing content"), 0o644)
 			require.NoError(t, err)
 
 			// Create a new MonitoringStack with the in-memory filesystem
@@ -493,7 +492,7 @@ func TestReadFile(t *testing.T) {
 			// Create files
 			_, err := afs.Create("/testfile")
 			require.NoError(t, err)
-			err = afero.WriteFile(afs, "/testfile", []byte("test content"), 0644)
+			err = afero.WriteFile(afs, "/testfile", []byte("test content"), 0o644)
 			require.NoError(t, err)
 
 			_, err = afs.Create("/emptyfile")
@@ -592,14 +591,13 @@ func TestWriteFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Create an in-memory filesystem
 			afs := afero.NewMemMapFs()
 
 			// Create an existing file
 			_, err := afs.Create("/existingfile")
 			require.NoError(t, err)
-			err = afero.WriteFile(afs, "/existingfile", []byte("test content"), 0644)
+			err = afero.WriteFile(afs, "/existingfile", []byte("test content"), 0o644)
 			require.NoError(t, err)
 
 			// Create a new MonitoringStack with the in-memory filesystem

@@ -11,6 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewDataDir(t *testing.T) {
@@ -694,4 +695,90 @@ func TestDataDir_TempPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMonitoringStack(t *testing.T) {
+	// Create a memory filesystem
+	fs := afero.NewMemMapFs()
+	userHome, err := os.UserHomeDir()
+	require.NoError(t, err)
+	basePath := filepath.Join(userHome, ".local", "share", ".eigen")
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+	locker.EXPECT().New(filepath.Join(basePath, "/monitoring", ".lock")).Return(locker).Times(2)
+
+	verify := func(t *testing.T, stack *MonitoringStack) {
+		t.Helper()
+		assert.Equal(t, filepath.Join(basePath, "/monitoring"), stack.path)
+		assert.Equal(t, fs, stack.fs)
+		assert.Equal(t, locker, stack.l)
+
+		exists, err := afero.DirExists(fs, filepath.Join(basePath, "/monitoring"))
+		assert.NoError(t, err)
+		assert.True(t, exists)
+
+		exists, err = afero.Exists(fs, filepath.Join(basePath, "/monitoring", ".lock"))
+		assert.NoError(t, err)
+		assert.True(t, exists)
+	}
+	// Create a data dir
+	dataDir, err := NewDataDirDefault(fs, locker)
+	require.NoError(t, err)
+
+	// Create a monitoring stack
+	monitoringStack, err := dataDir.MonitoringStack()
+	require.NoError(t, err)
+	verify(t, monitoringStack)
+
+	// Try to get a monitoring stack while it does exist
+	monitoringStack, err = dataDir.MonitoringStack()
+	require.NoError(t, err)
+	verify(t, monitoringStack)
+}
+
+func TestRemoveMonitoringStack(t *testing.T) {
+	// Create monitoring stack
+	// Create a memory filesystem
+	fs := afero.NewMemMapFs()
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+	locker.EXPECT().New(filepath.Join("/monitoring", ".lock")).Return(locker)
+
+	// Create a data dir
+	dataDir, err := NewDataDir("/", fs, locker)
+	require.NoError(t, err)
+
+	// Create a monitoring stack
+	_, err = dataDir.MonitoringStack()
+	require.NoError(t, err)
+
+	// Remove monitoring stack
+	err = dataDir.RemoveMonitoringStack()
+	require.NoError(t, err)
+
+	exists, err := afero.DirExists(fs, filepath.Join("/monitoring"))
+	assert.NoError(t, err)
+	assert.False(t, exists)
+}
+
+func TestRemoveMonitoringStackError(t *testing.T) {
+	// Create monitoring stack
+	// Create a memory filesystem
+	fs := afero.NewMemMapFs()
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+
+	// Create a data dir
+	dataDir, err := NewDataDir("/", fs, locker)
+	require.NoError(t, err)
+
+	// Remove monitoring stack
+	err = dataDir.RemoveMonitoringStack()
+	require.ErrorIs(t, err, ErrMonitoringStackNotFound)
 }

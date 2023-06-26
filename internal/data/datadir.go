@@ -183,12 +183,12 @@ func (d *DataDir) MonitoringStack() (*MonitoringStack, error) {
 // It returns an error if there is any issue accessing or removing the directory.
 func (d *DataDir) RemoveMonitoringStack() error {
 	monitoringStackPath := filepath.Join(d.path, monitoringStackDirName)
-	_, err := os.Stat(monitoringStackPath)
+	_, err := d.fs.Stat(monitoringStackPath)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("%w: %s", ErrMonitoringStackNotFound, monitoringStackPath)
 	} else if err != nil {
 		return err
 	}
 
-	return os.RemoveAll(monitoringStackPath)
+	return d.fs.RemoveAll(monitoringStackPath)
 }

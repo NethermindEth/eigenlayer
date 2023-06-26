@@ -16,8 +16,8 @@ import (
 )
 
 // NewDockerManager returns a new instance of DockerManager
-func NewDockerManager(dockerClient client.APIClient) DockerManager {
-	return DockerManager{dockerClient}
+func NewDockerManager(dockerClient client.APIClient) *DockerManager {
+	return &DockerManager{dockerClient}
 }
 
 // DockerManager is an interface to the Docker Daemon for managing docker containers

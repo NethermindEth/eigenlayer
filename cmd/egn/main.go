@@ -50,8 +50,8 @@ func main() {
 	}
 	monitoringManager := monitoring.NewMonitoringManager(
 		monitoringServices,
-		&composeManager,
-		&dockerManager,
+		composeManager,
+		dockerManager,
 		fs,
 		locker,
 	)

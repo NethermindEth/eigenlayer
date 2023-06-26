@@ -28,8 +28,8 @@ type ComposeManager struct {
 }
 
 // NewComposeManager creates a new instance of ComposeManager.
-func NewComposeManager(runner CMDRunner) ComposeManager {
-	return ComposeManager{
+func NewComposeManager(runner CMDRunner) *ComposeManager {
+	return &ComposeManager{
 		cmdRunner: runner,
 	}
 }

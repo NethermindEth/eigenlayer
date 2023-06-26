@@ -23,7 +23,7 @@ var _ = Daemon(&WizDaemon{})
 // WizDaemon is the main entrypoint for all the functionalities of the daemon.
 type WizDaemon struct {
 	dataDir       *data.DataDir
-	dockerCompose compose.ComposeManager
+	dockerCompose ComposeManager
 	monitoringMgr MonitoringManager
 	fs            afero.Fs
 	locker        locker.Locker
@@ -31,7 +31,7 @@ type WizDaemon struct {
 
 // NewDaemon create a new daemon instance.
 func NewWizDaemon(
-	cmpMgr compose.ComposeManager,
+	cmpMgr ComposeManager,
 	mtrMgr MonitoringManager,
 	fs afero.Fs,
 	locker locker.Locker,

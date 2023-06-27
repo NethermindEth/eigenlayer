@@ -131,23 +131,16 @@ func TestNewInstance(t *testing.T) {
 }
 
 func TestInstance_Init(t *testing.T) {
-	fs := afero.NewOsFs()
-
-	// Create a mock locker
-	ctrl := gomock.NewController(t)
-	locker := mocks.NewMockLocker(ctrl)
-
 	ts := []struct {
 		name      string
 		instance  *Instance
-		path      string
 		stateJSON []byte
 		err       error
+		mocker    func(path string, locker *mocks.MockLocker)
 	}{
 		{
 			name:      "invalid instance",
 			instance:  &Instance{},
-			path:      t.TempDir(),
 			stateJSON: nil,
 			err:       ErrInvalidInstance,
 		},
@@ -159,25 +152,33 @@ func TestInstance_Init(t *testing.T) {
 				URL:     "https://github.com/NethermindEth/mock-avs",
 				Version: "v2.0.1",
 				Profile: "option-returner",
-				fs:      fs,
-				locker:  locker,
 			},
-			path:      t.TempDir(),
 			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.0.1","profile":"option-returner","tag":"test_tag"}`),
+			mocker: func(path string, locker *mocks.MockLocker) {
+				locker.EXPECT().New(filepath.Join(path, ".lock")).Return(locker)
+			},
 		},
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.instance.locker != nil {
-				locker.EXPECT().New(filepath.Join(tc.path, ".lock")).Return(locker)
+			fs := afero.NewMemMapFs()
+
+			// Create a mock locker
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+
+			path := t.TempDir()
+
+			if tc.mocker != nil {
+				tc.mocker(path, locker)
 			}
 
-			err := tc.instance.init(tc.path)
+			err := tc.instance.init(path, fs, locker)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
 			} else {
 				assert.NoError(t, err)
-				stateFile, err := os.Open(filepath.Join(tc.path, "state.json"))
+				stateFile, err := fs.Open(filepath.Join(path, "state.json"))
 				assert.NoError(t, err)
 				stateData, err := io.ReadAll(stateFile)
 				assert.NoError(t, err)
@@ -207,10 +208,8 @@ func TestInstance_Setup(t *testing.T) {
 		Version: "v2.0.2",
 		Profile: "option-returner",
 		Tag:     "test-tag",
-		fs:      fs,
-		locker:  locker,
 	}
-	err := i.init(instancePath)
+	err := i.init(instancePath, fs, locker)
 	if err != nil {
 		t.Fatal(err)
 	}

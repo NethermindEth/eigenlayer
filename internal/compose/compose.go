@@ -133,6 +133,16 @@ func (cm *ComposeManager) Logs(opts DockerComposeLogsOptions) error {
 	return nil
 }
 
+// Stop runs the Docker Compose 'stop' command for the specified options.
+func (cm *ComposeManager) Stop(opts DockerComposeStopOptions) error {
+	stopCmd := fmt.Sprintf("docker compose -f %s stop", opts.Path)
+
+	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: stopCmd, GetOutput: true}); err != nil || exitCode != 0 {
+		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "stop"}, err, out)
+	}
+	return nil
+}
+
 // Down runs the Docker Compose 'down' command for the specified options.
 func (cm *ComposeManager) Down(opts DockerComposeDownOptions) error {
 	downCmd := fmt.Sprintf("docker compose -f %s down", opts.Path)

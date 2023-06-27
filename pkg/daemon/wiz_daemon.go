@@ -207,6 +207,7 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 		Profile: selectedProfile.Name,
 		Version: options.Version,
 		URL:     options.URL,
+		Tag:     options.Tag,
 	}
 	err = d.dataDir.InitInstance(&instance)
 	if err != nil {

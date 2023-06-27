@@ -60,9 +60,7 @@ func (d *WizDaemon) Init() error {
 	log.Infof("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is not installed, install it.
 	if installStatus == common.NotInstalled {
-		if err := d.monitoringMgr.InitStack(); err != nil {
-			return err
-		}
+		return d.monitoringMgr.InitStack()
 	}
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()

@@ -2,17 +2,22 @@ package daemon
 
 import (
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/common"
 	mock_locker "github.com/NethermindEth/egn/internal/locker/mocks"
 	"github.com/NethermindEth/egn/pkg/daemon/mocks"
 	"github.com/golang/mock/gomock"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInit(t *testing.T) {
+	// Silence logger
+	log.SetOutput(io.Discard)
+
 	tests := []struct {
 		name    string
 		mocker  func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager
@@ -36,36 +41,9 @@ func TestInit(t *testing.T) {
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
 					monitoringMgr.EXPECT().InitStack().Return(nil),
-					monitoringMgr.EXPECT().Status().Return(common.Running, nil),
 				)
 				return monitoringMgr
 			},
-		},
-		{
-			name: "monitoring -> prev: not installed, after: installed and broken",
-			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
-				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
-				gomock.InOrder(
-					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
-					monitoringMgr.EXPECT().InitStack().Return(nil),
-					monitoringMgr.EXPECT().Status().Return(common.Broken, nil),
-					monitoringMgr.EXPECT().Run().Return(nil),
-				)
-				return monitoringMgr
-			},
-		},
-		{
-			name: "monitoring -> prev: not installed, after: installed and status error",
-			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
-				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
-				gomock.InOrder(
-					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
-					monitoringMgr.EXPECT().InitStack().Return(nil),
-					monitoringMgr.EXPECT().Status().Return(common.Unknown, errors.New("status error")),
-				)
-				return monitoringMgr
-			},
-			wantErr: true,
 		},
 		{
 			name: "monitoring -> prev: not installed, after: installation failed",
@@ -89,6 +67,31 @@ func TestInit(t *testing.T) {
 				)
 				return monitoringMgr
 			},
+		},
+		{
+			name: "monitoring -> prev: installed and created, after: installed and running",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringMgr.EXPECT().Status().Return(common.Created, nil),
+					monitoringMgr.EXPECT().Run().Return(nil),
+				)
+				return monitoringMgr
+			},
+		},
+		{
+			name: "monitoring -> prev: installed and created, after: installed and run-error",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringMgr.EXPECT().Status().Return(common.Created, nil),
+					monitoringMgr.EXPECT().Run().Return(errors.New("run error")),
+				)
+				return monitoringMgr
+			},
+			wantErr: true,
 		},
 		{
 			name: "monitoring -> prev: installed, after: installed and status error",

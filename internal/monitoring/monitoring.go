@@ -116,6 +116,11 @@ func (m *MonitoringManager) InitStack() error {
 		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 	}
 
+	log.Info("Starting monitoring stack...")
+	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
+		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
+	}
+
 	return nil
 }
 

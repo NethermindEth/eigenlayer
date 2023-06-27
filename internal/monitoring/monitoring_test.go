@@ -107,6 +107,7 @@ func TestInitStack(t *testing.T) {
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
 
 				return []ServiceAPI{
 					servicer,
@@ -147,6 +148,7 @@ func TestInitStack(t *testing.T) {
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
 
 				return []ServiceAPI{
 					service1,
@@ -179,6 +181,7 @@ func TestInitStack(t *testing.T) {
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
 
 				return []ServiceAPI{
 					servicer,
@@ -353,6 +356,46 @@ func TestInitStack(t *testing.T) {
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(errors.New("error"))
+
+				return []ServiceAPI{
+					servicer,
+				}, composeManager
+			},
+			wantErr: true,
+		},
+		{
+			name: "error, 1 service, run error",
+			mockerLocker: func(t *testing.T, ctrl *gomock.Controller) *mock_locker.MockLocker {
+				// Create a mock locker
+				locker := mock_locker.NewMockLocker(ctrl)
+
+				// Expect the lock to be acquired
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				return locker
+			},
+			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack) ([]ServiceAPI, *mocks.MockComposeManager) {
+				dotenv := map[string]string{
+					"NODE_PORT": "9000",
+				}
+				servicer := mocks.NewMockServiceAPI(ctrl)
+				// Expect the service to be triggered
+				gomock.InOrder(
+					servicer.EXPECT().DotEnv().Return(dotenv),
+					servicer.EXPECT().Init(types.ServiceOptions{
+						Stack:  stack,
+						Dotenv: dotenv,
+					}).Return(nil),
+					servicer.EXPECT().Setup(dotenv).Return(nil),
+				)
+
+				composeManager := mocks.NewMockComposeManager(ctrl)
+				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(errors.New("error"))
 
 				return []ServiceAPI{
 					servicer,

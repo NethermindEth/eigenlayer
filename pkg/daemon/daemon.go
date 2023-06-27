@@ -19,6 +19,10 @@ type Daemon interface {
 	// an error will be returned.
 	Run(instanceId string) error
 
+	// Stop stops the instance with the given ID. If there is no installed instance
+	// with the given ID an error will be returned.
+	Stop(instanceId string) error
+
 	// Init initializes the daemon, making sure that all the necessary components
 	// are installed and running.
 	Init() error

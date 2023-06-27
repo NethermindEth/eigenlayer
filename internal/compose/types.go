@@ -59,6 +59,12 @@ type DockerComposeLogsOptions struct {
 	Tail int
 }
 
+// DockerComposeStopOptions defines the options for the 'docker compose stop' command.
+type DockerComposeStopOptions struct {
+	// Path specifies the location of the docker-compose.yaml file.
+	Path string
+}
+
 // DockerComposeDownOptions defines the options for the 'docker compose down' command.
 type DockerComposeDownOptions struct {
 	// Path specifies the location of the docker-compose.yaml file.

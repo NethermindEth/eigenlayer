@@ -12,6 +12,7 @@ func RootCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	}
 	cmd.AddCommand(
 		InstallCmd(d, p),
+		StopCmd(d),
 	)
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	return &cmd

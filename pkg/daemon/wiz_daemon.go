@@ -228,6 +228,18 @@ func (d *WizDaemon) Run(instanceID string) error {
 	})
 }
 
+// Stop implements Daemon.Stop.
+func (d *WizDaemon) Stop(instanceID string) error {
+	instancePath, err := d.dataDir.InstancePath(instanceID)
+	if err != nil {
+		return err
+	}
+	composePath := path.Join(instancePath, "docker-compose.yml")
+	return d.dockerCompose.Stop(compose.DockerComposeStopOptions{
+		Path: composePath,
+	})
+}
+
 func instanceNameFromURL(u string) (string, error) {
 	parsedURL, err := url.ParseRequestURI(u)
 	if err != nil {

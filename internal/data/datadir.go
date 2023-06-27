@@ -75,7 +75,7 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 	instancePath := filepath.Join(d.path, instancesDir, InstanceId(instance.Name, instance.Tag))
 	_, err := os.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
-		return instance.init(instancePath)
+		return instance.init(instancePath, d.fs, d.locker)
 	}
 	if err != nil {
 		return err

@@ -37,8 +37,7 @@ func TestImageFound(t *testing.T) {
 			ContainerJSONBase: &types.ContainerJSONBase{
 				Image: expectedImage,
 			},
-		}, nil).
-		Times(1)
+		}, nil)
 
 	dockerManager := NewDockerManager(dockerClient)
 	image, err := dockerManager.Image("eigen")
@@ -55,8 +54,7 @@ func TestImageNotFound(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerInspect(context.Background(), "eigen").
-		Return(types.ContainerJSON{}, expectedError).
-		Times(1)
+		Return(types.ContainerJSON{}, expectedError)
 
 	dockerManager := NewDockerManager(dockerClient)
 	image, err := dockerManager.Image("eigen")
@@ -92,8 +90,7 @@ func TestStartError(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerStart(context.Background(), "eigen", gomock.Any()).
-		Return(errors.New("error")).
-		Times(1)
+		Return(errors.New("error"))
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Start("eigen")
@@ -107,8 +104,7 @@ func TestStartWithoutError(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerStart(context.Background(), "eigen", gomock.Any()).
-		Return(nil).
-		Times(1)
+		Return(nil)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Start("eigen")
@@ -126,8 +122,7 @@ func TestStopContainerNotFound(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerInspect(context.Background(), "eigen").
-		Return(types.ContainerJSON{}, expectedError).
-		Times(1)
+		Return(types.ContainerJSON{}, expectedError)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Stop("eigen")
@@ -143,8 +138,7 @@ func TestStopError(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerInspect(context.Background(), "eigen").
-		Return(types.ContainerJSON{}, expectedError).
-		Times(1)
+		Return(types.ContainerJSON{}, expectedError)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Stop("eigen")
@@ -171,12 +165,10 @@ func TestStopContainerAlreadyStopped(t *testing.T) {
 					Running: true,
 				},
 			},
-		}, nil).
-		Times(1)
+		}, nil)
 	dockerClient.EXPECT().
 		ContainerStop(context.Background(), eigenCtId, gomock.Any()).
-		Return(expectedError).
-		Times(1)
+		Return(expectedError)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Stop("eigen")
@@ -221,12 +213,10 @@ func TestStopContainer(t *testing.T) {
 						ID:    eigenCtId,
 						State: tt.containerState,
 					},
-				}, nil).
-				Times(1)
+				}, nil)
 			dockerClient.EXPECT().
 				ContainerStop(context.Background(), eigenCtId, gomock.Any()).
-				Return(nil).
-				Times(1)
+				Return(nil)
 
 			dockerManager := NewDockerManager(dockerClient)
 			err := dockerManager.Stop("eigen")
@@ -292,8 +282,7 @@ func TestContainerId(t *testing.T) {
 				All:     true,
 				Filters: filters.NewArgs(filters.Arg("name", ctName)),
 			}).
-			Return(tt.containers, nil).
-			Times(1)
+			Return(tt.containers, nil)
 		dockerManager := NewDockerManager(dockerClient)
 		id, err := dockerManager.ContainerID(ctName)
 		assert.ErrorIs(t, err, tt.err)
@@ -315,8 +304,8 @@ func TestContainerIdError(t *testing.T) {
 			All:     true,
 			Filters: filters.NewArgs(filters.Arg("name", containerName)),
 		}).
-		Return(nil, wantErr).
-		Times(1)
+		Return(nil, wantErr)
+
 	dockerManager := NewDockerManager(dockerClient)
 	id, err := dockerManager.ContainerID(containerName)
 	assert.ErrorIs(t, err, wantErr)
@@ -335,8 +324,8 @@ func TestContainerIdNotFound(t *testing.T) {
 			All:     true,
 			Filters: filters.NewArgs(filters.Arg("name", containerName)),
 		}).
-		Return(make([]types.Container, 0), nil).
-		Times(1)
+		Return(make([]types.Container, 0), nil)
+
 	dockerManager := NewDockerManager(dockerClient)
 	id, err := dockerManager.ContainerID(containerName)
 	assert.ErrorIs(t, err, ErrContainerNotFound)
@@ -355,8 +344,7 @@ func TestPullError(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ImagePull(gomock.Any(), imageName, gomock.Any()).
-		Return(nil, wantErr).
-		Times(1)
+		Return(nil, wantErr)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Pull(imageName)
@@ -372,8 +360,7 @@ func TestPull(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ImagePull(gomock.Any(), imageName, gomock.Any()).
-		Return(nil, nil).
-		Times(1)
+		Return(nil, nil)
 
 	dockerManager := NewDockerManager(dockerClient)
 	err := dockerManager.Pull(imageName)
@@ -392,8 +379,7 @@ func TestContainerLogsError(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerLogs(gomock.Any(), containerName, gomock.Any()).
-		Return(nil, wantErr).
-		Times(1)
+		Return(nil, wantErr)
 
 	dockerManager := NewDockerManager(dockerClient)
 	logs, err := dockerManager.ContainerLogs(containerName)
@@ -426,8 +412,7 @@ func TestContainerLogs(t *testing.T) {
 			ShowStderr: true,
 			Follow:     false,
 		}).
-		Return(logReader, nil).
-		Times(1)
+		Return(logReader, nil)
 
 	dockerManager := NewDockerManager(dockerClient)
 	logs, err := dockerManager.ContainerLogs(containerName)
@@ -448,8 +433,7 @@ func TestWaitErrCh(t *testing.T) {
 
 	dockerClient.EXPECT().
 		ContainerWait(context.Background(), "eigen", gomock.Any()).
-		Return(make(chan container.WaitResponse), wantErrCh).
-		Times(1)
+		Return(make(chan container.WaitResponse), wantErrCh)
 
 	dockerManager := NewDockerManager(dockerClient)
 	exitCh, errCh := dockerManager.Wait("eigen", WaitConditionNextExit)
@@ -498,8 +482,7 @@ func TestWaitExitCh(t *testing.T) {
 
 			dockerClient.EXPECT().
 				ContainerWait(context.Background(), "eigen", gomock.Any()).
-				Return(wantWaitCh, make(chan error)).
-				Times(1)
+				Return(wantWaitCh, make(chan error))
 
 			dockerManager := NewDockerManager(dockerClient)
 			exitCh, errCh := dockerManager.Wait("eigen", WaitConditionNextExit)
@@ -594,13 +577,11 @@ func TestContainerStatus(t *testing.T) {
 			if tt.wantErr {
 				dockerClient.EXPECT().
 					ContainerInspect(context.Background(), container.ID).
-					Return(container, errors.New("error")).
-					Times(1)
+					Return(container, errors.New("error"))
 			} else {
 				dockerClient.EXPECT().
 					ContainerInspect(context.Background(), container.ID).
-					Return(container, nil).
-					Times(1)
+					Return(container, nil)
 			}
 
 			dockerManager := NewDockerManager(dockerClient)

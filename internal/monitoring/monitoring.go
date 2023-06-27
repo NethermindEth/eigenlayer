@@ -2,7 +2,6 @@ package monitoring
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -19,12 +18,6 @@ import (
 
 //go:embed script
 var script embed.FS
-
-var (
-	ErrInitializingMonitoringMngr = errors.New("error initializing monitoring manager")
-	ErrCheckingMonitoringStack    = errors.New("error checking monitoring stack status")
-	ErrRunningMonitoringStack     = errors.New("error running monitoring stack")
-)
 
 // MonitoringManager manages the monitoring services. It provides methods for initializing the monitoring stack,
 // adding and removing targets, running and stopping the monitoring stack, and checking the status of the monitoring stack.

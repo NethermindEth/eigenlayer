@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -16,12 +15,6 @@ import (
 
 //go:embed config
 var config embed.FS
-
-var (
-	ErrReloadFailed        = errors.New("failed to reload Prometheus config")
-	ErrInvalidOptions      = errors.New("invalid options for grafana setup")
-	ErrNonexistingEndpoint = errors.New("endpoint to remove does not exist")
-)
 
 // Config represents the Prometheus configuration.
 type Config struct {

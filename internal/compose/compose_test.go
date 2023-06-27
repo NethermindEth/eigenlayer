@@ -608,6 +608,60 @@ func ExampleComposeManager_Logs() {
 	manager.Logs(opts)
 }
 
+func TestStop(t *testing.T) {
+	tests := []struct {
+		name        string
+		opts        DockerComposeStopOptions
+		runCMDError error
+		wantError   error
+	}{
+		{
+			name: "it runs the correct command",
+			opts: DockerComposeStopOptions{
+				Path: "/path/to/docker-compose.yml",
+			},
+			runCMDError: nil,
+			wantError:   nil,
+		},
+		{
+			name: "it returns an error if RunCMD fails",
+			opts: DockerComposeStopOptions{
+				Path: "/path/to/docker-compose.yml",
+			},
+			runCMDError: errors.New("command failed"),
+			wantError:   DockerComposeCmdError{cmd: "stop"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRunner := mocks.NewMockCMDRunner(ctrl)
+
+			manager := NewComposeManager(mockRunner)
+
+			expectedCmd := "docker compose -f " + tt.opts.Path + " stop"
+
+			if tt.runCMDError != nil {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 1, tt.runCMDError)
+			} else {
+				mockRunner.EXPECT().RunCMD(commands.Command{Cmd: expectedCmd, GetOutput: true}).Return("", 0, nil)
+			}
+
+			err := manager.Stop(tt.opts)
+
+			if tt.wantError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.wantError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestDown(t *testing.T) {
 	tests := []struct {
 		name        string

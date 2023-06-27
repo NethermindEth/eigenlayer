@@ -69,7 +69,10 @@ func newInstance(path string, fs afero.Fs, locker locker.Locker) (*Instance, err
 
 // init initializes a new instance with the given path as root. It creates the
 // .lock and state.json files. If the instance is invalid, an error is returned.
-func (i *Instance) init(instancePath string) error {
+func (i *Instance) init(instancePath string, fs afero.Fs, locker locker.Locker) error {
+	i.fs = fs
+	i.locker = locker
+	i.path = instancePath
 	err := i.validate()
 	if err != nil {
 		return err
@@ -78,7 +81,6 @@ func (i *Instance) init(instancePath string) error {
 	if err != nil {
 		return err
 	}
-	i.path = instancePath
 
 	// Create the lock file
 	_, err = i.fs.Create(filepath.Join(i.path, ".lock"))

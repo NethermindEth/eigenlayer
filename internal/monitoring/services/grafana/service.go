@@ -2,18 +2,12 @@ package grafana
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"text/template"
 
 	datadir "github.com/NethermindEth/egn/internal/data"
 	"github.com/NethermindEth/egn/internal/monitoring"
 	"github.com/NethermindEth/egn/internal/monitoring/services/types"
-)
-
-var (
-	ErrConfigNotFound = errors.New("configuration file not found")
-	ErrInvalidOptions = errors.New("invalid options for grafana setup")
 )
 
 //go:embed config

@@ -6,13 +6,14 @@ import (
 	"io"
 	"time"
 
-	"github.com/NethermindEth/egn/internal/common"
-	"github.com/NethermindEth/egn/internal/utils"
 	"github.com/docker/docker/api/types"
 	dockerCt "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/NethermindEth/egn/internal/common"
+	"github.com/NethermindEth/egn/internal/utils"
 )
 
 // NewDockerManager returns a new instance of DockerManager
@@ -167,4 +168,55 @@ func (d *DockerManager) ContainerStatus(container string) (common.Status, error)
 	default:
 		return common.Unknown, fmt.Errorf("unknown container status: %s", ctInfo.State.Status)
 	}
+}
+
+// PS lists all running containers along with their details
+//
+// PS returns a slice of ContainerInfo structs, each representing one
+// running container. ContainerInfo struct contains the ID, Name, Image, Command, Created,
+// Ports, and Status of the container. If an error occurs while communicating with the Docker API,
+// function returns nil and the error.
+func (d *DockerManager) PS() ([]ContainerInfo, error) {
+	log.Debugf("Listing containers")
+	containerList, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	ctInfo := make([]ContainerInfo, len(containerList))
+	for i, ct := range containerList {
+		ctInfo[i] = ContainerInfo{
+			ID:      ct.ID,
+			Names:   ct.Names,
+			Image:   ct.Image,
+			Command: ct.Command,
+			Created: ct.Created,
+			Ports:   convertPorts(ct.Ports),
+			Status:  ct.Status,
+		}
+	}
+	return ctInfo, nil
+}
+
+// ContainerIP returns the IP address of the specified container
+//
+// The function takes a container ID or name as input and returns its IP address
+// as a string. If an error occurs while inspecting the container or if the container
+// does not have any networks configured, function returns an empty string and an error.
+// Possible errors that may occur are returned as error types defined in this package.
+func (d *DockerManager) ContainerIP(container string) (string, error) {
+	log.Debugf("Getting container's IP: %s", container)
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
+	if err != nil {
+		return "", err
+	}
+	networks := ctInfo.NetworkSettings.Networks
+	if len(networks) == 0 {
+		return "", fmt.Errorf("%w: in %s", ErrNetworksNotFound, container)
+	}
+	var ipAddress string
+	for _, network := range networks {
+		ipAddress = network.IPAddress
+		break // Use the first IP address found.
+	}
+	return ipAddress, nil
 }

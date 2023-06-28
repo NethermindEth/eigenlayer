@@ -9,17 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/egn/internal/common"
-	"github.com/NethermindEth/egn/internal/docker/mocks"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/NethermindEth/egn/internal/common"
+	"github.com/NethermindEth/egn/internal/docker/mocks"
 )
 
 // Image tests
@@ -592,6 +593,241 @@ func TestContainerStatus(t *testing.T) {
 			} else {
 				assert.Equal(t, tt.want, status)
 			}
+		})
+	}
+}
+
+func TestPS(t *testing.T) {
+	tests := []struct {
+		name       string
+		containers []types.Container
+		want       []ContainerInfo
+		wantErr    error
+	}{
+		{
+			name: "one container found",
+			containers: []types.Container{
+				{
+					ID:      "container-id1",
+					Names:   []string{"/name1"},
+					Image:   "image1",
+					ImageID: "image-id1",
+					Command: "command1",
+					Created: 1234,
+					Ports: []types.Port{
+						{
+							IP:          "127.0.0.1",
+							PrivatePort: 3000,
+							PublicPort:  3080,
+						},
+					},
+					Status: "running",
+					State:  "state1",
+				},
+			},
+			want: []ContainerInfo{
+				{
+					ID:      "container-id1",
+					Names:   []string{"/name1"},
+					Image:   "image1",
+					Command: "command1",
+					Created: 1234,
+					Ports: []Port{
+						{
+							IP:          "127.0.0.1",
+							PrivatePort: 3000,
+							PublicPort:  3080,
+						},
+					},
+					Status: "running",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "many containers found",
+			containers: []types.Container{
+				{
+					ID:      "container-id1",
+					Names:   []string{"/name1"},
+					Image:   "image1",
+					ImageID: "image-id1",
+					Command: "command1",
+					Created: 1234,
+					Ports: []types.Port{
+						{
+							IP:          "127.0.0.1",
+							PrivatePort: 3000,
+							PublicPort:  3080,
+						},
+					},
+					Status: "running",
+					State:  "state1",
+				},
+				{
+					ID:      "container-id2",
+					Names:   []string{"/name2"},
+					Image:   "image2",
+					ImageID: "image-id2",
+					Command: "command2",
+					Created: 5678,
+					Ports: []types.Port{
+						{
+							IP:          "127.0.0.10",
+							PrivatePort: 4000,
+							PublicPort:  4080,
+						},
+					},
+					Status: "running",
+					State:  "state2",
+				},
+			},
+			want: []ContainerInfo{
+				{
+					ID:      "container-id1",
+					Names:   []string{"/name1"},
+					Image:   "image1",
+					Command: "command1",
+					Created: 1234,
+					Ports: []Port{
+						{
+							IP:          "127.0.0.1",
+							PrivatePort: 3000,
+							PublicPort:  3080,
+						},
+					},
+					Status: "running",
+				},
+				{
+					ID:      "container-id2",
+					Names:   []string{"/name2"},
+					Image:   "image2",
+					Command: "command2",
+					Created: 5678,
+					Ports: []Port{
+						{
+							IP:          "127.0.0.10",
+							PrivatePort: 4000,
+							PublicPort:  4080,
+						},
+					},
+					Status: "running",
+				},
+			},
+		},
+		{
+			name:       "none containers",
+			containers: []types.Container{},
+			want:       []ContainerInfo{},
+		},
+		{
+			name:       "returning error",
+			containers: []types.Container{},
+			want:       nil,
+			wantErr:    errors.New("error listing containers"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			defer ctrl.Finish()
+
+			dockerClient.EXPECT().ContainerList(gomock.Any(), types.ContainerListOptions{}).Return(tt.containers, tt.wantErr)
+
+			dockerManager := NewDockerManager(dockerClient)
+			got, err := dockerManager.PS()
+			assert.ErrorIs(t, err, tt.wantErr, "Unexpected error returned")
+			assert.Equal(t, tt.want, got, "Expected containers does not match with containers obtained.")
+		})
+	}
+}
+
+func TestContainerIP(t *testing.T) {
+	tests := []struct {
+		name        string
+		arg         string
+		response    types.ContainerJSON
+		want        string
+		wantErr     error
+		expectedErr error
+	}{
+		{
+			name: "returning error",
+			arg:  "eigen",
+			response: types.ContainerJSON{
+				ContainerJSONBase: &types.ContainerJSONBase{
+					ID: "container-Id",
+					State: &types.ContainerState{
+						Running: true,
+					},
+				},
+				NetworkSettings: &types.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"eigen": {
+							IPAddress: "127.0.0.1",
+						},
+					},
+				},
+			},
+			want:    "",
+			wantErr: errors.New("error inspecting container"),
+		},
+		{
+			name: "checking empty networks",
+			arg:  "sedge-network",
+			response: types.ContainerJSON{
+				ContainerJSONBase: &types.ContainerJSONBase{
+					ID: "container-Id",
+					State: &types.ContainerState{
+						Running: true,
+					},
+				},
+				NetworkSettings: &types.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{},
+				},
+			},
+			want:        "",
+			expectedErr: ErrNetworksNotFound,
+		},
+		{
+			name: "returning correct IP",
+			arg:  "sedge-network",
+			response: types.ContainerJSON{
+				ContainerJSONBase: &types.ContainerJSONBase{
+					ID: "container-Id",
+					State: &types.ContainerState{
+						Running: true,
+					},
+				},
+				NetworkSettings: &types.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"eigen": {
+							IPAddress: "127.0.0.1",
+						},
+					},
+				},
+			},
+			want: "127.0.0.1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			defer ctrl.Finish()
+			dockerClient.EXPECT().
+				ContainerInspect(context.Background(), tt.arg).
+				Return(tt.response, tt.wantErr)
+
+			dockerManager := NewDockerManager(dockerClient)
+			got, err := dockerManager.ContainerIP(tt.arg)
+			if tt.wantErr == nil {
+				assert.ErrorIs(t, err, tt.expectedErr, "Unexpected error returned")
+			} else {
+				assert.ErrorIs(t, err, tt.wantErr, "Unexpected error returned")
+			}
+			assert.Equal(t, tt.want, got, "Expected container IP does not match with IP obtained.")
 		})
 	}
 }

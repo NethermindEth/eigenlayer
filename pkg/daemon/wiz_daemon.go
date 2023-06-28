@@ -240,6 +240,25 @@ func (d *WizDaemon) Stop(instanceID string) error {
 	})
 }
 
+// Uninstall implements Daemon.Uninstall.
+func (d *WizDaemon) Uninstall(instanceID string) error {
+	instancePath, err := d.dataDir.InstancePath(instanceID)
+	if err != nil {
+		return err
+	}
+	composePath := path.Join(instancePath, "docker-compose.yml")
+	// docker compose down
+	err = d.dockerCompose.Down(compose.DockerComposeDownOptions{
+		Path: composePath,
+	})
+	if err != nil {
+		return err
+	}
+	// remove instance directory
+	return d.dataDir.RemoveInstance(instanceID)
+	// TODO: remove from monitoring
+}
+
 func instanceNameFromURL(u string) (string, error) {
 	parsedURL, err := url.ParseRequestURI(u)
 	if err != nil {

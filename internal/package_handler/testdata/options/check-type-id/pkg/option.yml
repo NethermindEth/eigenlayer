@@ -1,4 +1,0 @@
-name: invalid-id
-type: id
-default: invalid id
-help: "invalid type id"

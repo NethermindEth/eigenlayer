@@ -1,0 +1,8 @@
+name: valid-id
+target: ID
+type: id
+default: validid
+help: "valid type id"
+validate: 
+  min_value: 1
+  max_value: 10000

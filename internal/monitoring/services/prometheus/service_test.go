@@ -148,7 +148,7 @@ func TestSetup(t *testing.T) {
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
@@ -298,7 +298,7 @@ func TestAddTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 				"localhost:8000",
 			},
 		},
@@ -314,7 +314,7 @@ func TestAddTarget(t *testing.T) {
 				"http://168.0.0.66:8001",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 				"localhost:8000",
 				"168.0.0.66:8001",
 			},
@@ -348,10 +348,10 @@ func TestAddTarget(t *testing.T) {
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
@@ -365,7 +365,7 @@ func TestAddTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 				"localhost:8000",
 			},
 			badEndpoint: true,
@@ -545,7 +545,7 @@ func TestRemoveTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
@@ -564,7 +564,7 @@ func TestRemoveTarget(t *testing.T) {
 				"http://168.0.0.66:8001",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
@@ -581,7 +581,7 @@ func TestRemoveTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
@@ -616,7 +616,7 @@ func TestRemoveTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 			wantErr: true,
 		},
@@ -634,7 +634,7 @@ func TestRemoveTarget(t *testing.T) {
 				"http://localhost:8000",
 			},
 			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterServiceName),
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 			badEndpoint: true,
 		},

@@ -197,3 +197,20 @@ func (m *MonitoringManager) InstallationStatus() (common.Status, error) {
 
 	return common.NotInstalled, nil
 }
+
+// Cleanup removes the monitoring stack. If force is true, it bypasses locks and removes the stack without running 'docker compose down'.
+func (m *MonitoringManager) Cleanup(force bool) error {
+	if !force {
+		log.Info("Shutting down monitoring stack...")
+		if err := m.composeManager.Down(compose.DockerComposeDownOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
+			return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
+		}
+	}
+
+	log.Info("Cleaning up monitoring stack...")
+	if err := m.stack.Cleanup(force); err != nil {
+		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
+	}
+
+	return nil
+}

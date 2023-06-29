@@ -3,6 +3,7 @@ package data
 import (
 	"errors"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -106,7 +107,10 @@ func TestSetup(t *testing.T) {
 				locker := mocks.NewMockLocker(ctrl)
 
 				// Expect the lock to be acquired
-				locker.EXPECT().Locked().Return(false).After(locker.EXPECT().Lock().Return(nil))
+				gomock.InOrder(
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(false),
+				)
 				return locker
 			},
 			wantErr: true,
@@ -266,7 +270,10 @@ func TestCreateDirUnlockError(t *testing.T) {
 	locker := mocks.NewMockLocker(ctrl)
 
 	// Expect the lock to be acquired
-	locker.EXPECT().Locked().Return(false).After(locker.EXPECT().Lock().Return(nil))
+	gomock.InOrder(
+		locker.EXPECT().Lock().Return(nil),
+		locker.EXPECT().Locked().Return(false),
+	)
 
 	// Create a new MonitoringStack with the in-memory filesystem
 	stack := &MonitoringStack{
@@ -319,7 +326,11 @@ func TestCreate(t *testing.T) {
 		locker := mocks.NewMockLocker(ctrl)
 
 		// Expect the lock to be acquired
-		locker.EXPECT().Unlock().Return(nil).After(locker.EXPECT().Locked().Return(true).After(locker.EXPECT().Lock().Return(nil)))
+		gomock.InOrder(
+			locker.EXPECT().Lock().Return(nil),
+			locker.EXPECT().Locked().Return(true),
+			locker.EXPECT().Unlock().Return(nil),
+		)
 		return locker
 	}
 
@@ -350,7 +361,10 @@ func TestCreate(t *testing.T) {
 				locker := mocks.NewMockLocker(ctrl)
 
 				// Expect the lock to be acquired
-				locker.EXPECT().Locked().Return(false).After(locker.EXPECT().Lock().Return(nil))
+				gomock.InOrder(
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(false),
+				)
 				return locker
 			},
 			wantErr: true,
@@ -423,7 +437,11 @@ func TestReadFile(t *testing.T) {
 		locker := mocks.NewMockLocker(ctrl)
 
 		// Expect the lock to be acquired
-		locker.EXPECT().Unlock().Return(nil).After(locker.EXPECT().Locked().Return(true).After(locker.EXPECT().Lock().Return(nil)))
+		gomock.InOrder(
+			locker.EXPECT().Lock().Return(nil),
+			locker.EXPECT().Locked().Return(true),
+			locker.EXPECT().Unlock().Return(nil),
+		)
 		return locker
 	}
 
@@ -463,7 +481,10 @@ func TestReadFile(t *testing.T) {
 				locker := mocks.NewMockLocker(ctrl)
 
 				// Expect the lock to be acquired
-				locker.EXPECT().Locked().Return(false).After(locker.EXPECT().Lock().Return(nil))
+				gomock.InOrder(
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(false),
+				)
 				return locker
 			},
 			wantErr: true,
@@ -525,7 +546,11 @@ func TestWriteFile(t *testing.T) {
 		locker := mocks.NewMockLocker(ctrl)
 
 		// Expect the lock to be acquired
-		locker.EXPECT().Unlock().Return(nil).After(locker.EXPECT().Locked().Return(true).After(locker.EXPECT().Lock().Return(nil)))
+		gomock.InOrder(
+			locker.EXPECT().Lock().Return(nil),
+			locker.EXPECT().Locked().Return(true),
+			locker.EXPECT().Unlock().Return(nil),
+		)
 		return locker
 	}
 
@@ -629,7 +654,11 @@ func TestInstalled(t *testing.T) {
 		locker := mocks.NewMockLocker(ctrl)
 
 		// Expect the lock to be acquired
-		locker.EXPECT().Unlock().Return(nil).After(locker.EXPECT().Locked().Return(true).After(locker.EXPECT().Lock().Return(nil)))
+		gomock.InOrder(
+			locker.EXPECT().Lock().Return(nil),
+			locker.EXPECT().Locked().Return(true),
+			locker.EXPECT().Unlock().Return(nil),
+		)
 		return locker
 	}
 
@@ -768,4 +797,116 @@ func TestPath(t *testing.T) {
 	}
 
 	assert.Equal(t, "/", stack.Path())
+}
+
+func TestCleanup(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		mocker     func(*testing.T) (*mocks.MockLocker, afero.Fs)
+		force      bool
+		notInstall bool
+		wantErr    bool
+	}{
+		{
+			name: "ok, force false",
+			mocker: func(t *testing.T) (*mocks.MockLocker, afero.Fs) {
+				// Create a mock locker
+				ctrl := gomock.NewController(t)
+				locker := mocks.NewMockLocker(ctrl)
+
+				// Expect the lock to be acquired
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join("/monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				locker.EXPECT().Lock().Return(nil)
+				return locker, afero.NewMemMapFs()
+			},
+		},
+		{
+			name: "ok, force true",
+			mocker: func(t *testing.T) (*mocks.MockLocker, afero.Fs) {
+				// Create a mock locker
+				ctrl := gomock.NewController(t)
+				locker := mocks.NewMockLocker(ctrl)
+
+				// Expect the lock to be acquired
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join("/monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				return locker, afero.NewMemMapFs()
+			},
+			force: true,
+		},
+		{
+			name: "not installed",
+			mocker: func(t *testing.T) (*mocks.MockLocker, afero.Fs) {
+				// Create a mock locker
+				ctrl := gomock.NewController(t)
+				locker := mocks.NewMockLocker(ctrl)
+
+				// Expect the lock to be acquired
+				locker.EXPECT().Lock().Return(nil)
+				return locker, afero.NewMemMapFs()
+			},
+			notInstall: true,
+		},
+		{
+			name: "lock error",
+			mocker: func(t *testing.T) (*mocks.MockLocker, afero.Fs) {
+				// Create a mock locker
+				ctrl := gomock.NewController(t)
+				locker := mocks.NewMockLocker(ctrl)
+
+				// Expect the lock to be acquired
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join("/monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				locker.EXPECT().Lock().Return(errors.New("lock error"))
+				return locker, afero.NewMemMapFs()
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			locker, fs := tt.mocker(t)
+			stack := &MonitoringStack{
+				path: "/monitoring",
+				l:    locker,
+				fs:   fs,
+			}
+
+			// Install the stack
+			var err error
+			if !tt.notInstall {
+				err = stack.Init()
+				require.NoError(t, err)
+				err = stack.Setup(map[string]string{"NODE_NAME": "test"}, testdata.TestData)
+				require.NoError(t, err)
+			}
+
+			err = stack.Cleanup(tt.force)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				// Check that monitoring stack has been removed
+				exists, err := afero.DirExists(fs, "/monitoring")
+				assert.NoError(t, err)
+				assert.False(t, exists)
+			}
+		})
+	}
 }

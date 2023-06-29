@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/docker/distribution/uuid"
+
 	"github.com/NethermindEth/egn/internal/utils"
 )
 
@@ -29,7 +31,7 @@ func (p *Profile) Validate() error {
 
 	var invalidOptionsErr error
 	for i, option := range p.Options {
-		if err := option.Validate(); len(err.missingFields) > 0 || len(err.invalidFields) > 0 {
+		if err := option.validate(); len(err.missingFields) > 0 || len(err.invalidFields) > 0 {
 			err.message = fmt.Sprintf("Invalid option %d", i+1)
 			invalidOptionsErr = fmt.Errorf("%w %w", invalidOptionsErr, err)
 		}
@@ -78,7 +80,7 @@ type Option struct {
 }
 
 // Validate validates the option
-func (o *Option) Validate() InvalidConfError {
+func (o *Option) validate() InvalidConfError {
 	var missingFields, invalidFields []string
 	if o.Name == "" {
 		missingFields = append(missingFields, "options.name")
@@ -98,7 +100,7 @@ func (o *Option) Validate() InvalidConfError {
 		switch o.Type {
 		case "string":
 			invalidDefault = true
-		case "int":
+		case "int", "port":
 			_, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
 		case "float":
@@ -107,9 +109,7 @@ func (o *Option) Validate() InvalidConfError {
 		case "bool":
 			_, err := strconv.ParseBool(o.Default)
 			invalidDefault = err != nil
-		case "path_dir":
-			invalidDefault = !pathRe.MatchString(o.Default)
-		case "path_file":
+		case "path_dir", "path_file":
 			invalidDefault = !pathRe.MatchString(o.Default)
 		case "uri":
 			_, err := url.Parse(o.Default)
@@ -120,11 +120,11 @@ func (o *Option) Validate() InvalidConfError {
 			} else {
 				invalidDefault = !utils.Contains(o.ValidateDef.Options, o.Default)
 			}
-		case "port":
-			_, err := strconv.Atoi(o.Default)
-			invalidDefault = err != nil
 		case "id":
-			invalidDefault = false
+			_, err := uuid.Parse(o.Default)
+			invalidDefault = err != nil
+		default:
+			invalidDefault = true
 		}
 	}
 	if invalidDefault {

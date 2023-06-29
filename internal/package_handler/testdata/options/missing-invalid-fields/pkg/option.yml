@@ -1,0 +1,5 @@
+type: path_file
+default: file name
+validate: 
+  min_value: 1
+  max_value: 10000

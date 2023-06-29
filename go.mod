@@ -12,15 +12,8 @@ require (
 )
 
 require (
-	github.com/cilium/ebpf v0.9.1 // indirect
-	github.com/containerd/cgroups/v3 v3.0.1 // indirect
-	github.com/containerd/containerd v1.7.2 // indirect
-	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/moby/sys/mountinfo v0.6.2 // indirect
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	google.golang.org/protobuf v1.29.1 // indirect
 )
 
 require (

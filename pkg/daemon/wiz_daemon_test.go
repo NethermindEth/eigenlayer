@@ -7,6 +7,7 @@ import (
 
 	"github.com/NethermindEth/egn/internal/common"
 	mock_locker "github.com/NethermindEth/egn/internal/locker/mocks"
+	"github.com/NethermindEth/egn/internal/monitoring"
 	"github.com/NethermindEth/egn/pkg/daemon/mocks"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
@@ -51,7 +52,33 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
-					monitoringMgr.EXPECT().InitStack().Return(errors.New("installation failed")),
+					monitoringMgr.EXPECT().InitStack().Return(monitoring.ErrInitializingMonitoringMngr),
+					monitoringMgr.EXPECT().Cleanup(true).Return(nil),
+				)
+				return monitoringMgr
+			},
+			wantErr: true,
+		},
+		{
+			name: "monitoring -> prev: not installed, after: installation failed, cleanup error",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
+					monitoringMgr.EXPECT().InitStack().Return(monitoring.ErrInitializingMonitoringMngr),
+					monitoringMgr.EXPECT().Cleanup(true).Return(errors.New("cleanup error")),
+				)
+				return monitoringMgr
+			},
+			wantErr: true,
+		},
+		{
+			name: "monitoring -> prev: not installed, after: installation failed but no cleanup needed",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
+					monitoringMgr.EXPECT().InitStack().Return(errors.New("init error")),
 				)
 				return monitoringMgr
 			},

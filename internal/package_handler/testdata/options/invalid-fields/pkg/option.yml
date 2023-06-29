@@ -1,0 +1,8 @@
+name: el-port
+target: PORT
+type: string
+default: string-value
+help: "Port of the harbor bay crocodile in the horse window within upside Coca Cola"
+validate: 
+  min_value: 1
+  max_value: 10000

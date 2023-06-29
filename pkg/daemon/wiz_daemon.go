@@ -12,6 +12,7 @@ import (
 	"github.com/NethermindEth/egn/internal/compose"
 	"github.com/NethermindEth/egn/internal/data"
 	"github.com/NethermindEth/egn/internal/locker"
+	"github.com/NethermindEth/egn/internal/monitoring"
 	"github.com/NethermindEth/egn/internal/package_handler"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -60,7 +61,17 @@ func (d *WizDaemon) Init() error {
 	log.Infof("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is not installed, install it.
 	if installStatus == common.NotInstalled {
-		return d.monitoringMgr.InitStack()
+		err = d.monitoringMgr.InitStack()
+		if errors.Is(err, monitoring.ErrInitializingMonitoringMngr) {
+			// If the monitoring stack installation fails, remove the monitoring stack directory.
+			if cerr := d.monitoringMgr.Cleanup(true); cerr != nil {
+				return fmt.Errorf("install failed: %w. Failed to cleanup monitoring stack after installation failure: %w", err, cerr)
+			}
+			return err
+		} else if err != nil {
+			return err
+		}
+		return nil
 	}
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()

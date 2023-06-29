@@ -17,4 +17,6 @@ type MonitoringManager interface {
 	Run() error
 	// Stop stops the monitoring stack.
 	Stop() error
+	// Cleanup removes the monitoring stack. If force is true, it will remove the stack directly bypassing any checks.
+	Cleanup(force bool) error
 }

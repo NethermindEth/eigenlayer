@@ -2,6 +2,3 @@ name: el-port
 target: PORT
 type: bool
 default: true
-validate: 
-  min_value: 1
-  max_value: 10000

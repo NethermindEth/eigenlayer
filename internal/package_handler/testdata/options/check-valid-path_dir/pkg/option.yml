@@ -1,0 +1,5 @@
+name: valid-path
+target: PATHDIR
+type: path_dir
+default: valid/path/dir
+help: "valid type path_dir"

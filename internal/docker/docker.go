@@ -184,7 +184,7 @@ func (d *DockerManager) PS() ([]ContainerInfo, error) {
 			Image:   ct.Image,
 			Command: ct.Command,
 			Created: ct.Created,
-			Ports:   ConvertPorts(ct.Ports),
+			Ports:   convertPorts(ct.Ports),
 			Status:  ct.Status,
 		}
 	}

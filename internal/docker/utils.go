@@ -2,7 +2,7 @@ package docker
 
 import "github.com/docker/docker/api/types"
 
-func ConvertPorts(ports []types.Port) []Port {
+func convertPorts(ports []types.Port) []Port {
 	res := make([]Port, len(ports))
 	for i, p := range ports {
 		res[i].IP = p.IP

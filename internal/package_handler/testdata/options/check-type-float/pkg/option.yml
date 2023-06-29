@@ -1,0 +1,4 @@
+name: invalid-float
+type: float
+default: 123O
+help: "invalid type float"

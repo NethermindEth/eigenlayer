@@ -733,7 +733,7 @@ func TestStop(t *testing.T) {
 				locker,
 			)
 
-			// Run the stack
+			// Stop the stack
 			err := manager.Stop()
 			if tt.wantErr {
 				require.Error(t, err)
@@ -851,7 +851,6 @@ func TestStatus(t *testing.T) {
 				locker,
 			)
 
-			// Run the stack
 			status, err := manager.Status()
 			if tt.wantErr {
 				require.Error(t, err)
@@ -975,7 +974,6 @@ func TestInstallationStatus(t *testing.T) {
 				locker,
 			)
 
-			// Run the stack
 			status, err := manager.InstallationStatus()
 			if tt.wantErr {
 				require.Error(t, err)
@@ -983,6 +981,151 @@ func TestInstallationStatus(t *testing.T) {
 				require.NoError(t, err)
 			}
 			assert.Equal(t, tt.want, status)
+		})
+	}
+}
+
+func TestCleanup(t *testing.T) {
+	// Silence logger
+	log.SetOutput(io.Discard)
+
+	userDataHome := os.Getenv("XDG_DATA_HOME")
+	if userDataHome == "" {
+		userHome, err := os.UserHomeDir()
+		require.NoError(t, err)
+		userDataHome = filepath.Join(userHome, ".local", "share")
+	}
+	composePath := filepath.Join(userDataHome, ".eigen", "monitoring", "docker-compose.yml")
+
+	tests := []struct {
+		name      string
+		mocker    func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker)
+		force     bool
+		noInstall bool
+		wantErr   bool
+	}{
+		{
+			name: "ok, force false",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
+				composeManager := mocks.NewMockComposeManager(ctrl)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+
+				locker := mock_locker.NewMockLocker(ctrl)
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				locker.EXPECT().Lock().Return(nil)
+
+				return composeManager, locker
+			},
+		},
+		{
+			name: "ok, force true",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
+				composeManager := mocks.NewMockComposeManager(ctrl)
+
+				locker := mock_locker.NewMockLocker(ctrl)
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+
+				return composeManager, locker
+			},
+			force: true,
+		},
+		{
+			name: "down error",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
+				composeManager := mocks.NewMockComposeManager(ctrl)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(errors.New("error"))
+
+				locker := mock_locker.NewMockLocker(ctrl)
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+
+				return composeManager, locker
+			},
+			wantErr: true,
+		},
+		{
+			name: "ok, force false, no install",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
+				composeManager := mocks.NewMockComposeManager(ctrl)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+
+				locker := mock_locker.NewMockLocker(ctrl)
+				locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker)
+				locker.EXPECT().Lock().Return(nil)
+
+				return composeManager, locker
+			},
+			noInstall: true,
+		},
+		{
+			name: "stack cleanup error, lock error",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
+				composeManager := mocks.NewMockComposeManager(ctrl)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+
+				locker := mock_locker.NewMockLocker(ctrl)
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
+				locker.EXPECT().Lock().Return(errors.New("lock error"))
+
+				return composeManager, locker
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create an in-memory filesystem
+			afs := afero.NewMemMapFs()
+
+			// Create a mock controller
+			ctrl := gomock.NewController(t)
+
+			composeMgr, locker := tt.mocker(t, ctrl)
+
+			// Create a monitoring manager
+			manager := NewMonitoringManager(
+				[]ServiceAPI{mocks.NewMockServiceAPI(ctrl)},
+				composeMgr,
+				mocks.NewMockDockerManager(ctrl),
+				afs,
+				locker,
+			)
+
+			if !tt.noInstall {
+				err := manager.stack.Setup(map[string]string{"NODE_NAME": "test"}, script)
+				require.NoError(t, err)
+			}
+
+			err := manager.Cleanup(tt.force)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				// Check that monitoring stack has been removed
+				exists, err := afero.DirExists(afs, filepath.Join(userDataHome, ".eigen", "monitoring"))
+				assert.NoError(t, err)
+				assert.False(t, exists)
+			}
 		})
 	}
 }

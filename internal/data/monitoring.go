@@ -206,3 +206,20 @@ func (m *MonitoringStack) Installed() (installed bool, err error) {
 func (m *MonitoringStack) Path() string {
 	return m.path
 }
+
+// Cleanup removes the monitoring stack datadir. If force is true, it doesn't
+// lock the monitoring stack.
+func (m *MonitoringStack) Cleanup(force bool) (err error) {
+	if !force {
+		err = m.lock()
+		if err != nil {
+			return err
+		}
+		// No unlock as the lock file will be removed
+		defer func() {
+			// Reset locker
+			m.l = nil
+		}()
+	}
+	return m.fs.RemoveAll(m.path)
+}

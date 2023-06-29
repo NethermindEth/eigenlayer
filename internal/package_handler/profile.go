@@ -5,8 +5,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-
-	"github.com/docker/distribution/uuid"
+	"strings"
 
 	"github.com/NethermindEth/egn/internal/utils"
 )
@@ -98,8 +97,8 @@ func (o *Option) validate() InvalidConfError {
 	var invalidDefault bool
 	if o.Default != "" {
 		switch o.Type {
-		case "string":
-			invalidDefault = true
+		case "str":
+			invalidDefault = false
 		case "int", "port":
 			_, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
@@ -112,8 +111,12 @@ func (o *Option) validate() InvalidConfError {
 		case "path_dir", "path_file":
 			invalidDefault = !pathRe.MatchString(o.Default)
 		case "uri":
-			_, err := url.Parse(o.Default)
-			invalidDefault = err != nil
+			gotUrl, err := url.Parse(o.Default)
+			if err != nil {
+				invalidDefault = true
+			} else if o.ValidateDef != nil {
+				invalidDefault = !utils.Contains(o.ValidateDef.UriScheme, gotUrl.Scheme)
+			}
 		case "select":
 			if o.ValidateDef == nil {
 				missingFields = append(missingFields, "options.validate")
@@ -121,8 +124,7 @@ func (o *Option) validate() InvalidConfError {
 				invalidDefault = !utils.Contains(o.ValidateDef.Options, o.Default)
 			}
 		case "id":
-			_, err := uuid.Parse(o.Default)
-			invalidDefault = err != nil
+			invalidDefault = len(strings.Split(o.Default, " ")) != 1
 		default:
 			invalidDefault = true
 		}

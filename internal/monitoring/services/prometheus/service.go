@@ -192,7 +192,7 @@ func (p *PrometheusService) Setup(options map[string]string) error {
 	}
 
 	// Add node exporter target
-	config.ScrapeConfigs[0].StaticConfigs[0].Targets = append(config.ScrapeConfigs[0].StaticConfigs[0].Targets, fmt.Sprintf("%s:%s", monitoring.NodeExporterServiceName, options["NODE_EXPORTER_PORT"]))
+	config.ScrapeConfigs[0].StaticConfigs[0].Targets = append(config.ScrapeConfigs[0].StaticConfigs[0].Targets, fmt.Sprintf("%s:%s", monitoring.NodeExporterContainerName, options["NODE_EXPORTER_PORT"]))
 
 	// Marshal the updated config back to YAML
 	newConfig, err := yaml.Marshal(&config)

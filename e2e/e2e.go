@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -36,6 +37,11 @@ func (e *e2eTestCase) Cleanup() {
 	err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down").Run()
 	if err != nil {
 		e.t.Fatalf("error removing monitoring stack: %v", err)
+	}
+	// Remove data dir
+	err = os.RemoveAll(dataDir)
+	if err != nil {
+		e.t.Fatalf("error removing data dir: %v", err)
 	}
 }
 

@@ -29,8 +29,13 @@ format: ## Run gofumpt against code to format it
 staticcheck: ## Run staticcheck against code
 	@staticcheck ./...
 
-test: generate ## Run tests
-	@go test ./...
+test: unit-test e2e-test ## Run tests
+
+unit-test: generate ## Run unit tests
+	@go test ./cli/... ./internal/... ./pkg/...
+
+e2e-test: generate ## Run e2e tests
+	@go test ./e2e/...
 
 codecov-test: generate ## Run tests with coverage
 	@mkdir -p coverage

@@ -22,6 +22,8 @@ type DockerComposeCreateOptions struct {
 	Path string
 	// Services lists the names of the services to be created.
 	Services []string
+	// Build specifies whether to build images before starting containers.
+	Build bool
 }
 
 // DockerComposeBuildOptions defines the options for the 'docker compose build' command.
@@ -44,6 +46,10 @@ type DockerComposePsOptions struct {
 	ServiceName string
 	// FilterRunning, when true, filters to display only running services.
 	FilterRunning bool
+	// Format specifies the format of the output.
+	Format string
+	// All, when true, displays all containers.
+	All bool
 }
 
 // DockerComposeLogsOptions defines the options for the 'docker compose logs' command.

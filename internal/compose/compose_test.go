@@ -198,6 +198,7 @@ func TestCreate(t *testing.T) {
 			opts: DockerComposeCreateOptions{
 				Path:     "/path/to/docker-compose.yml",
 				Services: []string{"service1", "service2"},
+				Build:    true,
 			},
 			runCMDError: nil,
 			wantError:   nil,
@@ -231,11 +232,13 @@ func TestCreate(t *testing.T) {
 
 			manager := NewComposeManager(mockRunner)
 
-			var expectedCmd string
+			expectedCmd := "docker compose -f " + tt.opts.Path + " create"
+			if tt.opts.Build {
+				expectedCmd += " --build"
+			}
+
 			if len(tt.opts.Services) > 0 {
-				expectedCmd = "docker compose -f " + tt.opts.Path + " create " + strings.Join(tt.opts.Services, " ")
-			} else {
-				expectedCmd = "docker compose -f " + tt.opts.Path + " create"
+				expectedCmd += " " + strings.Join(tt.opts.Services, " ")
 			}
 
 			if tt.runCMDError != nil {
@@ -375,6 +378,8 @@ func TestPS(t *testing.T) {
 				Quiet:         true,
 				FilterRunning: true,
 				ServiceName:   "service1",
+				Format:        "format",
+				All:           true,
 			},
 			runCMDError: nil,
 			wantError:   nil,
@@ -459,6 +464,12 @@ func TestPS(t *testing.T) {
 			}
 			if tt.opts.FilterRunning {
 				expectedCmd += " --filter status=running"
+			}
+			if tt.opts.Format != "" {
+				expectedCmd += " --format " + tt.opts.Format
+			}
+			if tt.opts.All {
+				expectedCmd += " -a"
 			}
 			if tt.opts.ServiceName != "" {
 				expectedCmd += " " + tt.opts.ServiceName

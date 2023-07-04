@@ -831,3 +831,207 @@ func TestContainerIP(t *testing.T) {
 		})
 	}
 }
+
+func TestContainerNetworks(t *testing.T) {
+	tests := []struct {
+		name      string
+		mocker    func(t *testing.T, container string) *mocks.MockAPIClient
+		container string
+		want      []string
+		wantErr   bool
+	}{
+		{
+			name: "ok, 1 network",
+			mocker: func(t *testing.T, container string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container).
+					Return(types.ContainerJSON{
+						NetworkSettings: &types.NetworkSettings{
+							Networks: map[string]*network.EndpointSettings{
+								"eigen": {
+									IPAddress: "127.0.0.1",
+								},
+							},
+						},
+					}, nil)
+				return dockerClient
+			},
+			container: "container-Id1",
+			want:      []string{"eigen"},
+			wantErr:   false,
+		},
+		{
+			name: "ok, 2 networks",
+			mocker: func(t *testing.T, container string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container).
+					Return(types.ContainerJSON{
+						NetworkSettings: &types.NetworkSettings{
+							Networks: map[string]*network.EndpointSettings{
+								"eigen": {
+									IPAddress: "168.0.0.1",
+								},
+								"eigen2": {
+									IPAddress: "168.0.0.2",
+								},
+							},
+						},
+					}, nil)
+				return dockerClient
+			},
+			container: "container-Id2",
+			want:      []string{"eigen", "eigen2"},
+			wantErr:   false,
+		},
+		{
+			name: "empty networks",
+			mocker: func(t *testing.T, container string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container).
+					Return(types.ContainerJSON{
+						NetworkSettings: &types.NetworkSettings{
+							Networks: map[string]*network.EndpointSettings{},
+						},
+					}, nil)
+				return dockerClient
+			},
+			container: "container-Id3",
+			wantErr:   true,
+		},
+		{
+			name: "error inspecting container",
+			mocker: func(t *testing.T, container string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					ContainerInspect(context.Background(), container).
+					Return(types.ContainerJSON{}, errors.New("error inspecting container"))
+				return dockerClient
+			},
+			container: "container-Id4",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dockerClient := tt.mocker(t, tt.container)
+			dockerManager := NewDockerManager(dockerClient)
+			got, err := dockerManager.ContainerNetworks(tt.container)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error not returned")
+			} else {
+				assert.NoError(t, err, "Unexpected error returned")
+			}
+			assert.Equal(t, tt.want, got, "Expected container networks does not match with networks obtained.")
+		})
+	}
+}
+
+func TestNetworkConnect(t *testing.T) {
+	tests := []struct {
+		name      string
+		mocker    func(t *testing.T, container, network string) *mocks.MockAPIClient
+		container string
+		network   string
+		wantErr   bool
+	}{
+		{
+			name: "ok",
+			mocker: func(t *testing.T, container, network string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					NetworkConnect(context.Background(), network, container, nil).
+					Return(nil)
+				return dockerClient
+			},
+			container: "container-Id1",
+			network:   "eigen",
+		},
+		{
+			name: "error connecting container to network",
+			mocker: func(t *testing.T, container, network string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					NetworkConnect(context.Background(), network, container, nil).
+					Return(errors.New("error connecting container to network"))
+				return dockerClient
+			},
+			container: "container-Id2",
+			network:   "eigen",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dockerClient := tt.mocker(t, tt.container, tt.network)
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.NetworkConnect(tt.container, tt.network)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error not returned")
+			} else {
+				assert.NoError(t, err, "Unexpected error returned")
+			}
+		})
+	}
+}
+
+func TestNetworkDisconnect(t *testing.T) {
+	tests := []struct {
+		name      string
+		mocker    func(t *testing.T, container, network string) *mocks.MockAPIClient
+		container string
+		network   string
+		wantErr   bool
+	}{
+		{
+			name: "ok",
+			mocker: func(t *testing.T, container, network string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					NetworkDisconnect(context.Background(), network, container, false).
+					Return(nil)
+				return dockerClient
+			},
+			container: "container-Id1",
+			network:   "eigen",
+		},
+		{
+			name: "error disconnecting container from network",
+			mocker: func(t *testing.T, container, network string) *mocks.MockAPIClient {
+				ctrl := gomock.NewController(t)
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				dockerClient.EXPECT().
+					NetworkDisconnect(context.Background(), network, container, false).
+					Return(errors.New("error disconnecting container from network"))
+				return dockerClient
+			},
+			container: "container-Id2",
+			network:   "eigen",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dockerClient := tt.mocker(t, tt.container, tt.network)
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.NetworkDisconnect(tt.container, tt.network)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error not returned")
+			} else {
+				assert.NoError(t, err, "Unexpected error returned")
+			}
+		})
+	}
+}

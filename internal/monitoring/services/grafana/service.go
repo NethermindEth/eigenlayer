@@ -3,6 +3,9 @@ package grafana
 import (
 	"embed"
 	"fmt"
+	"io"
+	"io/fs"
+	"path/filepath"
 	"text/template"
 
 	datadir "github.com/NethermindEth/egn/internal/data"
@@ -12,6 +15,9 @@ import (
 
 //go:embed config
 var config embed.FS
+
+//go:embed dashboards
+var dashboards embed.FS
 
 // Verify that GrafanaService implements the ServiceAPI interface.
 var _ monitoring.ServiceAPI = &GrafanaService{}
@@ -67,12 +73,12 @@ func (g *GrafanaService) Setup(options map[string]string) error {
 	}
 
 	// Create config directory
-	if err = g.stack.CreateDir("grafana/provisioning/datasources"); err != nil {
+	grafProvPath := filepath.Join("grafana", "provisioning")
+	if err = g.stack.CreateDir(filepath.Join(grafProvPath, "datasources")); err != nil {
 		return err
 	}
-
 	// Create config file
-	configFile, err := g.stack.Create("grafana/provisioning/datasources/prom.yml")
+	configFile, err := g.stack.Create(filepath.Join(grafProvPath, "datasources", "prom.yml"))
 	if err != nil {
 		return err
 	}
@@ -89,5 +95,62 @@ func (g *GrafanaService) Setup(options map[string]string) error {
 		return err
 	}
 
+	// Create provisioning dashboards folder
+	if err = g.stack.CreateDir(filepath.Join(grafProvPath, "dashboards")); err != nil {
+		return err
+	}
+	// Create dashboards provisioning file
+	dashboardsFile, err := g.stack.Create(filepath.Join(grafProvPath, "dashboards", "dashboards.yml"))
+	if err != nil {
+		return err
+	}
+	defer dashboardsFile.Close()
+	dbs, err := config.ReadFile("config/dashboards.yml")
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrConfigNotFound, err)
+	}
+	if _, err = dashboardsFile.Write(dbs); err != nil {
+		return err
+	}
+
+	// Copy dashboards
+	if err = g.copyDashboards(filepath.Join("grafana", "data")); err != nil {
+		return err
+	}
+
 	return nil
 }
+
+// copyDashboards copy dashboards to $DATA_DIR/dashboards
+func (g *GrafanaService) copyDashboards(dst string) (err error) {
+	return fs.WalkDir(dashboards, "dashboards", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			dashboard, err := dashboards.Open(path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				cerr := dashboard.Close()
+				if err == nil {
+					err = cerr
+				}
+			}()
+			data, err := io.ReadAll(dashboard)
+			if err != nil {
+				return err
+			}
+			if err = g.stack.WriteFile(filepath.Join(dst, path), data); err != nil {
+				return err
+			}
+		} else {
+			if err = g.stack.CreateDir(filepath.Join(dst, path)); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+

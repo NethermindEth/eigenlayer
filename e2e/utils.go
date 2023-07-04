@@ -1,9 +1,13 @@
 package e2e
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/docker/docker/client"
+	"github.com/stretchr/testify/assert"
 )
 
 func dataDirPath(t *testing.T) string {
@@ -18,4 +22,53 @@ func dataDirPath(t *testing.T) string {
 	}
 	dataDir := filepath.Join(userDataHome, ".eigen")
 	return dataDir
+}
+
+func checkMonitoringStack(t *testing.T) {
+	// Check monitoring folder exists
+	monitoringDir := filepath.Join(dataDirPath(t), "monitoring")
+	assert.DirExists(t, monitoringDir)
+
+	// Check monitoring docker-compose file exists
+	assert.FileExists(t, filepath.Join(monitoringDir, "docker-compose.yml"))
+
+	// Docker client
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dockerClient.Close()
+
+	// Check grafana container is running
+	grafanaContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_grafana")
+	assert.NoError(t, err)
+	assert.True(t, grafanaContainer.State.Running, "grafana container is not running")
+
+	// Check prometheus container is running
+	prometheusContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_prometheus")
+	assert.NoError(t, err)
+	assert.True(t, prometheusContainer.State.Running, "prometheus container is not running")
+
+	// Check node-exporter container is running
+	nodeExporterContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_node_exporter")
+	assert.NoError(t, err)
+	assert.True(t, nodeExporterContainer.State.Running, "node-exporter container is not running")
+
+	// TODO: request grafana API and check the connection is working https://grafana.com/docs/grafana/latest/developers/http_api/other/
+}
+
+type Target struct {
+	Labels Labels `json:"labels"`
+	Health string `json:"health"`
+}
+
+type Labels map[string]string
+
+type Data struct {
+	ActiveTargets []Target `json:"activeTargets"`
+}
+
+type PrometheusTargetsResponse struct {
+	Status string `json:"status"`
+	Data   Data   `json:"data"`
 }

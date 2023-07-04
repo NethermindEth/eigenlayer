@@ -1,13 +1,17 @@
 package e2e
 
 import (
-	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
-	"github.com/docker/docker/client"
+	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,32 +28,38 @@ func TestMonitoringStack_Init(t *testing.T) {
 	err = cmd.Run()
 	assert.NoError(t, err)
 
-	// Check monitoring folder exists
-	monitoringDir := filepath.Join(dataDirPath(t), "monitoring")
-	assert.DirExists(t, monitoringDir)
+	checkMonitoringStack(t)
 
-	// Check monitoring docker-compose file exists
-	assert.FileExists(t, filepath.Join(monitoringDir, "docker-compose.yml"))
+	// Wait for monitoring stack to be ready
+	time.Sleep(15 * time.Second)
 
-	// Docker client
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		t.Fatal(err)
+	// Check prometheus
+	response, err := http.Get("http://localhost:9090/api/v1/targets")
+	assert.NoError(t, err)
+	assert.Equal(t, 200, response.StatusCode)
+	var r PrometheusTargetsResponse
+	body, err := io.ReadAll(response.Body)
+	assert.NoError(t, err)
+	err = json.Unmarshal(body, &r)
+	assert.NoError(t, err)
+	// Check number of targets
+	assert.Len(t, r.Data.ActiveTargets, 1)
+	// Check success
+	assert.Equal(t, "success", r.Status)
+	// Check node exporter target
+	assert.Contains(t, r.Data.ActiveTargets[0].Labels, "instance")
+	assert.Equal(t, "egn_node_exporter:9100", r.Data.ActiveTargets[0].Labels["instance"])
+	// Check all targets are up
+	for i := 0; i < len(r.Data.ActiveTargets); i++ {
+		assert.Equal(t, "up", r.Data.ActiveTargets[i].Health)
 	}
-	defer dockerClient.Close()
 
-	// Check grafana container is running
-	grafanaContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_grafana")
+	// Check grafana
+	gClient, err := gapi.New("http://localhost:3000", gapi.Config{
+		BasicAuth: url.UserPassword("admin", "admin"),
+	})
 	assert.NoError(t, err)
-	assert.True(t, grafanaContainer.State.Running, "grafana container is not running")
-
-	// Check prometheus container is running
-	prometheusContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_prometheus")
+	healthResponse, err := gClient.Health()
 	assert.NoError(t, err)
-	assert.True(t, prometheusContainer.State.Running, "prometheus container is not running")
-
-	// Check node-exporter container is running
-	nodeExporterContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_node_exporter")
-	assert.NoError(t, err)
-	assert.True(t, nodeExporterContainer.State.Running, "node-exporter container is not running")
+	assert.Equal(t, "ok", healthResponse.Database)
 }

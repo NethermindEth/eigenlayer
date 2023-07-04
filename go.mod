@@ -6,12 +6,14 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/gofrs/flock v0.8.1
+	github.com/grafana/grafana-api-golang-client v0.23.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 )
 
 require (
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 )
@@ -51,7 +53,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect

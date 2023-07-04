@@ -220,3 +220,33 @@ func (d *DockerManager) ContainerIP(container string) (string, error) {
 	}
 	return ipAddress, nil
 }
+
+// ContainerNetworks returns the networks of the specified container
+func (d *DockerManager) ContainerNetworks(container string) ([]string, error) {
+	log.Debugf("Getting container's networks: %s", container)
+	ctInfo, err := d.dockerClient.ContainerInspect(context.Background(), container)
+	if err != nil {
+		return nil, err
+	}
+	networks := ctInfo.NetworkSettings.Networks
+	if len(networks) == 0 {
+		return nil, fmt.Errorf("%w: in %s", ErrNetworksNotFound, container)
+	}
+	var networkNames []string
+	for network := range networks {
+		networkNames = append(networkNames, network)
+	}
+	return networkNames, nil
+}
+
+// NetworkConnect connects a container to a network
+func (d *DockerManager) NetworkConnect(container, network string) error {
+	log.Debugf("Connecting container %s to network %s", container, network)
+	return d.dockerClient.NetworkConnect(context.Background(), network, container, nil)
+}
+
+// NetworkDisconnect disconnects a container from a network
+func (d *DockerManager) NetworkDisconnect(container, network string) error {
+	log.Debugf("Disconnecting container %s from network %s", container, network)
+	return d.dockerClient.NetworkDisconnect(context.Background(), network, container, false)
+}

@@ -3,10 +3,12 @@ package daemon
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 
 	"github.com/NethermindEth/egn/internal/common"
 	"github.com/NethermindEth/egn/internal/compose"
@@ -25,6 +27,7 @@ var _ = Daemon(&WizDaemon{})
 type WizDaemon struct {
 	dataDir       *data.DataDir
 	dockerCompose ComposeManager
+	docker        DockerManager
 	monitoringMgr MonitoringManager
 	fs            afero.Fs
 	locker        locker.Locker
@@ -33,6 +36,7 @@ type WizDaemon struct {
 // NewDaemon create a new daemon instance.
 func NewWizDaemon(
 	cmpMgr ComposeManager,
+	dockerMgr DockerManager,
 	mtrMgr MonitoringManager,
 	fs afero.Fs,
 	locker locker.Locker,
@@ -44,6 +48,7 @@ func NewWizDaemon(
 	return &WizDaemon{
 		dataDir:       dataDir,
 		dockerCompose: cmpMgr,
+		docker:        dockerMgr,
 		monitoringMgr: mtrMgr,
 		fs:            fs,
 		locker:        locker,
@@ -61,8 +66,8 @@ func (d *WizDaemon) Init() error {
 	log.Infof("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is not installed, install it.
 	if installStatus == common.NotInstalled {
-		err = d.monitoringMgr.InitStack()
-		if errors.Is(err, monitoring.ErrInitializingMonitoringMngr) {
+		err = d.monitoringMgr.InstallStack()
+		if errors.Is(err, monitoring.ErrInstallingMonitoringMngr) {
 			// If the monitoring stack installation fails, remove the monitoring stack directory.
 			if cerr := d.monitoringMgr.Cleanup(true); cerr != nil {
 				return fmt.Errorf("install failed: %w. Failed to cleanup monitoring stack after installation failure: %w", err, cerr)
@@ -72,6 +77,10 @@ func (d *WizDaemon) Init() error {
 			return err
 		}
 		return nil
+	} else {
+		if err := d.monitoringMgr.Init(); err != nil {
+			return err
+		}
 	}
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()
@@ -164,37 +173,57 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 
 // Install implements Daemon.Install.
 func (d *WizDaemon) Install(options InstallOptions) (string, error) {
+	instanceId, tempDirID, err := d.install(options)
+	if err != nil && instanceId != "" {
+		// Cleanup if Install fails
+		if cerr := d.uninstall(instanceId, false); cerr != nil {
+			err = fmt.Errorf("install failed: %w. Failed to cleanup after installation failure: %w", err, cerr)
+		}
+	}
+
+	// Cleanup temp folder
+	if rerr := d.dataDir.RemoveTempDir(tempDirID); rerr != nil {
+		if err != nil {
+			err = fmt.Errorf("install failed: %w. Failed to cleanup temporary folder after installation failure: %w", err, rerr)
+		} else {
+			err = fmt.Errorf("install failed. Failed to cleanup temporary folder after installation failure: %w", rerr)
+		}
+	}
+	return instanceId, err
+}
+
+func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 	// Get pulled package directory from temp
 	tID := tempID(options.URL)
 	tempPath, err := d.dataDir.TempPath(tID)
 	if err != nil {
-		return "", err
+		return "", tID, err
 	}
 
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {
-		return "", err
+		return "", tID, err
 	}
 	instanceId := data.InstanceId(instanceName, options.Tag)
 
 	// Check if instance already exists
 	if d.dataDir.HasInstance(instanceId) {
-		return "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
+		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
 
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
 	// Check if selected version is valid
 	if err := pkgHandler.HasVersion(options.Version); err != nil {
-		return "", err
+		return "", tID, err
 	}
 	if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
-		return "", err
+		return "", tID, err
 	}
 
 	pkgProfiles, err := pkgHandler.Profiles()
 	if err != nil {
-		return "", err
+		return "", tID, err
 	}
 	var selectedProfile *package_handler.Profile
 	// Check if selected profile is valid
@@ -205,7 +234,7 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 		}
 	}
 	if selectedProfile == nil {
-		return "", fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
+		return "", tID, fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
 	}
 
 	// Install package
@@ -213,22 +242,60 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 	for _, o := range options.Options {
 		env[o.Target()] = o.Value()
 	}
+	// Get monitoring targets
+	monitoringTargets := make([]data.MonitoringTarget, 0)
+	for _, target := range selectedProfile.Monitoring.Targets {
+		mt := data.MonitoringTarget{
+			Service: target.Service,
+			Port:    strconv.Itoa(target.Port),
+			Path:    target.Path,
+		}
+		monitoringTargets = append(monitoringTargets, mt)
+	}
+
 	instance := data.Instance{
-		Name:    instanceName,
-		Profile: selectedProfile.Name,
-		Version: options.Version,
-		URL:     options.URL,
-		Tag:     options.Tag,
+		Name:              instanceName,
+		Profile:           selectedProfile.Name,
+		Version:           options.Version,
+		URL:               options.URL,
+		Tag:               options.Tag,
+		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},
 	}
-	err = d.dataDir.InitInstance(&instance)
-	if err != nil {
-		return "", err
+	if err = d.dataDir.InitInstance(&instance); err != nil {
+		return instanceId, tID, err
 	}
+
+	if err = instance.Setup(env, pkgHandler.ProfileFS(instance.Profile)); err != nil {
+		return instanceId, tID, err
+	}
+
+	// Create containers
+	// TODO: Log Create output and log to wait as containers might be built
+	if err = d.dockerCompose.Create(compose.DockerComposeCreateOptions{
+		Path:  instance.ComposePath(),
+		Build: true,
+	}); err != nil {
+		return instanceId, tID, err
+	}
+
+	// Start containers
+	if err = d.dockerCompose.Up(compose.DockerComposeUpOptions{
+		Path: instance.ComposePath(),
+	}); err != nil {
+		return instanceId, tID, err
+	}
+
 	return instanceId, instance.Setup(env, pkgHandler.ProfileFS(instance.Profile))
+	return instanceId, tID, nil
 }
 
 // Run implements Daemon.Run.
 func (d *WizDaemon) Run(instanceID string) error {
+	// Add target just in case
+	if err := d.addTarget(instanceID); err != nil {
+		return err
+	}
+
 	instancePath, err := d.dataDir.InstancePath(instanceID)
 	if err != nil {
 		return err
@@ -253,6 +320,10 @@ func (d *WizDaemon) Stop(instanceID string) error {
 
 // Uninstall implements Daemon.Uninstall.
 func (d *WizDaemon) Uninstall(instanceID string) error {
+	return d.uninstall(instanceID, true)
+}
+
+func (d *WizDaemon) uninstall(instanceID string, down bool) error {
 	instancePath, err := d.dataDir.InstancePath(instanceID)
 	if err != nil {
 		return err
@@ -265,9 +336,22 @@ func (d *WizDaemon) Uninstall(instanceID string) error {
 	if err != nil {
 		return err
 	}
+	if down {
+		instancePath, err := d.dataDir.InstancePath(instanceID)
+		if err != nil {
+			return err
+		}
+		composePath := path.Join(instancePath, "docker-compose.yml")
+		// docker compose down
+		if err = d.dockerCompose.Down(compose.DockerComposeDownOptions{
+			Path: composePath,
+		}); err != nil {
+			return err
+		}
+	}
+
 	// remove instance directory
 	return d.dataDir.RemoveInstance(instanceID)
-	// TODO: remove from monitoring
 }
 
 func instanceNameFromURL(u string) (string, error) {
@@ -281,4 +365,38 @@ func instanceNameFromURL(u string) (string, error) {
 func tempID(url string) string {
 	tempHash := sha256.Sum256([]byte(url))
 	return hex.EncodeToString(tempHash[:])
+}
+
+type psServiceJSON struct {
+	ID      string `json:"ID"`
+	Service string `json:"Service"`
+}
+
+func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePath string) (map[string]string, error) {
+	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		Path:   composePath,
+		Format: "json",
+		All:    true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal docker-compose ps output
+	var psServices []psServiceJSON
+	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
+		return nil, err
+	}
+
+	// Get containerID of monitoring targets
+	monitoringTargets := make(map[string]string)
+	for _, serviceName := range serviceNames {
+		for _, psService := range psServices {
+			if psService.Service == serviceName {
+				monitoringTargets[serviceName] = psService.ID
+			}
+		}
+	}
+
+	return monitoringTargets, nil
 }

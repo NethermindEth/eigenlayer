@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/NethermindEth/egn/internal/monitoring/services/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	funk "github.com/thoas/go-funk"
 )
 
 //go:embed script
@@ -54,33 +56,21 @@ func NewMonitoringManager(
 	}
 }
 
-// InitStack initializes the monitoring stack by merging all environment variables, checking ports, setting up the stack and services, and creating containers.
-func (m *MonitoringManager) InitStack() error {
-	// Merge all dotEnv
-	dotEnv := make(map[string]string)
-	defaultPorts := make(map[string]uint16)
-	for _, service := range m.services {
-		for k, v := range service.DotEnv() {
-			dotEnv[k] = v
-			// Grab default ports
-			if strings.HasSuffix(k, "_PORT") {
-				// Cast string to uint16
-				p, err := strconv.ParseUint(v, 10, 16)
-				if err != nil {
-					return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
-				}
-				defaultPorts[k] = uint16(p)
-			}
-		}
-	}
-
-	// Check ports
-	ports, err := assignPorts("localhost", defaultPorts)
+// Init initializes the monitoring stack. Assumes that the stack is already installed.
+func (m *MonitoringManager) Init() error {
+	// Read installed .env
+	rawDotEnv, err := m.stack.ReadFile(filepath.Join(".env"))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 	}
-	for k, v := range ports {
-		dotEnv[k] = strconv.Itoa(int(v))
+
+	dotEnv := make(map[string]string)
+	for _, line := range bytes.Split(rawDotEnv, []byte("\n")) {
+		split := bytes.Split(line, []byte("="))
+		if len(split) != 2 {
+			continue
+		}
+		dotEnv[string(split[0])] = string(split[1])
 	}
 
 	// Intialize stack
@@ -92,26 +82,97 @@ func (m *MonitoringManager) InitStack() error {
 			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 		}
 	}
+
+	// Get containerID of monitoring targets
+	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
+		return service.ContainerName()
+	}).([]string)
+	for _, name := range containerNames {
+		ip, err := m.idToIP(name)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+		}
+		for _, service := range m.services {
+			service.SetContainerIP(ip, name)
+		}
+	}
+
+	return nil
+}
+
+// InitStack initializes the monitoring stack by merging all environment variables, checking ports, setting up the stack and services, and creating containers.
+func (m *MonitoringManager) InstallStack() error {
+	// Merge all dotEnv
+	dotEnv := make(map[string]string)
+	defaultPorts := make(map[string]uint16)
+	for _, service := range m.services {
+		for k, v := range service.DotEnv() {
+			dotEnv[k] = v
+			// Grab default ports
+			if strings.HasSuffix(k, "_PORT") {
+				// Cast string to uint16
+				p, err := strconv.ParseUint(v, 10, 16)
+				if err != nil {
+					return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
+				}
+				defaultPorts[k] = uint16(p)
+			}
+		}
+	}
+
+	// Check ports
+	ports, err := assignPorts("localhost", defaultPorts)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
+	}
+	for k, v := range ports {
+		dotEnv[k] = strconv.Itoa(int(v))
+	}
+
+	// Intialize stack
+	for _, service := range m.services {
+		if err := service.Init(types.ServiceOptions{
+			Stack:  m.stack,
+			Dotenv: dotEnv,
+		}); err != nil {
+			return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
+		}
+	}
+
 	if err = m.stack.Setup(dotEnv, script); err != nil {
-		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+		return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
 	}
 
 	// Setup services
 	log.Info("Setting up monitoring stack...")
 	for _, service := range m.services {
 		if err = service.Setup(dotEnv); err != nil {
-			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+			return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
 		}
 	}
 
 	// Create containers
 	if err = m.composeManager.Create(compose.DockerComposeCreateOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
-		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+		return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
 	}
 
 	log.Info("Starting monitoring stack...")
 	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
+	}
+
+	// Save container IPs of monitoring services
+	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
+		return service.ContainerName()
+	}).([]string)
+	for _, name := range containerNames {
+		ip, err := m.idToIP(name)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrConfiguringMonitoringServices, err)
+		}
+		for _, service := range m.services {
+			service.SetContainerIP(ip, name)
+		}
 	}
 
 	return nil
@@ -147,6 +208,20 @@ func (m *MonitoringManager) Run() error {
 	log.Info("Starting monitoring stack...")
 	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
+	}
+
+	// Save container IPs of monitoring services
+	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
+		return service.ContainerName()
+	}).([]string)
+	for _, name := range containerNames {
+		ip, err := m.idToIP(name)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrConfiguringMonitoringServices, err)
+		}
+		for _, service := range m.services {
+			service.SetContainerIP(ip, name)
+		}
 	}
 
 	return nil
@@ -213,4 +288,17 @@ func (m *MonitoringManager) Cleanup(force bool) error {
 	}
 
 	return nil
+}
+
+type psServiceJSON struct {
+	ID   string `json:"ID"`
+	Name string `json:"Name"`
+}
+
+func (m *MonitoringManager) idToIP(id string) (string, error) {
+	ip, err := m.dockerManager.ContainerIP(id)
+	if err != nil {
+		return "", err
+	}
+	return ip, nil
 }

@@ -154,3 +154,9 @@ func (g *GrafanaService) copyDashboards(dst string) (err error) {
 	})
 }
 
+func (g *GrafanaService) SetContainerIP(ip, containerName string) {
+}
+
+func (g *GrafanaService) ContainerName() string {
+	return monitoring.GrafanaContainerName
+}

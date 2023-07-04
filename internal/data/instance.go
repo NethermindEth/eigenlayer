@@ -20,14 +20,25 @@ func InstanceId(name, tag string) string {
 
 // Instance represents the data stored about a node software instance
 type Instance struct {
-	Name    string `json:"name"`
-	URL     string `json:"url"`
-	Version string `json:"version"`
-	Profile string `json:"profile"`
-	Tag     string `json:"tag"`
-	path    string
-	fs      afero.Fs
-	locker  locker.Locker
+	Name              string            `json:"name"`
+	URL               string            `json:"url"`
+	Version           string            `json:"version"`
+	Profile           string            `json:"profile"`
+	Tag               string            `json:"tag"`
+	MonitoringTargets MonitoringTargets `json:"monitoring"`
+	path              string
+	fs                afero.Fs
+	locker            locker.Locker
+}
+
+type MonitoringTargets struct {
+	Targets []MonitoringTarget `json:"targets"`
+}
+
+type MonitoringTarget struct {
+	Service string `json:"service"`
+	Port    string `json:"port"`
+	Path    string `json:"path"`
 }
 
 // newInstance creates a new instance with the given path as root. It loads the

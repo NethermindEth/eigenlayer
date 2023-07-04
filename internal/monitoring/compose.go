@@ -12,4 +12,7 @@ type ComposeManager interface {
 
 	// Create creates the Docker Compose services defined in the Docker Compose file specified in the options, but does not start them.
 	Create(opts compose.DockerComposeCreateOptions) error
+
+	// PS lists the Docker Compose services defined in the Docker Compose file specified in the options.
+	PS(opts compose.DockerComposePsOptions) (string, error)
 }

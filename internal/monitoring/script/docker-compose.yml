@@ -9,6 +9,7 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
       - ${GRAFANA_PROV}:/etc/grafana/provisioning
+      - ${GRAFANA_DATA}:/etc/grafana/data
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     networks:

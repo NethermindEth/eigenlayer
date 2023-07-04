@@ -45,8 +45,7 @@ func TestInit(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, stack, prometheus.stack)
-	want := fmt.Sprintf("http://%s:9090", monitoring.PrometheusServiceName)
-	assert.Equal(t, want, prometheus.endpoint)
+	assert.Equal(t, "9090", prometheus.port)
 }
 
 func TestInitError(t *testing.T) {
@@ -777,6 +776,55 @@ func TestRemoveTarget(t *testing.T) {
 
 			// Check the Prometheus targets
 			assert.Equal(t, tt.targets, prom.ScrapeConfigs[0].StaticConfigs[0].Targets)
+		})
+	}
+}
+
+func TestContainerIP(t *testing.T) {
+	tests := []struct {
+		name          string
+		ip            string
+		containerName string
+		want          string
+	}{
+		{
+			name:          "Prometheus container name",
+			ip:            "127.0.0.1",
+			containerName: monitoring.PrometheusContainerName,
+			want:          "127.0.0.1",
+		},
+		{
+			name:          "Not Prometheus container name",
+			ip:            "168.0.16.1",
+			containerName: "not-prometheus",
+			want:          "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prometheus := NewPrometheus()
+			prometheus.SetContainerIP(tt.ip, tt.containerName)
+			assert.Equal(t, tt.want, prometheus.containerIP)
+		})
+	}
+}
+
+func TestContainerName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "Prometheus container name",
+			want: monitoring.PrometheusContainerName,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prometheus := NewPrometheus()
+			assert.Equal(t, tt.want, prometheus.ContainerName())
 		})
 	}
 }

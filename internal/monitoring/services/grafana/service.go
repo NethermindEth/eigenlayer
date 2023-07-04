@@ -38,7 +38,7 @@ func (g *GrafanaService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (g *GrafanaService) AddTarget(endpoint string) error {
+func (g *GrafanaService) AddTarget(endpoint, instanceID string) error {
 	return nil
 }
 

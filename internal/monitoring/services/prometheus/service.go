@@ -35,7 +35,8 @@ type ScrapeConfig struct {
 
 // StaticConfig represents the static configuration for a Prometheus scrape job.
 type StaticConfig struct {
-	Targets []string `yaml:"targets"`
+	Targets []string          `yaml:"targets"`
+	Labels  map[string]string `yaml:"labels,omitempty"`
 }
 
 // Verify that PrometheusService implements the ServiceAPI interface.
@@ -70,7 +71,7 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 
 // AddTarget adds a new target to the Prometheus config and reloads the Prometheus configuration.
 // Assumes endpoint is in the form http://<ip/domain>:<port>
-func (p *PrometheusService) AddTarget(endpoint string) error {
+func (p *PrometheusService) AddTarget(endpoint, instanceID string) error {
 	path := filepath.Join("prometheus", "prometheus.yml")
 	// Read the existing config
 	rawConfig, err := p.stack.ReadFile(path)
@@ -84,16 +85,26 @@ func (p *PrometheusService) AddTarget(endpoint string) error {
 		return err
 	}
 
-	// Add the new endpoint to the targets of the first scrape config
+	// Add a new job for the new endpoint
 	endpoint = strings.TrimPrefix(endpoint, "http://")
-	// Check if the endpoint is already in the targets
-	for _, target := range config.ScrapeConfigs[0].StaticConfigs[0].Targets {
-		if target == endpoint {
-			// There is no need to add the endpoint if it is already in the targets
+	// Check if the job already exists
+	for _, job := range config.ScrapeConfigs {
+		if job.JobName == endpoint {
+			// There is no need to add the job if it already exists
 			return nil
 		}
 	}
-	config.ScrapeConfigs[0].StaticConfigs[0].Targets = append(config.ScrapeConfigs[0].StaticConfigs[0].Targets, endpoint)
+
+	job := ScrapeConfig{
+		JobName: endpoint,
+		StaticConfigs: []StaticConfig{
+			{
+				Targets: []string{endpoint},
+				Labels:  map[string]string{"instanceID": instanceID},
+			},
+		},
+	}
+	config.ScrapeConfigs = append(config.ScrapeConfigs, job)
 
 	// Marshal the updated config back to YAML
 	newConfig, err := yaml.Marshal(&config)
@@ -130,18 +141,18 @@ func (p *PrometheusService) RemoveTarget(endpoint string) error {
 		return err
 	}
 
-	// Remove the endpoint from the targets of the first scrape config
-	prevLen := len(config.ScrapeConfigs[0].StaticConfigs[0].Targets)
+	// Remove the endpoint from the jobs
+	prevLen := len(config.ScrapeConfigs)
 	endpoint = strings.TrimPrefix(endpoint, "http://")
-	for i, target := range config.ScrapeConfigs[0].StaticConfigs[0].Targets {
-		if target == endpoint {
-			config.ScrapeConfigs[0].StaticConfigs[0].Targets = append(config.ScrapeConfigs[0].StaticConfigs[0].Targets[:i], config.ScrapeConfigs[0].StaticConfigs[0].Targets[i+1:]...)
+	for i, job := range config.ScrapeConfigs {
+		if job.JobName == endpoint {
+			config.ScrapeConfigs = append(config.ScrapeConfigs[:i], config.ScrapeConfigs[i+1:]...)
 			break
 		}
 	}
 
 	// Check if the endpoint was removed
-	if len(config.ScrapeConfigs[0].StaticConfigs[0].Targets) == prevLen {
+	if len(config.ScrapeConfigs) == prevLen {
 		// The endpoint was not removed because it was not in the targets
 		return fmt.Errorf("%w: %s", ErrNonexistingEndpoint, endpoint)
 	}
@@ -193,7 +204,17 @@ func (p *PrometheusService) Setup(options map[string]string) error {
 	}
 
 	// Add node exporter target
-	config.ScrapeConfigs[0].StaticConfigs[0].Targets = append(config.ScrapeConfigs[0].StaticConfigs[0].Targets, fmt.Sprintf("%s:%s", monitoring.NodeExporterContainerName, options["NODE_EXPORTER_PORT"]))
+	endpoint := fmt.Sprintf("%s:%s", monitoring.NodeExporterContainerName, options["NODE_EXPORTER_PORT"])
+	config.ScrapeConfigs = []ScrapeConfig{
+		{
+			JobName: endpoint,
+			StaticConfigs: []StaticConfig{
+				{
+					Targets: []string{endpoint},
+				},
+			},
+		},
+	}
 
 	// Marshal the updated config back to YAML
 	newConfig, err := yaml.Marshal(&config)

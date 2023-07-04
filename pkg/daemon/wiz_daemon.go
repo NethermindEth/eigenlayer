@@ -285,7 +285,10 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return instanceId, tID, err
 	}
 
-	return instanceId, instance.Setup(env, pkgHandler.ProfileFS(instance.Profile))
+	if err = d.addTarget(instanceId); err != nil {
+		return instanceId, tID, err
+	}
+
 	return instanceId, tID, nil
 }
 
@@ -324,18 +327,10 @@ func (d *WizDaemon) Uninstall(instanceID string) error {
 }
 
 func (d *WizDaemon) uninstall(instanceID string, down bool) error {
-	instancePath, err := d.dataDir.InstancePath(instanceID)
-	if err != nil {
+	if err := d.removeTarget(instanceID); err != nil {
 		return err
 	}
-	composePath := path.Join(instancePath, "docker-compose.yml")
-	// docker compose down
-	err = d.dockerCompose.Down(compose.DockerComposeDownOptions{
-		Path: composePath,
-	})
-	if err != nil {
-		return err
-	}
+
 	if down {
 		instancePath, err := d.dataDir.InstancePath(instanceID)
 		if err != nil {
@@ -399,4 +394,78 @@ func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 	}
 
 	return monitoringTargets, nil
+}
+
+func (d *WizDaemon) idToEndpoint(id, path, port string) (string, error) {
+	ip, err := d.docker.ContainerIP(id)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("http://%s:%s", ip, port), nil
+}
+
+func (d *WizDaemon) addTarget(instanceID string) error {
+	// Get monitoring targets
+	instance, err := d.dataDir.Instance(instanceID)
+	if err != nil {
+		return err
+	}
+	// Get containerID of monitoring targets
+	serviceNames := make([]string, 0)
+	for _, target := range instance.MonitoringTargets.Targets {
+		serviceNames = append(serviceNames, target.Service)
+	}
+	nameToID, err := d.monitoringTargetsEndpoints(serviceNames, instance.ComposePath())
+	if err != nil {
+		return err
+	}
+	// Remove monitoring targets
+	for _, target := range instance.MonitoringTargets.Targets {
+		endpoint, err := d.idToEndpoint(nameToID[target.Service], target.Path, target.Port)
+		if err != nil {
+			return err
+		}
+		networks, err := d.docker.ContainerNetworks(nameToID[target.Service])
+		if err != nil {
+			return err
+		}
+		if err = d.monitoringMgr.AddTarget(endpoint, instanceID, networks[0]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *WizDaemon) removeTarget(instanceID string) error {
+	// Get monitoring targets
+	instance, err := d.dataDir.Instance(instanceID)
+	if err != nil {
+		return err
+	}
+	// Get containerID of monitoring targets
+	serviceNames := make([]string, 0)
+	for _, target := range instance.MonitoringTargets.Targets {
+		serviceNames = append(serviceNames, target.Service)
+	}
+	nameToID, err := d.monitoringTargetsEndpoints(serviceNames, instance.ComposePath())
+	if err != nil {
+		return err
+	}
+	// Remove monitoring targets
+	for _, target := range instance.MonitoringTargets.Targets {
+		endpoint, err := d.idToEndpoint(nameToID[target.Service], target.Path, target.Port)
+		if err != nil {
+			return err
+		}
+		networks, err := d.docker.ContainerNetworks(nameToID[target.Service])
+		if err != nil {
+			return err
+		}
+		if err = d.monitoringMgr.RemoveTarget(endpoint, networks[0]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

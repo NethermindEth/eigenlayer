@@ -179,9 +179,20 @@ func (m *MonitoringManager) InstallStack() error {
 }
 
 // AddTarget adds a new target to all services in the monitoring stack.
-func (m *MonitoringManager) AddTarget(endpoint string) error {
+// It also connects the target to the docker network of the monitoring stack if it isn't already connected.
+func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string) error {
 	for _, service := range m.services {
-		if err := service.AddTarget(endpoint); err != nil {
+		// Check if network was already added to service
+		networks, err := m.dockerManager.ContainerNetworks(service.ContainerName())
+		if err != nil {
+			return err
+		}
+		if !funk.Contains(networks, dockerNetwork) {
+			if err := m.dockerManager.NetworkConnect(service.ContainerName(), dockerNetwork); err != nil {
+				return err
+			}
+		}
+		if err := service.AddTarget(endpoint, instanceID); err != nil {
 			return err
 		}
 	}
@@ -189,8 +200,19 @@ func (m *MonitoringManager) AddTarget(endpoint string) error {
 }
 
 // RemoveTarget removes a target from all services in the monitoring stack.
-func (m *MonitoringManager) RemoveTarget(endpoint string) error {
+// It also disconnects the target from the docker network of the monitoring stack if it isn't already disconnected.
+func (m *MonitoringManager) RemoveTarget(endpoint, dockerNetwork string) error {
 	for _, service := range m.services {
+		// Check if network hasn't already been removed from service
+		networks, err := m.dockerManager.ContainerNetworks(service.ContainerName())
+		if err != nil {
+			return err
+		}
+		if funk.Contains(networks, dockerNetwork) {
+			if err := m.dockerManager.NetworkDisconnect(service.ContainerName(), dockerNetwork); err != nil {
+				return err
+			}
+		}
 		if err := service.RemoveTarget(endpoint); err != nil {
 			return err
 		}
@@ -288,11 +310,6 @@ func (m *MonitoringManager) Cleanup(force bool) error {
 	}
 
 	return nil
-}
-
-type psServiceJSON struct {
-	ID   string `json:"ID"`
-	Name string `json:"Name"`
 }
 
 func (m *MonitoringManager) idToIP(id string) (string, error) {

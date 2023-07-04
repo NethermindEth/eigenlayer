@@ -131,6 +131,7 @@ func TestNewInstance(t *testing.T) {
 }
 
 func TestInstance_Init(t *testing.T) {
+	// TODO: Use always the latest version of mock-avs
 	ts := []struct {
 		name      string
 		instance  *Instance
@@ -150,10 +151,19 @@ func TestInstance_Init(t *testing.T) {
 				Name:    "test_name",
 				Tag:     "test_tag",
 				URL:     "https://github.com/NethermindEth/mock-avs",
-				Version: "v2.0.1",
+				Version: "v2.1.0",
 				Profile: "option-returner",
+				MonitoringTargets: MonitoringTargets{
+					Targets: []MonitoringTarget{
+						{
+							Service: "main-service",
+							Port:    "8080",
+							Path:    "/metrics",
+						},
+					},
+				},
 			},
-			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.0.1","profile":"option-returner","tag":"test_tag"}`),
+			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.1.0","profile":"option-returner","tag":"test_tag","monitoring":{"targets":[{"service":"main-service","port":"8080","path":"/metrics"}]}}`),
 			mocker: func(path string, locker *mocks.MockLocker) {
 				locker.EXPECT().New(filepath.Join(path, ".lock")).Return(locker)
 			},

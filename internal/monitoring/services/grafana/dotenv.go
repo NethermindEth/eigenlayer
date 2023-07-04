@@ -6,4 +6,5 @@ var dotEnv map[string]string = map[string]string{
 	"GRAFANA_ADMIN_USER":     "admin",
 	"GRAFANA_ADMIN_PASSWORD": "admin",
 	"GRAFANA_PROV":           "./grafana/provisioning",
+	"GRAFANA_DATA":           "./grafana/data",
 }

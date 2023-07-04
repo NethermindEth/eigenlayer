@@ -192,3 +192,8 @@ func (d *DataDir) RemoveMonitoringStack() error {
 
 	return d.fs.RemoveAll(monitoringStackPath)
 }
+
+// RemoveTempDir removes the temporary directory with the given id.
+func (d *DataDir) RemoveTempDir(id string) error {
+	return d.fs.RemoveAll(filepath.Join(d.path, tempDir, id))
+}

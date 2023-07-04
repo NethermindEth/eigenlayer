@@ -43,8 +43,9 @@ var _ monitoring.ServiceAPI = &PrometheusService{}
 
 // PrometheusService implements the ServiceAPI interface for a Prometheus service.
 type PrometheusService struct {
-	stack    *data.MonitoringStack
-	endpoint string
+	stack       *data.MonitoringStack
+	containerIP string
+	port        string
 }
 
 // NewPrometheus creates a new PrometheusService.
@@ -63,7 +64,7 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 	}
 
 	p.stack = opts.Stack
-	p.endpoint = fmt.Sprintf("http://%s:%s", monitoring.PrometheusServiceName, opts.Dotenv["PROM_PORT"])
+	p.port = opts.Dotenv["PROM_PORT"]
 	return nil
 }
 
@@ -213,9 +214,20 @@ func (p *PrometheusService) Setup(options map[string]string) error {
 	return nil
 }
 
+// SetContainerIP sets the container IP for the Prometheus service.
+func (p *PrometheusService) SetContainerIP(ip, containerName string) {
+	if containerName == monitoring.PrometheusContainerName {
+		p.containerIP = ip
+	}
+}
+
+func (p *PrometheusService) ContainerName() string {
+	return monitoring.PrometheusContainerName
+}
+
 // reloadConfig reloads the Prometheus config by making a POST request to the /-/reload endpoint
 func (p *PrometheusService) reloadConfig() error {
-	resp, err := http.Post(fmt.Sprintf("%s/-/reload", p.endpoint), "", nil)
+	resp, err := http.Post(fmt.Sprintf("http://%s:%s/-/reload", p.containerIP, p.port), "", nil)
 	if err != nil {
 		return err
 	}

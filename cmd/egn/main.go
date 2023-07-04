@@ -57,7 +57,7 @@ func main() {
 	)
 
 	// Initialize daemon
-	daemon, err := daemon.NewWizDaemon(composeManager, monitoringManager, fs, locker)
+	daemon, err := daemon.NewWizDaemon(composeManager, dockerManager, monitoringManager, fs, locker)
 	if err != nil {
 		log.Fatal(err)
 	}

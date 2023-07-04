@@ -19,4 +19,10 @@ type ServiceAPI interface {
 
 	// Init initializes the service with the given ServiceOptions.
 	Init(types.ServiceOptions) error
+
+	// SetContainerIP sets the container IP of the service.
+	SetContainerIP(ip, containerName string)
+
+	// ContainerName returns the name of the service's container.
+	ContainerName() string
 }

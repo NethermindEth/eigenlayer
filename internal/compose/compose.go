@@ -63,6 +63,9 @@ func (cm *ComposeManager) Pull(opts DockerComposePullOptions) error {
 // Create runs the Docker Compose 'create' command for the specified options.
 func (cm *ComposeManager) Create(opts DockerComposeCreateOptions) error {
 	createCmd := fmt.Sprintf("docker compose -f %s create", opts.Path)
+	if opts.Build {
+		createCmd += " --build"
+	}
 	if len(opts.Services) > 0 {
 		createCmd += " " + strings.Join(opts.Services, " ")
 	}
@@ -102,6 +105,12 @@ func (cm *ComposeManager) PS(opts DockerComposePsOptions) (string, error) {
 	}
 	if opts.FilterRunning {
 		psCmd += " --filter status=running"
+	}
+	if opts.Format != "" {
+		psCmd += " --format " + opts.Format
+	}
+	if opts.All {
+		psCmd += " -a"
 	}
 	if opts.ServiceName != "" {
 		psCmd += " " + opts.ServiceName

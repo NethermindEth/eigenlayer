@@ -38,7 +38,27 @@ func (e *e2eTestCase) Cleanup() {
 	if err != nil {
 		e.t.Fatalf("error removing monitoring stack: %v", err)
 	}
-	// Remove data dir
+	// Remove all installed nodes
+	nodesDir, err := os.Open(filepath.Join(dataDir, "nodes"))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			e.t.Fatal(err)
+		}
+	} else {
+		dirEntries, err := nodesDir.ReadDir(-1)
+		if err != nil {
+			e.t.Fatal(err)
+		}
+		for _, entry := range dirEntries {
+			if entry.IsDir() {
+				e.t.Logf("Removing node %s", entry.Name())
+				err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "nodes", entry.Name(), "docker-compose.yml"), "down").Run()
+				if err != nil {
+					e.t.Fatalf("error removing node %s: %v", entry.Name(), err)
+				}
+			}
+		}
+	}
 	err = os.RemoveAll(dataDir)
 	if err != nil {
 		e.t.Fatalf("error removing data dir: %v", err)

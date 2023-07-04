@@ -6,7 +6,8 @@ import "github.com/NethermindEth/egn/internal/monitoring/services/types"
 // adding and removing targets, retrieving environment variables, setting up the service, and initializing the service.
 type ServiceAPI interface {
 	// AddTarget adds a new target to the service's configuration given the endpoint of the new node.
-	AddTarget(endpoint string) error
+	// The instanceID is used to identify the node in the service's configuration.
+	AddTarget(endpoint, instanceID string) error
 
 	// RemoveTarget removes a target from the service's configuration given the endpoint of the node to be removed.
 	RemoveTarget(endpoint string) error

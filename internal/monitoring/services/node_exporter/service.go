@@ -17,7 +17,7 @@ func (n *NodeExporterService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (n *NodeExporterService) AddTarget(endpoint string) error {
+func (n *NodeExporterService) AddTarget(endpoint, instanceID string) error {
 	return nil
 }
 

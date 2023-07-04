@@ -1,18 +1,11 @@
 package e2e
 
 import (
-	"context"
-	"encoding/json"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/docker/docker/client"
-	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,89 +48,76 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 	checkMonitoringStack(t)
 	checkMonitoringInit(t)
 
-	// Docker client
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer dockerClient.Close()
 	var (
 		grafanaContainerID      string
 		prometheusContainerID   string
 		nodeExporterContainerID string
 	)
-	// Check grafana container is running
-	grafanaContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_grafana")
+	grafanaContainerID, err = getContainerIDByName("egn_grafana")
 	assert.NoError(t, err)
-	assert.True(t, grafanaContainer.State.Running, "grafana container is not running")
-	grafanaContainerID = grafanaContainer.ID
-
-	// Check prometheus container is running
-	prometheusContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_prometheus")
+	prometheusContainerID, err = getContainerIDByName("egn_prometheus")
 	assert.NoError(t, err)
-	assert.True(t, prometheusContainer.State.Running, "prometheus container is not running")
-	prometheusContainerID = prometheusContainer.ID
-
-	// Check node-exporter container is running
-	nodeExporterContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_node_exporter")
+	nodeExporterContainerID, err = getContainerIDByName("egn_node_exporter")
 	assert.NoError(t, err)
-	assert.True(t, nodeExporterContainer.State.Running, "node-exporter container is not running")
-	nodeExporterContainerID = nodeExporterContainer.ID
 
-	// Run egn command again
 	err = runCommand(t, e2eTest.EgnPath(), "--help")
-	assert.NoError(t, err)
-
-	// Check grafana container is running
-	grafanaContainer, err = dockerClient.ContainerInspect(context.Background(), "egn_grafana")
-	assert.NoError(t, err)
-	assert.True(t, grafanaContainer.State.Running, "grafana container is not running")
-	assert.Equal(t, grafanaContainerID, grafanaContainer.ID, "grafana container ID has changed")
-
-	// Check prometheus container is running
-	prometheusContainer, err = dockerClient.ContainerInspect(context.Background(), "egn_prometheus")
-	assert.NoError(t, err)
-	assert.True(t, prometheusContainer.State.Running, "prometheus container is not running")
-	assert.Equal(t, prometheusContainerID, prometheusContainer.ID, "prometheus container ID has changed")
-
-	// Check node-exporter container is running
-	nodeExporterContainer, err = dockerClient.ContainerInspect(context.Background(), "egn_node_exporter")
-	assert.NoError(t, err)
-	assert.True(t, nodeExporterContainer.State.Running, "node-exporter container is not running")
-	assert.Equal(t, nodeExporterContainerID, nodeExporterContainer.ID, "node-exporter container ID has changed")
+	assert.NoError(t, err, "egn command failed")
 
 	checkMonitoringStack(t)
 	checkMonitoringInit(t)
+
+	newGrafanaContainerID, err := getContainerIDByName("egn_grafana")
+	assert.NoError(t, err)
+	assert.Equal(t, grafanaContainerID, newGrafanaContainerID, "grafana container ID has changed")
+
+	newPrometheusContainerID, err := getContainerIDByName("egn_prometheus")
+	assert.NoError(t, err)
+	assert.Equal(t, prometheusContainerID, newPrometheusContainerID, "prometheus container ID has changed")
+
+	newNodeExporterContainerID, err := getContainerIDByName("egn_node_exporter")
+	assert.NoError(t, err)
+	assert.Equal(t, nodeExporterContainerID, newNodeExporterContainerID, "node-exporter container ID has changed")
 }
 
-func checkMonitoringInit(t *testing.T) {
-	// Check prometheus
-	response, err := http.Get("http://localhost:9090/api/v1/targets")
-	assert.NoError(t, err)
-	assert.Equal(t, 200, response.StatusCode)
-	var r PrometheusTargetsResponse
-	body, err := io.ReadAll(response.Body)
-	assert.NoError(t, err)
-	err = json.Unmarshal(body, &r)
-	assert.NoError(t, err)
-	// Check number of targets
-	assert.Len(t, r.Data.ActiveTargets, 1)
-	// Check success
-	assert.Equal(t, "success", r.Status)
-	// Check node exporter target
-	assert.Contains(t, r.Data.ActiveTargets[0].Labels, "instance")
-	assert.Equal(t, "egn_node_exporter:9100", r.Data.ActiveTargets[0].Labels["instance"])
-	// Check all targets are up
-	for i := 0; i < len(r.Data.ActiveTargets); i++ {
-		assert.Equal(t, "up", r.Data.ActiveTargets[i].Health)
+func TestMonitoring_Restart(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
 	}
+	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
+	defer e2eTest.Cleanup()
 
-	// Check grafana
-	gClient, err := gapi.New("http://localhost:3000", gapi.Config{
-		BasicAuth: url.UserPassword("admin", "admin"),
-	})
+	err = runCommand(t,
+		e2eTest.EgnPath(),
+		"install",
+		"--profile", "option-returner",
+		"--run",
+		"--no-prompt",
+		"--tag", "tag-1",
+		"--option.main-container-name", "main-service-1",
+		"https://github.com/NethermindEth/mock-avs",
+	)
 	assert.NoError(t, err)
-	healthResponse, err := gClient.Health()
+
+	checkMonitoringStack(t)
+	checkContainerRunning(t, "main-service-1")
+
+	stopMonitoringStackContainers(t)
+
+	err = runCommand(t,
+		e2eTest.EgnPath(),
+		"install",
+		"--profile", "option-returner",
+		"--run",
+		"--no-prompt",
+		"--tag", "tag-2",
+		"--option.main-container-name", "main-service-2",
+		"https://github.com/NethermindEth/mock-avs",
+	)
 	assert.NoError(t, err)
-	assert.Equal(t, "ok", healthResponse.Database)
+
+	checkMonitoringStack(t)
+
+	checkContainerRunning(t, "main-service-1")
+	checkContainerRunning(t, "main-service-2")
 }

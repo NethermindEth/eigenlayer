@@ -53,8 +53,6 @@ func checkMonitoringStack(t *testing.T) {
 	nodeExporterContainer, err := dockerClient.ContainerInspect(context.Background(), "egn_node_exporter")
 	assert.NoError(t, err)
 	assert.True(t, nodeExporterContainer.State.Running, "node-exporter container is not running")
-
-	// TODO: request grafana API and check the connection is working https://grafana.com/docs/grafana/latest/developers/http_api/other/
 }
 
 type Target struct {

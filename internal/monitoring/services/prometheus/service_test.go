@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/data"
@@ -39,13 +40,13 @@ func TestInit(t *testing.T) {
 	err = prometheus.Init(types.ServiceOptions{
 		Stack: stack,
 		Dotenv: map[string]string{
-			"PROM_PORT": "9090",
+			"PROM_PORT": "9999",
 		},
 	})
 
 	assert.NoError(t, err)
 	assert.Equal(t, stack, prometheus.stack)
-	assert.Equal(t, "9090", prometheus.port)
+	assert.Equal(t, "9999", prometheus.port)
 }
 
 func TestInitError(t *testing.T) {
@@ -143,7 +144,7 @@ func TestSetup(t *testing.T) {
 			name:   "ok",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			targets: []string{
@@ -154,7 +155,7 @@ func TestSetup(t *testing.T) {
 			name:   "missing node exporter port",
 			mocker: onlyNewLocker,
 			options: map[string]string{
-				"PROM_PORT": "9090",
+				"PROM_PORT": "9999",
 			},
 			wantErr: true,
 		},
@@ -162,7 +163,7 @@ func TestSetup(t *testing.T) {
 			name:   "empty node exporter port",
 			mocker: onlyNewLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "",
 			},
 			wantErr: true,
@@ -182,7 +183,7 @@ func TestSetup(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			wantErr: true,
@@ -203,7 +204,7 @@ func TestSetup(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			wantErr: true,
@@ -246,8 +247,11 @@ func TestSetup(t *testing.T) {
 				err = yaml.Unmarshal(promYml, &prom)
 				assert.NoError(t, err)
 
-				// Check the Prometheus targets
-				assert.Equal(t, tt.targets, prom.ScrapeConfigs[0].StaticConfigs[0].Targets)
+				// Check the Prometheus initial targets
+				for i := 0; i < len(tt.targets); i++ {
+					assert.Equal(t, tt.targets[i], prom.ScrapeConfigs[i].JobName)
+					assert.Equal(t, tt.targets[i], prom.ScrapeConfigs[i].StaticConfigs[0].Targets[0])
+				}
 			}
 		})
 	}
@@ -290,7 +294,7 @@ func TestAddTarget(t *testing.T) {
 			name:   "ok, 1 target",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -305,7 +309,7 @@ func TestAddTarget(t *testing.T) {
 			name:   "ok, 2 targets",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -343,7 +347,7 @@ func TestAddTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -357,7 +361,7 @@ func TestAddTarget(t *testing.T) {
 			name:   "bad endpoint",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -390,7 +394,7 @@ func TestAddTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -422,7 +426,7 @@ func TestAddTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -471,12 +475,19 @@ func TestAddTarget(t *testing.T) {
 					}
 				}))
 				defer server.Close()
-				prometheus.endpoint = server.URL
+				split := strings.Split(server.URL, ":")
+				host, port := split[1][2:], split[2]
+				prometheus.containerIP = host
+				prometheus.port = port
 			}
 
 			// Add the targets
 			for _, target := range tt.toAdd {
-				err = prometheus.AddTarget(target)
+				id := target
+				if strings.HasPrefix(target, "http://") {
+					id = strings.TrimPrefix(target, "http://")
+				}
+				err = prometheus.AddTarget(target, id)
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
 					return
@@ -491,7 +502,15 @@ func TestAddTarget(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Check the Prometheus targets
-			assert.Equal(t, tt.targets, prom.ScrapeConfigs[0].StaticConfigs[0].Targets)
+			for i, target := range tt.targets {
+				if i == 0 {
+					// Skip node exporter
+					continue
+				}
+				assert.Equal(t, target, prom.ScrapeConfigs[i].StaticConfigs[0].Targets[0])
+				assert.Equal(t, target, prom.ScrapeConfigs[i].JobName)
+				assert.Equal(t, target, prom.ScrapeConfigs[i].StaticConfigs[0].Labels["instanceID"])
+			}
 		})
 	}
 }
@@ -534,7 +553,7 @@ func TestRemoveTarget(t *testing.T) {
 			name:   "ok, 1 target",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -551,7 +570,7 @@ func TestRemoveTarget(t *testing.T) {
 			name:   "ok, 2 targets",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -570,7 +589,7 @@ func TestRemoveTarget(t *testing.T) {
 			name:   "ok, already existing target",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -608,7 +627,7 @@ func TestRemoveTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toRem: []string{
@@ -623,7 +642,7 @@ func TestRemoveTarget(t *testing.T) {
 			name:   "bad endpoint",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toAdd: []string{
@@ -658,7 +677,7 @@ func TestRemoveTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toRem: []string{
@@ -690,7 +709,7 @@ func TestRemoveTarget(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT":          "9090",
+				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
 			toRem: []string{
@@ -739,9 +758,10 @@ func TestRemoveTarget(t *testing.T) {
 					}
 				}))
 				defer server.Close()
-				// split := strings.Split(server.URL, ":")
-				// host, port := split[1][2:], split[2]
-				prometheus.endpoint = server.URL
+				split := strings.Split(server.URL, ":")
+				host, port := split[1][2:], split[2]
+				prometheus.containerIP = host
+				prometheus.port = port
 			}
 
 			// Read the prom.yml file
@@ -751,7 +771,18 @@ func TestRemoveTarget(t *testing.T) {
 			err = yaml.Unmarshal(promYml, &prom)
 			assert.NoError(t, err)
 			// Add the targets
-			prom.ScrapeConfigs[0].StaticConfigs[0].Targets = append(prom.ScrapeConfigs[0].StaticConfigs[0].Targets, tt.toAdd...)
+			for _, target := range tt.toAdd {
+				job := ScrapeConfig{
+					JobName: target,
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{target},
+							Labels:  map[string]string{"instanceID": target},
+						},
+					},
+				}
+				prom.ScrapeConfigs = append(prom.ScrapeConfigs, job)
+			}
 			// Save the prom.yml file
 			promYml, err = yaml.Marshal(prom)
 			assert.NoError(t, err)

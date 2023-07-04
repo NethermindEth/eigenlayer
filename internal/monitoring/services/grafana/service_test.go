@@ -58,11 +58,13 @@ func TestSetup(t *testing.T) {
 			locker.EXPECT().Locked().Return(true),
 			locker.EXPECT().Unlock().Return(nil),
 		)
-		gomock.InOrder(
-			locker.EXPECT().Lock().Return(nil),
-			locker.EXPECT().Locked().Return(true),
-			locker.EXPECT().Unlock().Return(nil),
-		)
+		for i := 0; i < 9; i++ {
+			gomock.InOrder(
+				locker.EXPECT().Lock().Return(nil),
+				locker.EXPECT().Locked().Return(true),
+				locker.EXPECT().Unlock().Return(nil),
+			)
+		}
 		return locker
 	}
 	onlyNewLocker := func(t *testing.T) *mocks.MockLocker {
@@ -166,6 +168,8 @@ func TestSetup(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+
+				// Check the Grafana config file
 				ok, err := afero.Exists(afs, "/monitoring/grafana/provisioning/datasources/prom.yml")
 				assert.True(t, ok)
 				assert.NoError(t, err)
@@ -180,6 +184,33 @@ func TestSetup(t *testing.T) {
 				// Check the Prometheus port
 				promEndpoint := fmt.Sprintf("http://%s:%s", monitoring.PrometheusServiceName, tt.options["PROM_PORT"])
 				assert.Equal(t, promEndpoint, prom.Datasources[0].URL)
+
+				// Check the Dashboards config file
+				ok, err = afero.Exists(afs, "/monitoring/grafana/provisioning/dashboards/dashboards.yml")
+				assert.True(t, ok)
+				assert.NoError(t, err)
+
+				// Check the provisioned dashboards
+				foldersToCheck := []string{
+					"/monitoring/grafana/data/dashboards",
+					"/monitoring/grafana/data/dashboards/common-metrics",
+					"/monitoring/grafana/data/dashboards/node-exporter",
+				}
+				filesToCheck := []string{
+					"/monitoring/grafana/data/dashboards/common-metrics/common-metrics.json",
+					"/monitoring/grafana/data/dashboards/common-metrics/common-metrics-global.json",
+					"/monitoring/grafana/data/dashboards/node-exporter/node-exporter.json",
+				}
+				for _, folder := range foldersToCheck {
+					ok, err = afero.DirExists(afs, folder)
+					assert.True(t, ok)
+					assert.NoError(t, err)
+				}
+				for _, file := range filesToCheck {
+					ok, err = afero.Exists(afs, file)
+					assert.True(t, ok)
+					assert.NoError(t, err)
+				}
 			}
 		})
 	}
@@ -190,4 +221,24 @@ func TestDotEnv(t *testing.T) {
 	grafana := NewGrafana()
 	// Verify the dotEnv
 	assert.EqualValues(t, dotEnv, grafana.DotEnv())
+}
+
+func TestContainerName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "ok",
+			want: monitoring.GrafanaContainerName,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new Grafana service
+			grafana := NewGrafana()
+			assert.Equal(t, tt.want, grafana.ContainerName())
+		})
+	}
 }

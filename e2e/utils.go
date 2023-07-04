@@ -3,7 +3,9 @@ package e2e
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/docker/docker/client"
@@ -22,6 +24,14 @@ func dataDirPath(t *testing.T) string {
 	}
 	dataDir := filepath.Join(userDataHome, ".eigen")
 	return dataDir
+}
+
+func runCommand(t *testing.T, path string, args ...string) error {
+	t.Helper()
+	t.Logf("Running command: %s %s", path, strings.Join(args, " "))
+	out, err := exec.Command(path, args...).CombinedOutput()
+	t.Logf("===== OUTPUT =====\n%s\n==================", out)
+	return err
 }
 
 func checkMonitoringStack(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -28,8 +27,7 @@ func TestMonitoringStack_Init(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	cmd := exec.Command(e2eTest.EgnPath(), "--help")
-	err = cmd.Run()
+	err = runCommand(t, e2eTest.EgnPath(), "--help")
 	assert.NoError(t, err)
 
 	// Wait for monitoring stack to be ready
@@ -48,8 +46,7 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	cmd := exec.Command(e2eTest.EgnPath(), "--help")
-	err = cmd.Run()
+	err = runCommand(t, e2eTest.EgnPath(), "--help")
 	assert.NoError(t, err)
 
 	// Wait for monitoring stack to be ready
@@ -88,8 +85,7 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 	nodeExporterContainerID = nodeExporterContainer.ID
 
 	// Run egn command again
-	cmd = exec.Command(e2eTest.EgnPath(), "--help")
-	err = cmd.Run()
+	err = runCommand(t, e2eTest.EgnPath(), "--help")
 	assert.NoError(t, err)
 
 	// Check grafana container is running

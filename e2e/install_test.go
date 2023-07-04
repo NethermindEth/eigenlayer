@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -26,8 +25,8 @@ func TestInstall_WithoutArguments(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	cmd := exec.Command(e2eTest.EgnPath(), "install")
-	err = cmd.Run()
+	err = runCommand(t, e2eTest.EgnPath(), "install")
+
 	assert.Error(t, err, "install command should fail without arguments")
 }
 
@@ -40,7 +39,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	cmd := exec.Command(
+	err = runCommand(t,
 		e2eTest.EgnPath(),
 		"install",
 		"--profile", "option-returner",
@@ -48,7 +47,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 		"--no-prompt",
 		"https://github.com/NethermindEth/mock-avs",
 	)
-	err = cmd.Run()
+
 	assert.NoError(t, err)
 
 	checkMonitoringStack(t)
@@ -97,7 +96,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	cmd := exec.Command(
+	err = runCommand(t,
 		e2eTest.EgnPath(),
 		"install",
 		"--profile", "option-returner",
@@ -106,8 +105,6 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		"--tag", "integration",
 		"https://github.com/NethermindEth/mock-avs",
 	)
-	cmd.Stdout = os.Stdout
-	err = cmd.Run()
 	assert.NoError(t, err)
 
 	// Wait for monitoring stack to be ready
@@ -157,16 +154,14 @@ func TestInstall_DuplicatedID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, ct.State.Running, "main-service container should be running")
 
-	cmd = exec.Command(
+	err = runCommand(t,
 		e2eTest.EgnPath(),
 		"install",
 		"--profile", "option-returner",
 		"--run",
 		"--no-prompt",
-		"--tag", "integration",
+		"--tag", "integration1",
 		"https://github.com/NethermindEth/mock-avs",
 	)
-	cmd.Stdout = os.Stdout
-	err = cmd.Run()
 	assert.Error(t, err)
 }

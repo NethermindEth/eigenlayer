@@ -22,12 +22,12 @@ func TestInstall(t *testing.T) {
 		{
 			name: "no arguments",
 			args: []string{},
-			err:  errors.New("accepts 1 arg(s), received 0"),
+			err:  fmt.Errorf("%w: accepts 1 arg, received 0", ErrInvalidNumberOfArgs),
 		},
 		{
 			name: "more than one argument",
 			args: []string{"arg1", "arg2"},
-			err:  errors.New("accepts 1 arg(s), received 2"),
+			err:  fmt.Errorf("%w: accepts 1 arg, received 2", ErrInvalidNumberOfArgs),
 		},
 		{
 			name: "invalid URL",
@@ -40,9 +40,9 @@ func TestInstall(t *testing.T) {
 			err:  nil,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
-				option.EXPECT().Name().Return("option1")
-				option.EXPECT().Default().Return("default1")
-				option.EXPECT().Help().Return("help1")
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -72,9 +72,9 @@ func TestInstall(t *testing.T) {
 			err:  errors.New("input string error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
-				option.EXPECT().Name().Return("option1")
-				option.EXPECT().Default().Return("default1")
-				option.EXPECT().Help().Return("help1")
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -142,9 +142,9 @@ func TestInstall(t *testing.T) {
 			err:  errors.New("install error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
-				option.EXPECT().Name().Return("option1")
-				option.EXPECT().Default().Return("default1")
-				option.EXPECT().Help().Return("help1")
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
 
 				gomock.InOrder(
 					d.EXPECT().

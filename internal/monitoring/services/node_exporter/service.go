@@ -33,7 +33,7 @@ func (n *NodeExporterService) Setup(options map[string]string) error {
 	return nil
 }
 
-func (n *NodeExporterService) SetContainerIP(ip, containerName string) {
+func (n *NodeExporterService) SetContainerIP(ip string) {
 }
 
 func (n *NodeExporterService) ContainerName() string {

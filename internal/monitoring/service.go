@@ -22,7 +22,7 @@ type ServiceAPI interface {
 	Init(types.ServiceOptions) error
 
 	// SetContainerIP sets the container IP of the service.
-	SetContainerIP(ip, containerName string)
+	SetContainerIP(ip string)
 
 	// ContainerName returns the name of the service's container.
 	ContainerName() string

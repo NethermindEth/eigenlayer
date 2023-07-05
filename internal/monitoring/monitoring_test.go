@@ -62,16 +62,14 @@ func TestInit(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		mockerLocker func(t *testing.T, ctrl *gomock.Controller) *mock_locker.MockLocker
-		mocker       func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager)
-		setupDotEnv  func(t *testing.T, fs afero.Fs, dotenv map[string]string)
-		dotenv       map[string]string
-		wantErr      bool
+		name        string
+		mocker      func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager)
+		setupDotEnv func(t *testing.T, fs afero.Fs, dotenv map[string]string)
+		dotenv      map[string]string
+		wantErr     bool
 	}{
 		{
-			name:         "ok, 1 service",
-			mockerLocker: okLocker,
+			name: "ok, 1 service",
 			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager) {
 				servicer := mocks.NewMockServiceAPI(ctrl)
 				// Expect the service to be triggered
@@ -81,7 +79,7 @@ func TestInit(t *testing.T) {
 						Dotenv: dotenv,
 					}).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.0.0.1", "node").Return(),
+					servicer.EXPECT().SetContainerIP("127.0.0.1").Return(),
 				)
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
@@ -97,8 +95,7 @@ func TestInit(t *testing.T) {
 			},
 		},
 		{
-			name:         "ok, 2 services",
-			mockerLocker: okLocker,
+			name: "ok, 2 services",
 			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service1 := mocks.NewMockServiceAPI(ctrl)
 				// Expect the service to be triggered
@@ -120,10 +117,8 @@ func TestInit(t *testing.T) {
 					service2.EXPECT().ContainerName().Return("node2"),
 				)
 
-				service1.EXPECT().SetContainerIP("127.0.0.1", "node1").Return()
-				service2.EXPECT().SetContainerIP("127.0.0.1", "node1").Return()
-				service1.EXPECT().SetContainerIP("127.0.0.2", "node2").Return()
-				service2.EXPECT().SetContainerIP("127.0.0.2", "node2").Return()
+				service1.EXPECT().SetContainerIP("127.0.0.1").Return()
+				service2.EXPECT().SetContainerIP("127.0.0.2").Return()
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("node1").Return("127.0.0.1", nil)
@@ -140,8 +135,7 @@ func TestInit(t *testing.T) {
 			},
 		},
 		{
-			name:         "error, 1 service, init service error",
-			mockerLocker: okLocker,
+			name: "error, 1 service, init service error",
 			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager) {
 				servicer := mocks.NewMockServiceAPI(ctrl)
 				// Expect the service to be triggered
@@ -165,8 +159,7 @@ func TestInit(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:         "error, 1 service, ContainerIP error",
-			mockerLocker: okLocker,
+			name: "error, 1 service, ContainerIP error",
 			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager) {
 				servicer := mocks.NewMockServiceAPI(ctrl)
 				// Expect the service to be triggered
@@ -198,7 +191,7 @@ func TestInit(t *testing.T) {
 			t.Helper()
 			// Create a mock controller
 			ctrl := gomock.NewController(t)
-			locker := tt.mockerLocker(t, ctrl)
+			locker := okLocker(t, ctrl)
 
 			afs := afero.NewMemMapFs()
 			tt.setupDotEnv(t, afs, tt.dotenv)
@@ -306,7 +299,7 @@ func TestInstallStack(t *testing.T) {
 					}).Return(nil),
 					servicer.EXPECT().Setup(dotenv).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.0.0.1", "node").Return(),
+					servicer.EXPECT().SetContainerIP("127.0.0.1").Return(),
 				)
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
@@ -354,10 +347,8 @@ func TestInstallStack(t *testing.T) {
 					service2.EXPECT().Setup(dotenv).Return(nil),
 					service2.EXPECT().ContainerName().Return("node2"),
 				)
-				service1.EXPECT().SetContainerIP("168.0.2.1", "node1").Return()
-				service2.EXPECT().SetContainerIP("168.0.2.1", "node1").Return()
-				service1.EXPECT().SetContainerIP("168.0.3.1", "node2").Return()
-				service2.EXPECT().SetContainerIP("168.0.3.1", "node2").Return()
+				service1.EXPECT().SetContainerIP("168.0.2.1").Return()
+				service2.EXPECT().SetContainerIP("168.0.3.1").Return()
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
@@ -395,7 +386,7 @@ func TestInstallStack(t *testing.T) {
 					}).Return(nil),
 					servicer.EXPECT().Setup(dotenv).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.1.1.6", "node").Return(),
+					servicer.EXPECT().SetContainerIP("127.1.1.6").Return(),
 				)
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
@@ -1035,10 +1026,8 @@ func TestRun(t *testing.T) {
 				service1.EXPECT().ContainerName().Return("node1")
 				service2.EXPECT().ContainerName().Return("node2")
 
-				service1.EXPECT().SetContainerIP("168.0.2.1", "node1").Return()
-				service2.EXPECT().SetContainerIP("168.0.2.1", "node1").Return()
-				service1.EXPECT().SetContainerIP("168.0.3.1", "node2").Return()
-				service2.EXPECT().SetContainerIP("168.0.3.1", "node2").Return()
+				service1.EXPECT().SetContainerIP("168.0.2.1").Return()
+				service2.EXPECT().SetContainerIP("168.0.3.1").Return()
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				// Expect the compose manager to be triggered

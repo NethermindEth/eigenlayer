@@ -483,10 +483,7 @@ func TestAddTarget(t *testing.T) {
 
 			// Add the targets
 			for _, target := range tt.toAdd {
-				id := target
-				if strings.HasPrefix(target, "http://") {
-					id = strings.TrimPrefix(target, "http://")
-				}
+				id := strings.TrimPrefix(target, "http://")
 				err = prometheus.AddTarget(target, id)
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
@@ -813,29 +810,21 @@ func TestRemoveTarget(t *testing.T) {
 
 func TestContainerIP(t *testing.T) {
 	tests := []struct {
-		name          string
-		ip            string
-		containerName string
-		want          string
+		name string
+		ip   string
+		want string
 	}{
 		{
-			name:          "Prometheus container name",
-			ip:            "127.0.0.1",
-			containerName: monitoring.PrometheusContainerName,
-			want:          "127.0.0.1",
-		},
-		{
-			name:          "Not Prometheus container name",
-			ip:            "168.0.16.1",
-			containerName: "not-prometheus",
-			want:          "",
+			name: "Prometheus container name",
+			ip:   "127.0.0.1",
+			want: "127.0.0.1",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prometheus := NewPrometheus()
-			prometheus.SetContainerIP(tt.ip, tt.containerName)
+			prometheus.SetContainerIP(tt.ip)
 			assert.Equal(t, tt.want, prometheus.containerIP)
 		})
 	}

@@ -154,7 +154,7 @@ func (g *GrafanaService) copyDashboards(dst string) (err error) {
 	})
 }
 
-func (g *GrafanaService) SetContainerIP(ip, containerName string) {
+func (g *GrafanaService) SetContainerIP(ip string) {
 }
 
 func (g *GrafanaService) ContainerName() string {

@@ -73,7 +73,7 @@ func (m *MonitoringManager) Init() error {
 		dotEnv[string(split[0])] = string(split[1])
 	}
 
-	// Intialize stack
+	// Initialize stack
 	for _, service := range m.services {
 		if err := service.Init(types.ServiceOptions{
 			Stack:  m.stack,
@@ -83,18 +83,9 @@ func (m *MonitoringManager) Init() error {
 		}
 	}
 
-	// Get containerID of monitoring targets
-	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
-		return service.ContainerName()
-	}).([]string)
-	for _, name := range containerNames {
-		ip, err := m.idToIP(name)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
-		}
-		for _, service := range m.services {
-			service.SetContainerIP(ip, name)
-		}
+	// Save container IPs of monitoring services
+	if err := m.saveServiceIP(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 	}
 
 	return nil
@@ -162,17 +153,8 @@ func (m *MonitoringManager) InstallStack() error {
 	}
 
 	// Save container IPs of monitoring services
-	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
-		return service.ContainerName()
-	}).([]string)
-	for _, name := range containerNames {
-		ip, err := m.idToIP(name)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrConfiguringMonitoringServices, err)
-		}
-		for _, service := range m.services {
-			service.SetContainerIP(ip, name)
-		}
+	if err := m.saveServiceIP(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 	}
 
 	return nil
@@ -233,17 +215,8 @@ func (m *MonitoringManager) Run() error {
 	}
 
 	// Save container IPs of monitoring services
-	containerNames := funk.Map(m.services, func(service ServiceAPI) string {
-		return service.ContainerName()
-	}).([]string)
-	for _, name := range containerNames {
-		ip, err := m.idToIP(name)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrConfiguringMonitoringServices, err)
-		}
-		for _, service := range m.services {
-			service.SetContainerIP(ip, name)
-		}
+	if err := m.saveServiceIP(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 	}
 
 	return nil
@@ -318,4 +291,16 @@ func (m *MonitoringManager) idToIP(id string) (string, error) {
 		return "", err
 	}
 	return ip, nil
+}
+
+func (m *MonitoringManager) saveServiceIP() error {
+	for _, service := range m.services {
+		name := service.ContainerName()
+		ip, err := m.idToIP(name)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+		}
+		service.SetContainerIP(ip)
+	}
+	return nil
 }

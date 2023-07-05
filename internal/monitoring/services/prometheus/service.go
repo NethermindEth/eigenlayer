@@ -236,10 +236,8 @@ func (p *PrometheusService) Setup(options map[string]string) error {
 }
 
 // SetContainerIP sets the container IP for the Prometheus service.
-func (p *PrometheusService) SetContainerIP(ip, containerName string) {
-	if containerName == monitoring.PrometheusContainerName {
-		p.containerIP = ip
-	}
+func (p *PrometheusService) SetContainerIP(ip string) {
+	p.containerIP = ip
 }
 
 func (p *PrometheusService) ContainerName() string {

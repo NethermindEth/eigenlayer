@@ -143,7 +143,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"git":"https://github.com/NethermindEth/mock-avs.git#main:plugin"}}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin"}}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -158,7 +158,7 @@ func TestNewInstance(t *testing.T) {
 					Version: "v0.1.0",
 					Profile: "mainnet",
 					Plugin: &Plugin{
-						Git: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
+						BuildFrom: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
 					},
 					path: testDir,
 				},

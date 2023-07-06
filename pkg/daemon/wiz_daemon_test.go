@@ -90,8 +90,8 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Running, nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},
@@ -102,9 +102,9 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Created, nil),
 					monitoringMgr.EXPECT().Run().Return(nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},
@@ -115,7 +115,6 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Created, nil),
 					monitoringMgr.EXPECT().Run().Return(errors.New("run error")),
 				)
@@ -129,12 +128,13 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Unknown, errors.New("status error")),
+					monitoringMgr.EXPECT().Run().Return(nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "monitoring -> prev: installed and restarting, after: installed and restarting",
@@ -142,8 +142,8 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Restarting, nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},
@@ -154,9 +154,9 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Broken, nil),
 					monitoringMgr.EXPECT().Run().Return(nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},
@@ -167,7 +167,6 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Init().Return(nil),
 					monitoringMgr.EXPECT().Status().Return(common.Broken, nil),
 					monitoringMgr.EXPECT().Run().Return(errors.New("run error")),
 				)
@@ -181,6 +180,8 @@ func TestInit(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringMgr.EXPECT().Status().Return(common.Created, nil),
+					monitoringMgr.EXPECT().Run().Return(nil),
 					monitoringMgr.EXPECT().Init().Return(monitoring.ErrInitializingMonitoringMngr),
 				)
 				return monitoringMgr

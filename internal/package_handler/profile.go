@@ -64,8 +64,8 @@ type HardwareRequirementsOverrides struct {
 
 // PluginOverrides represents the plugin overrides field of a profile
 type PluginOverrides struct {
-	Image string `yaml:"image"`
-	Git   string `yaml:"git"`
+	Image     string `yaml:"image"`
+	BuildFrom string `yaml:"build_from"`
 }
 
 // TODO: add validation for plugin overrides

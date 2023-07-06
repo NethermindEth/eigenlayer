@@ -102,21 +102,17 @@ func (h *hardwareRequirements) validate() InvalidConfError {
 }
 
 type Plugin struct {
-	Image string `yaml:"image"`
-	Git   string `yaml:"git"`
+	Image     string `yaml:"image"`
+	BuildFrom string `yaml:"build_from"`
 }
 
 func (p *Plugin) validate() InvalidConfError {
 	var invalidFields []string
-	// Validate plugin git and image fields are not both empty
-	if p.Git == "" && p.Image == "" {
-		invalidFields = append(invalidFields, "plugin.git, plugin.image -> (both empty)")
-	}
 	// Validate plugin git field is a valid git url
-	if p.Git != "" {
-		uri, err := url.ParseRequestURI(p.Git)
-		if err != nil || uri.Scheme == "" || uri.Host == "" || (uri.Scheme != "https" && uri.Scheme != "http") {
-			invalidFields = append(invalidFields, "plugin.git -> (invalid git url)")
+	if p.BuildFrom != "" {
+		_, err := url.ParseRequestURI(p.BuildFrom)
+		if err != nil {
+			invalidFields = append(invalidFields, "plugin.build_from -> (invalid build from)")
 		}
 	}
 	// Validate plugin image field is a valid docker image

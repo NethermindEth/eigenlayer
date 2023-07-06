@@ -73,16 +73,12 @@ To ensure each instance of the node software is uniquely identified, use the --t
 			if err != nil {
 				return err
 			}
+
+			log.Info("Installed successfully with instance id: ", instanceId)
+
 			if pullResult.HasPlugin {
 				// TODO: improve this message with the command to run the plugin
 				log.Info("The installed node software has a plugin.")
-			}
-			ok, err = p.Confirm("Run the new instance now?")
-			if err != nil {
-				return err
-			}
-			if ok {
-				return d.Run(instanceId)
 			}
 			return nil
 		},

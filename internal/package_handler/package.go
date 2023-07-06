@@ -309,6 +309,28 @@ func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
 	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
 }
 
+func (p *PackageHandler) HasPlugin() (bool, error) {
+	manifest, err := p.parseManifest()
+	if err != nil {
+		return false, err
+	}
+
+	return manifest.Plugin != nil, nil
+}
+
+func (p *PackageHandler) Plugin() (*Plugin, error) {
+	manifest, err := p.parseManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	if manifest.Plugin == nil {
+		return nil, ErrNoPlugin
+	}
+
+	return manifest.Plugin, nil
+}
+
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
 	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
 	// Read the manifest file

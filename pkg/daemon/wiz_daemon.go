@@ -126,6 +126,10 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 		}
 	}
 	result.Version = version
+	err = pkgHandler.CheckoutVersion(version)
+	if err != nil {
+		return
+	}
 	// Get profiles names and its options
 	profiles, err := pkgHandler.Profiles()
 	if err != nil {
@@ -167,7 +171,8 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 		profileOptions[profile.Name] = options
 	}
 	result.Options = profileOptions
-	return result, nil
+	result.HasPlugin, err = pkgHandler.HasPlugin()
+	return result, err
 }
 
 // Install implements Daemon.Install.
@@ -236,7 +241,7 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return "", tID, fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
 	}
 
-	// Install package
+	// Build environment variables
 	env := make(map[string]string, len(options.Options))
 	for _, o := range options.Options {
 		env[o.Target()] = o.Value()
@@ -252,6 +257,24 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		monitoringTargets = append(monitoringTargets, mt)
 	}
 
+	// Build plugin info
+	var plugin *data.Plugin
+	hasPlugin, err := pkgHandler.HasPlugin()
+	if err != nil {
+		return "", tID, err
+	}
+	if hasPlugin {
+		pkgPlugin, err := pkgHandler.Plugin()
+		if err != nil {
+			return "", tID, err
+		}
+		plugin = &data.Plugin{
+			Image: pkgPlugin.Image,
+			Git:   pkgPlugin.Git,
+		}
+	}
+
+	// Init instance
 	instance := data.Instance{
 		Name:              instanceName,
 		Profile:           selectedProfile.Name,
@@ -259,6 +282,7 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		URL:               options.URL,
 		Tag:               options.Tag,
 		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},
+		Plugin:            plugin,
 	}
 	if err = d.dataDir.InitInstance(&instance); err != nil {
 		return instanceId, tID, err

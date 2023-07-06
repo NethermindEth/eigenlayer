@@ -14,6 +14,9 @@ type Daemon interface {
 	// before calling Install to ensure that the package is downloaded.
 	Install(options InstallOptions) (string, error)
 
+	// HasInstance returns true if there is an installed instance with the given ID.
+	HasInstance(instanceId string) bool
+
 	// Run starts the instance with the given ID running docker compose in the
 	// instance directory. If there is no installed instance with the given ID,
 	// an error will be returned.

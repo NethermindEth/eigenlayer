@@ -87,7 +87,7 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 // data dir.
 func (d *DataDir) HasInstance(instanceId string) bool {
 	instancePath := filepath.Join(d.path, instancesDir, instanceId)
-	_, err := os.Stat(instancePath)
+	_, err := d.fs.Stat(instancePath)
 	return err == nil
 }
 

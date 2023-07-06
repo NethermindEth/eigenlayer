@@ -281,8 +281,6 @@ func TestDataDir_InitInstance(t *testing.T) {
 }
 
 func TestDataDir_HasInstance(t *testing.T) {
-	fs := afero.NewOsFs()
-
 	type testCase struct {
 		name       string
 		dataDir    *DataDir
@@ -291,6 +289,7 @@ func TestDataDir_HasInstance(t *testing.T) {
 	}
 	ts := []testCase{
 		func() testCase {
+			fs := afero.NewMemMapFs()
 			// Create a mock locker
 			ctrl := gomock.NewController(t)
 			locker := mocks.NewMockLocker(ctrl)
@@ -308,22 +307,23 @@ func TestDataDir_HasInstance(t *testing.T) {
 			}
 		}(),
 		func() testCase {
+			fs := afero.NewMemMapFs()
 			// Create a mock locker
 			ctrl := gomock.NewController(t)
 			locker := mocks.NewMockLocker(ctrl)
 
 			testDir := t.TempDir()
-			_, err := NewDataDir(testDir, fs, locker)
+			dataDir, err := NewDataDir(testDir, fs, locker)
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = os.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)
+			err = fs.MkdirAll(filepath.Join(testDir, "nodes", "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			return testCase{
 				name:       "instance dir found",
-				dataDir:    &DataDir{path: testDir},
+				dataDir:    dataDir,
 				instanceId: "mock_avs-latest",
 				has:        true,
 			}

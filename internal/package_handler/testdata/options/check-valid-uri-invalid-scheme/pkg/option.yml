@@ -1,7 +1,7 @@
 name: invalid-uri
 target: URI
 type: uri
-default: "noturi/" #"noturi:" is valid
+default: https://localhost:8080
 help: "invalid type uri with scheme"
 validate: 
-  uri_scheme: ["http","ftp","noturi"] 
+  uri_scheme: ["htp","ptf"] 

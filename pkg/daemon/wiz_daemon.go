@@ -315,6 +315,10 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 	return instanceId, tID, nil
 }
 
+func (d *WizDaemon) HasInstance(instanceID string) bool {
+	return d.dataDir.HasInstance(instanceID)
+}
+
 // Run implements Daemon.Run.
 func (d *WizDaemon) Run(instanceID string) error {
 	// Add target just in case

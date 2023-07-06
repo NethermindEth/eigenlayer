@@ -43,8 +43,8 @@ type MonitoringTarget struct {
 }
 
 type Plugin struct {
-	Image string `json:"image,omitempty"`
-	Git   string `json:"git,omitempty"`
+	Image     string `json:"image,omitempty"`
+	BuildFrom string `json:"build_from,omitempty"`
 }
 
 // newInstance creates a new instance with the given path as root. It loads the
@@ -228,7 +228,7 @@ func (i *Instance) validate() error {
 	if i.Tag == "" {
 		return fmt.Errorf("%w: tag is empty", ErrInvalidInstance)
 	}
-	if i.Plugin != nil && i.Plugin.Git == "" && i.Plugin.Image == "" {
+	if i.Plugin != nil && i.Plugin.BuildFrom == "" && i.Plugin.Image == "" {
 		return fmt.Errorf("%w: plugin git and image are empty", ErrInvalidInstance)
 	}
 	return nil

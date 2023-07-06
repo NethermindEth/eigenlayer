@@ -269,8 +269,8 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 			return "", tID, err
 		}
 		plugin = &data.Plugin{
-			Image: pkgPlugin.Image,
-			Git:   pkgPlugin.Git,
+			Image:     pkgPlugin.Image,
+			BuildFrom: pkgPlugin.BuildFrom,
 		}
 	}
 

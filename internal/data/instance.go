@@ -26,6 +26,7 @@ type Instance struct {
 	Profile           string            `json:"profile"`
 	Tag               string            `json:"tag"`
 	MonitoringTargets MonitoringTargets `json:"monitoring"`
+	Plugin            *Plugin           `json:"plugin,omitempty"`
 	path              string
 	fs                afero.Fs
 	locker            locker.Locker
@@ -39,6 +40,11 @@ type MonitoringTarget struct {
 	Service string `json:"service"`
 	Port    string `json:"port"`
 	Path    string `json:"path"`
+}
+
+type Plugin struct {
+	Image string `json:"image,omitempty"`
+	Git   string `json:"git,omitempty"`
 }
 
 // newInstance creates a new instance with the given path as root. It loads the
@@ -221,6 +227,9 @@ func (i *Instance) validate() error {
 	}
 	if i.Tag == "" {
 		return fmt.Errorf("%w: tag is empty", ErrInvalidInstance)
+	}
+	if i.Plugin != nil && i.Plugin.Git == "" && i.Plugin.Image == "" {
+		return fmt.Errorf("%w: plugin git and image are empty", ErrInvalidInstance)
 	}
 	return nil
 }

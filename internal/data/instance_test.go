@@ -107,6 +107,91 @@ func TestNewInstance(t *testing.T) {
 				err:      ErrInvalidInstance,
 			}
 		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"image":"nethermind/egn-plugin:latest"}}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "with plugin image",
+				path: testDir,
+				instance: &Instance{
+					Name:    "test_name",
+					Tag:     "test_tag",
+					URL:     "https://github.com/NethermindEth/mock-avs",
+					Version: "v0.1.0",
+					Profile: "mainnet",
+					Plugin: &Plugin{
+						Image: "nethermind/egn-plugin:latest",
+					},
+					path: testDir,
+				},
+				err: nil,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"git":"https://github.com/NethermindEth/mock-avs.git#main:plugin"}}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "with plugin git url",
+				path: testDir,
+				instance: &Instance{
+					Name:    "test_name",
+					Tag:     "test_tag",
+					URL:     "https://github.com/NethermindEth/mock-avs",
+					Version: "v0.1.0",
+					Profile: "mainnet",
+					Plugin: &Plugin{
+						Git: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
+					},
+					path: testDir,
+				},
+				err: nil,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{}}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "error, empty plugin",
+				path: testDir,
+				instance: &Instance{
+					Name:    "test_name",
+					Tag:     "test_tag",
+					URL:     "https://github.com/NethermindEth/mock-avs",
+					Version: "v0.1.0",
+					Profile: "mainnet",
+					Plugin:  &Plugin{},
+					path:    testDir,
+				},
+				err: ErrInvalidInstance,
+			}
+		}(),
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {

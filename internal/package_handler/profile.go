@@ -3,6 +3,7 @@ package package_handler
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -98,18 +99,28 @@ func (o *Option) validate() InvalidConfError {
 	if o.Default != "" {
 		switch o.Type {
 		case "str":
-			invalidDefault = false
-		case "int", "port":
+			if o.ValidateDef != nil {
+				invalidDefault = !regexp.MustCompile(o.ValidateDef.Re2Regex).MatchString(o.Default)
+			}
+		case "int":
 			_, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
+		case "port":
+			port, err := strconv.Atoi(o.Default)
+			invalidDefault = err != nil || port <= 0 || port > 65535
 		case "float":
 			_, err := strconv.ParseFloat(o.Default, 64)
 			invalidDefault = err != nil
 		case "bool":
 			_, err := strconv.ParseBool(o.Default)
 			invalidDefault = err != nil
-		case "path_dir", "path_file":
+		case "path_dir":
 			invalidDefault = !pathRe.MatchString(o.Default)
+		case "path_file":
+			invalidDefault = !pathRe.MatchString(o.Default)
+			if o.ValidateDef != nil {
+				invalidDefault = filepath.Ext(o.Default) != o.ValidateDef.Format
+			}
 		case "uri":
 			gotUrl, err := url.Parse(o.Default)
 			if err != nil {

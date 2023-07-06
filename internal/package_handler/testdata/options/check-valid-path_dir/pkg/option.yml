@@ -1,4 +1,4 @@
-name: valid-path
+name: valid-path-dir
 target: PATHDIR
 type: path_dir
 default: valid/path/dir

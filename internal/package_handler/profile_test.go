@@ -76,6 +76,34 @@ func TestOptionValidate(t *testing.T) {
 			},
 		},
 		{
+			name:     "Check invalid type port with negative value",
+			filePath: "check-negative-port/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
+			name:     "Check invalid type port with huge value",
+			filePath: "check-huge-port/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
+			name:     "Check invalid type port with zero value",
+			filePath: "check-zero-port/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
+			name:     "Check invalid type port with decimal value",
+			filePath: "check-decimal-port/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
 			name:     "Check invalid type bool",
 			filePath: "check-invalid-bool/pkg/option.yml",
 			want: InvalidConfError{
@@ -126,6 +154,13 @@ func TestOptionValidate(t *testing.T) {
 			want:     InvalidConfError{},
 		},
 		{
+			name:     "Check valid type uri with invalid scheme",
+			filePath: "check-valid-uri-invalid-scheme/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
 			name:     "Check type select",
 			filePath: "check-type-select/pkg/option.yml",
 			want: InvalidConfError{
@@ -146,6 +181,42 @@ func TestOptionValidate(t *testing.T) {
 			name:     "Check valid type path_dir",
 			filePath: "check-valid-path_dir/pkg/option.yml",
 			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type str with validate",
+			filePath: "check-valid-str-validate/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check invalid type str with validate",
+			filePath: "check-invalid-str-validate/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
+			name:     "Check valid type path_file",
+			filePath: "check-valid-path-file/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type path_file with validate",
+			filePath: "check-valid-path-file-validate/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check invalid type path_file",
+			filePath: "check-invalid-path-file/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
+			name:     "Check invalid type path_file with validate",
+			filePath: "check-invalid-path-file-validate/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
 		},
 	}
 	for _, tt := range tests {

@@ -38,6 +38,9 @@ type PullResult struct {
 	// Version is the version of the pulled package.
 	Version string
 
+	// HasPlugin is true if the package has a plugin.
+	HasPlugin bool
+
 	// Options is map of profile names to their options.
 	Options map[string][]Option
 }

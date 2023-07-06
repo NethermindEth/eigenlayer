@@ -13,7 +13,7 @@ type Manifest struct {
 	Name                 string               `yaml:"name"`
 	Upgrade              string               `yaml:"upgrade"`
 	HardwareRequirements hardwareRequirements `yaml:"hardware_requirements"`
-	Plugin               plugin               `yaml:"plugin"`
+	Plugin               *Plugin              `yaml:"plugin"`
 	Profiles             []profileDefinition  `yaml:"profiles"`
 }
 
@@ -36,7 +36,10 @@ func (m *Manifest) validate() error {
 	}
 
 	hrErr := m.HardwareRequirements.validate()
-	pluErr := m.Plugin.validate()
+	var pluErr InvalidConfError
+	if m.Plugin != nil {
+		pluErr = m.Plugin.validate()
+	}
 
 	var proErr InvalidConfError
 	for i, profile := range m.Profiles {
@@ -98,13 +101,17 @@ func (h *hardwareRequirements) validate() InvalidConfError {
 	return InvalidConfError{}
 }
 
-type plugin struct {
+type Plugin struct {
 	Image string `yaml:"image"`
 	Git   string `yaml:"git"`
 }
 
-func (p *plugin) validate() InvalidConfError {
+func (p *Plugin) validate() InvalidConfError {
 	var invalidFields []string
+	// Validate plugin git and image fields are not both empty
+	if p.Git == "" && p.Image == "" {
+		invalidFields = append(invalidFields, "plugin.git, plugin.image -> (both empty)")
+	}
 	// Validate plugin git field is a valid git url
 	if p.Git != "" {
 		uri, err := url.ParseRequestURI(p.Git)

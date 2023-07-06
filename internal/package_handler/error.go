@@ -14,6 +14,7 @@ var (
 	ErrInvalidVersion  = errors.New("invalid version")
 	ErrVersionNotFound = errors.New("version not found")
 	ErrProfileNotFound = errors.New("profile not found")
+	ErrNoPlugin        = errors.New("no plugin found")
 )
 
 // PackageFileNotFoundError is returned when a package file is not found.

@@ -229,6 +229,7 @@ func (d *DockerManager) ContainerNetworks(container string) ([]string, error) {
 		return nil, err
 	}
 	networks := ctInfo.NetworkSettings.Networks
+	// TODO: Consider whether returning an error if the container has no networks is a good idea.
 	if len(networks) == 0 {
 		return nil, fmt.Errorf("%w: in %s", ErrNetworksNotFound, container)
 	}

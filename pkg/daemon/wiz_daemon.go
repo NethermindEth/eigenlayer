@@ -77,21 +77,20 @@ func (d *WizDaemon) Init() error {
 			return err
 		}
 		return nil
-	} else {
-		if err := d.monitoringMgr.Init(); err != nil {
-			return err
-		}
 	}
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()
 	if err != nil {
-		return err
+		log.Errorf("Monitoring stack status: unknown. Got error: %v", err)
 	}
 	// If the monitoring stack is not running, start it.
 	if status != common.Running && status != common.Restarting {
 		if err := d.monitoringMgr.Run(); err != nil {
 			return err
 		}
+	}
+	if err := d.monitoringMgr.Init(); err != nil {
+		return err
 	}
 	// *** Monitoring stack initialization. ***
 	return nil

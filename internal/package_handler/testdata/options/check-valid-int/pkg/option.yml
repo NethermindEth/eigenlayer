@@ -1,4 +1,4 @@
-name: invalid-int
+name: valid-int
 target: INT
 type: int
 default: 1234

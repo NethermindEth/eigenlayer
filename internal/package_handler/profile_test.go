@@ -64,8 +64,30 @@ func TestOptionValidate(t *testing.T) {
 			},
 		},
 		{
+			name:     "Check invalid type int with min-max value",
+			filePath: "check-invalid-int-validate/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
 			name:     "Check valid type int",
 			filePath: "check-valid-int/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type int with validate",
+			filePath: "check-valid-int-validate/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type int without max value",
+			filePath: "check-valid-int-without-max/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type int without min value",
+			filePath: "check-valid-int-without-min/pkg/option.yml",
 			want:     InvalidConfError{},
 		},
 		{
@@ -118,8 +140,30 @@ func TestOptionValidate(t *testing.T) {
 			},
 		},
 		{
+			name:     "Check invalid type float with min-max value",
+			filePath: "check-invalid-float-validate/pkg/option.yml",
+			want: InvalidConfError{
+				invalidFields: []string{"options.default"},
+			},
+		},
+		{
 			name:     "Check valid type float",
 			filePath: "check-valid-float/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type float with validate",
+			filePath: "check-valid-float-validate/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type float without max value",
+			filePath: "check-valid-float-without-max/pkg/option.yml",
+			want:     InvalidConfError{},
+		},
+		{
+			name:     "Check valid type float without min value",
+			filePath: "check-valid-float-without-min/pkg/option.yml",
 			want:     InvalidConfError{},
 		},
 		{

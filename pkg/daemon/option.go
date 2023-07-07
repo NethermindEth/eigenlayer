@@ -63,8 +63,8 @@ func NewOptionInt(pkgOption package_handler.Option) (*OptionInt, error) {
 		validate:     pkgOption.ValidateDef != nil,
 	}
 	if o.validate {
-		o.MinValue = int(pkgOption.ValidateDef.MinValue)
-		o.MaxValue = int(pkgOption.ValidateDef.MaxValue)
+		o.MinValue = int(*pkgOption.ValidateDef.MinValue)
+		o.MaxValue = int(*pkgOption.ValidateDef.MaxValue)
 	}
 	return o, nil
 }
@@ -148,8 +148,8 @@ func NewOptionFloat(pkgOption package_handler.Option) (*OptionFloat, error) {
 		validate: pkgOption.ValidateDef != nil,
 	}
 	if o.validate {
-		o.MinValue = pkgOption.ValidateDef.MinValue
-		o.MaxValue = pkgOption.ValidateDef.MaxValue
+		o.MinValue = *pkgOption.ValidateDef.MinValue
+		o.MaxValue = *pkgOption.ValidateDef.MaxValue
 	}
 	return o, nil
 }

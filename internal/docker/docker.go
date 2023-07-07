@@ -251,3 +251,26 @@ func (d *DockerManager) NetworkDisconnect(container, network string) error {
 	log.Debugf("Disconnecting container %s from network %s", container, network)
 	return d.dockerClient.NetworkDisconnect(context.Background(), network, container, false)
 }
+
+// BuildFromURL build an image from a Git repository URI or HTTP/HTTPS context URI.
+func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
+	log.Debugf("Building image from %s", remote)
+	buildResult, err := d.dockerClient.ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+		RemoteContext: remote,
+		Tags:          []string{tag},
+		Remove:        true,
+		ForceRemove:   true,
+	})
+	if err != nil {
+		return err
+	}
+	defer buildResult.Body.Close()
+
+	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
+	if err != nil {
+		return err
+	}
+	defer loadResult.Body.Close()
+	return nil
+}
+

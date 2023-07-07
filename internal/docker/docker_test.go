@@ -1,10 +1,12 @@
 package docker
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -1031,6 +1033,71 @@ func TestNetworkDisconnect(t *testing.T) {
 				assert.Error(t, err, "Expected error not returned")
 			} else {
 				assert.NoError(t, err, "Unexpected error returned")
+			}
+		})
+	}
+}
+
+func TestBuildFromURI(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func(*mocks.MockAPIClient)
+		expectedError error
+	}{
+		{
+			name: "success",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				buildBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				buildResponse := types.ImageBuildResponse{
+					Body: buildBody,
+				}
+				loadBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				loadResponse := types.ImageLoadResponse{
+					Body: loadBody,
+				}
+				dockerClient.EXPECT().ImageBuild(context.Background(), gomock.Any(), gomock.Any()).Return(buildResponse, nil)
+				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(loadResponse, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "build error",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				dockerClient.EXPECT().ImageBuild(context.Background(), gomock.Any(), gomock.Any()).Return(types.ImageBuildResponse{}, errors.New("build error"))
+			},
+			expectedError: errors.New("build error"),
+		},
+		{
+			name: "load error",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				buildBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				buildResponse := types.ImageBuildResponse{
+					Body: buildBody,
+				}
+				dockerClient.EXPECT().ImageBuild(context.Background(), gomock.Any(), gomock.Any()).Return(buildResponse, nil)
+				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(types.ImageLoadResponse{}, errors.New("load error"))
+			},
+			expectedError: errors.New("load error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			tt.setup(dockerClient)
+			defer ctrl.Finish()
+
+			remote := "example.com/my-image"
+			tag := "v1.0.0"
+
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.BuildFromURI(remote, tag)
+
+			if tt.expectedError != nil {
+				assert.EqualError(t, err, tt.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

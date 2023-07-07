@@ -2,6 +2,7 @@ package package_handler
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -115,7 +116,7 @@ func (o *Option) validate() InvalidConfError {
 			}
 		case "port":
 			port, err := strconv.Atoi(o.Default)
-			invalidDefault = err != nil || port <= 0 || port > 65535
+			invalidDefault = err != nil || port <= 0 || port > math.MaxUint16
 		case "float":
 			val, err := strconv.ParseFloat(o.Default, 64)
 			invalidDefault = err != nil

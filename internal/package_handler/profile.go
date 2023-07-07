@@ -159,8 +159,8 @@ type Validate struct {
 	Re2Regex  string   `yaml:"re2_regex"`
 	Format    string   `yaml:"format"`
 	UriScheme []string `yaml:"uri_scheme"`
-	MinValue  float64  `yaml:"min_value"`
-	MaxValue  float64  `yaml:"max_value"`
+	MinValue  *float64 `yaml:"min_value,omitempty"`
+	MaxValue  *float64 `yaml:"max_value,omitempty"`
 	Options   []string `yaml:"options"`
 }
 

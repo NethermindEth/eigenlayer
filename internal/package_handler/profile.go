@@ -103,14 +103,30 @@ func (o *Option) validate() InvalidConfError {
 				invalidDefault = !regexp.MustCompile(o.ValidateDef.Re2Regex).MatchString(o.Default)
 			}
 		case "int":
-			_, err := strconv.Atoi(o.Default)
+			val, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil
+			if o.ValidateDef != nil {
+				if o.ValidateDef.MinValue != nil && val < int(*o.ValidateDef.MinValue) {
+					invalidDefault = true
+				}
+				if o.ValidateDef.MaxValue != nil && val > int(*o.ValidateDef.MaxValue) {
+					invalidDefault = true
+				}
+			}
 		case "port":
 			port, err := strconv.Atoi(o.Default)
 			invalidDefault = err != nil || port <= 0 || port > 65535
 		case "float":
-			_, err := strconv.ParseFloat(o.Default, 64)
+			val, err := strconv.ParseFloat(o.Default, 64)
 			invalidDefault = err != nil
+			if o.ValidateDef != nil {
+				if o.ValidateDef.MinValue != nil && val < *o.ValidateDef.MinValue {
+					invalidDefault = true
+				}
+				if o.ValidateDef.MaxValue != nil && val > *o.ValidateDef.MaxValue {
+					invalidDefault = true
+				}
+			}
 		case "bool":
 			_, err := strconv.ParseBool(o.Default)
 			invalidDefault = err != nil

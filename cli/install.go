@@ -3,10 +3,10 @@ package cli
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/NethermindEth/egn/cli/prompter"
 	"github.com/NethermindEth/egn/pkg/daemon"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +16,6 @@ func InstallCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		version  string
 		profile  string
 		tag      string
-		run      bool
 		noPrompt bool
 		help     bool
 	)
@@ -162,7 +161,6 @@ the user to know which options are available for each profile.
 	cmd.Flags().StringVarP(&version, "version", "v", "", "version to install. If not specified the latest version will be installed.")
 	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance name. If not specified a list of available profiles will be shown to select from.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name.")
-	cmd.Flags().BoolVarP(&run, "run", "r", false, "the CLI will prompt to run the new instance or not at the end of the installation if not specified. If specified, the CLI will run the new instance without prompting.")
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
 	return &cmd
 }

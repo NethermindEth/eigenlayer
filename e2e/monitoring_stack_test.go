@@ -112,6 +112,8 @@ func TestMonitoring_Restart(t *testing.T) {
 		"--no-prompt",
 		"--tag", "tag-2",
 		"--option.main-container-name", "main-service-2",
+		"--option.network-name", "eigenlayer-2",
+		"--option.main-port", "8081",
 		"https://github.com/NethermindEth/mock-avs",
 	)
 	assert.NoError(t, err)

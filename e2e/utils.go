@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -79,6 +80,25 @@ func checkMonitoringStack(t *testing.T) {
 	assert.Equal(t, "ok", healthResponse.Database)
 }
 
+func getContainerIPByName(containerName string, networkName string) (string, error) {
+	// Docker client
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return "", err
+	}
+	defer dockerClient.Close()
+
+	container, err := dockerClient.ContainerInspect(context.Background(), containerName)
+	if err != nil {
+		return "", err
+	}
+	network, ok := container.NetworkSettings.Networks[networkName]
+	if !ok {
+		return "", fmt.Errorf("network %s not found", networkName)
+	}
+	return network.IPAddress, nil
+}
+
 func getContainerIDByName(containerName string) (string, error) {
 	// Docker client
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -95,7 +115,7 @@ func getContainerIDByName(containerName string) (string, error) {
 	return container.ID, nil
 }
 
-func checkPrometheusTargets(t *testing.T, expectedCount int) {
+func checkPrometheusTargets(t *testing.T, targets ...string) {
 	// Check prometheus targets
 	response, err := http.Get("http://localhost:9090/api/v1/targets")
 	assert.NoError(t, err)
@@ -106,12 +126,18 @@ func checkPrometheusTargets(t *testing.T, expectedCount int) {
 	err = json.Unmarshal(body, &r)
 	assert.NoError(t, err)
 	// Check number of targets
-	assert.Len(t, r.Data.ActiveTargets, expectedCount)
+	assert.Len(t, r.Data.ActiveTargets, len(targets))
 	// Check success
 	assert.Equal(t, "success", r.Status)
 	// Check node exporter target
-	assert.Contains(t, r.Data.ActiveTargets[0].Labels, "instance")
-	assert.Equal(t, "egn_node_exporter:9100", r.Data.ActiveTargets[0].Labels["instance"])
+	var labels []string
+	for _, target := range r.Data.ActiveTargets {
+		assert.Contains(t, r.Data.ActiveTargets[0].Labels, "instance")
+		labels = append(labels, target.Labels["instance"])
+	}
+	for _, target := range targets {
+		assert.Contains(t, labels, target)
+	}
 	// TODO: check mock-avs target
 	// Check all targets are up
 	for i := 0; i < len(r.Data.ActiveTargets); i++ {

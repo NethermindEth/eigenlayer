@@ -48,7 +48,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 
 	checkMonitoringStack(t)
 
-	checkContainerRunning(t, "main-service")
+	checkContainerRunning(t, "option-returner")
 }
 
 func TestInstall_DuplicatedID(t *testing.T) {
@@ -75,11 +75,14 @@ func TestInstall_DuplicatedID(t *testing.T) {
 
 	checkMonitoringStack(t)
 
-	checkPrometheusTargets(t, 1) // Expecting 1 target (node exporter)
+	optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+	assert.NoError(t, err)
+
+	checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080") // Expecting 2 targets (node exporter + option-returner)
 
 	checkGrafanaHealth(t)
 
-	checkContainerRunning(t, "main-service")
+	checkContainerRunning(t, "option-returner")
 
 	err = runCommand(t,
 		e2eTest.EgnPath(),

@@ -18,18 +18,18 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			instanceId = args[0]
-			println(instanceId)
 			if !d.HasInstance(instanceId) {
 				return errors.New("instance not found")
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return d.RunPlugin(instanceId, args[1:], noDestroyImage)
 		},
 	}
 
 	cmd.Flags().BoolVar(&noDestroyImage, "no-rm-image", false, "Do not remove the plugin image after plugin execution")
+	cmd.DisableFlagParsing = true // Flag parsing is disable to support dynamic flags for plugin arguments
 
 	return &cmd
 }

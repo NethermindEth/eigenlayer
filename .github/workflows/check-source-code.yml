@@ -139,5 +139,5 @@ jobs:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Integration tests
+      - name: E2E tests
         run: make e2e-test

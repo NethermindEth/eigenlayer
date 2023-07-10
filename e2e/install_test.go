@@ -102,34 +102,52 @@ func TestInstall_MultipleAVS(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
-	err = runCommand(t,
-		e2eTest.EgnPath(),
-		"install",
-		"--profile", "option-returner",
-		"--no-prompt",
-		"--tag", "tag-1",
-		"--option.main-container-name", "main-service-1",
-		"https://github.com/NethermindEth/mock-avs",
-	)
-	assert.NoError(t, err)
+	commandSequence := []struct {
+		args            []string
+		checkContainers []string
+	}{
+		{
+			args: []string{
+				"install",
+				"--profile", "option-returner",
+				"--no-prompt",
+				"--tag", "option-returner-1",
+				"--option.main-container-name", "main-service-1",
+				"https://github.com/NethermindEth/mock-avs",
+			},
+			checkContainers: []string{"main-service-1"},
+		},
+		{
+			args: []string{
+				"install",
+				"--profile", "option-returner",
+				"--no-prompt",
+				"--tag", "option-returner-2",
+				"--option.main-container-name", "main-service-2",
+				"--option.main-port", "8081",
+				"https://github.com/NethermindEth/mock-avs",
+			},
+			checkContainers: []string{"main-service-1", "main-service-2"},
+		},
+		{
+			args: []string{
+				"install",
+				"--profile", "health-checker",
+				"--no-prompt",
+				"--tag", "health-checker",
+				"https://github.com/NethermindEth/mock-avs",
+			},
+			checkContainers: []string{"main-service-1", "main-service-2", "health-checker"},
+		},
+	}
 
-	checkMonitoringStack(t)
-	checkContainerRunning(t, "main-service-1")
+	for _, command := range commandSequence {
+		err = runCommand(t, e2eTest.EgnPath(), command.args...)
+		assert.NoError(t, err)
+		checkMonitoringStack(t)
+		for _, container := range command.checkContainers {
+			checkContainerRunning(t, container)
+		}
+	}
 
-	err = runCommand(t,
-		e2eTest.EgnPath(),
-		"install",
-		"--profile", "option-returner",
-		"--no-prompt",
-		"--tag", "tag-2",
-		"--option.main-container-name", "main-service-2",
-		"--option.main-port", "8081",
-		"https://github.com/NethermindEth/mock-avs",
-	)
-	assert.NoError(t, err)
-
-	checkMonitoringStack(t)
-
-	checkContainerRunning(t, "main-service-1")
-	checkContainerRunning(t, "main-service-2")
 }

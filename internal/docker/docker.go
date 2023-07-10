@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -274,3 +275,71 @@ func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
 	return nil
 }
 
+// Run is a method of DockerManager that handles running a Docker container from an image.
+// It creates the container from the specified image with the provided command arguments,
+// connects the created container to the specified network, then starts the container.
+//
+// After the container starts, the function waits for the container to exit.
+// During the waiting process, it also listens for errors from the container.
+// If an error is received, it prints the container logs and returns the error.
+func (d *DockerManager) Run(image string, network string, args []string) (err error) {
+	log.Debugf("Creating container from image %s", image)
+	createResponse, err := d.dockerClient.ContainerCreate(context.Background(), &dockerCt.Config{Image: image, Cmd: args}, nil, nil, nil, "")
+	if err != nil {
+		return err
+	}
+
+	// Ensure the container is removed after use
+	defer func() {
+		log.Debugf("Removing container %s", createResponse.ID)
+		removeErr := d.dockerClient.ContainerRemove(context.Background(), createResponse.ID, types.ContainerRemoveOptions{})
+		if removeErr != nil {
+			log.Errorf("Error removing container %s: %v", createResponse.ID, removeErr)
+			// If the main function did not return an error, but the deferred function did,
+			// the deferred function's error is returned.
+			if err == nil {
+				err = removeErr
+			}
+		}
+	}()
+
+	log.Debugf("Connecting container %s to network %s", createResponse.ID, network)
+	err = d.NetworkConnect(createResponse.ID, network)
+	if err != nil {
+		return err
+	}
+	waitChn, errChn := d.dockerClient.ContainerWait(context.Background(), createResponse.ID, dockerCt.WaitConditionNextExit)
+	log.Debugf("Starting container %s", createResponse.ID)
+	err = d.dockerClient.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{})
+	if err != nil {
+		return err
+	}
+	log.Debugf("Waiting for container to exit")
+	for {
+		select {
+		case err := <-errChn:
+			if err != nil {
+				log.Debugf("Error while waiting for container to exit")
+				printContainerLogs(d.dockerClient, createResponse.ID)
+				return err
+			}
+		case wait := <-waitChn:
+			log.Debugf("Container exited with status %d", wait.StatusCode)
+			printContainerLogs(d.dockerClient, createResponse.ID)
+			if wait.StatusCode != 0 {
+				return fmt.Errorf("container exited with status %d", wait.StatusCode)
+			}
+			return nil
+		}
+	}
+}
+
+func printContainerLogs(dockerClient client.APIClient, containerID string) error {
+	logs, err := dockerClient.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		return err
+	}
+	defer logs.Close()
+	_, err = io.Copy(os.Stdout, logs)
+	return err
+}

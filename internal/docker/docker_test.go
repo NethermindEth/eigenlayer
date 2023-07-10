@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -1047,11 +1046,11 @@ func TestBuildFromURI(t *testing.T) {
 		{
 			name: "success",
 			setup: func(dockerClient *mocks.MockAPIClient) {
-				buildBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
 				buildResponse := types.ImageBuildResponse{
 					Body: buildBody,
 				}
-				loadBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				loadBody := io.NopCloser(bytes.NewReader([]byte{}))
 				loadResponse := types.ImageLoadResponse{
 					Body: loadBody,
 				}
@@ -1070,7 +1069,7 @@ func TestBuildFromURI(t *testing.T) {
 		{
 			name: "load error",
 			setup: func(dockerClient *mocks.MockAPIClient) {
-				buildBody := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
 				buildResponse := types.ImageBuildResponse{
 					Body: buildBody,
 				}
@@ -1096,6 +1095,198 @@ func TestBuildFromURI(t *testing.T) {
 
 			if tt.expectedError != nil {
 				assert.EqualError(t, err, tt.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestDockerManager_Run(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(*gomock.Controller) *mocks.MockAPIClient
+		image         string
+		network       string
+		args          []string
+		expectedError error
+	}{
+		{
+			name: "Run successful",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				// Create channels
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				// Write to one of the channels
+				waitCh <- container.WaitResponse{StatusCode: 0}
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+				)
+				return dockerClient
+			},
+			image:   "my-image",
+			network: "my-network",
+			args:    []string{"arg1", "arg2"},
+		},
+		{
+			name: "Container create error",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{}, errors.New("creation error")),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: errors.New("creation error"),
+		},
+		{
+			name: "Container remove error",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				// Create channels
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				// Write to one of the channels
+				waitCh <- container.WaitResponse{StatusCode: 0}
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(errors.New("remove error")),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: errors.New("remove error"),
+		},
+		{
+			name: "NetworkConnect error",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(errors.New("network connection error")),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: errors.New("network connection error"),
+		},
+		{
+			name: "ContainerStart error",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				// Create channels
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(errors.New("start container error")),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: errors.New("start container error"),
+		},
+		{
+			name: "ContainerWait error channel",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				// Create channels
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				// Write to error channel
+				errCh <- errors.New("container wait error")
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: errors.New("container wait error"),
+		},
+		{
+			name: "Non-zero exit status",
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				// Create channels
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				// Write to one of the channels
+				waitCh <- container.WaitResponse{StatusCode: 1}
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
+				)
+				return dockerClient
+			},
+			image:         "my-image",
+			network:       "my-network",
+			args:          []string{"arg1", "arg2"},
+			expectedError: fmt.Errorf("container exited with status %d", 1),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			dockerClient := tt.setupMock(ctrl)
+
+			dockerManager := NewDockerManager(dockerClient)
+
+			err := dockerManager.Run(tt.image, tt.network, tt.args)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
 			} else {
 				assert.NoError(t, err)
 			}

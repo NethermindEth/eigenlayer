@@ -417,7 +417,7 @@ func (opf *OptionPathFile) Help() string {
 
 func (opf *OptionPathFile) Set(value string) error {
 	if opf.validate {
-		if filepath.Ext(value) != "."+opf.Format {
+		if filepath.Ext(value) != opf.Format {
 			return InvalidOptionValueError{
 				optionName: opf.name,
 				value:      value,

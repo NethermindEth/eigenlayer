@@ -930,7 +930,10 @@ func TestContainerNetworks(t *testing.T) {
 			} else {
 				assert.NoError(t, err, "Unexpected error returned")
 			}
-			assert.Equal(t, tt.want, got, "Expected container networks does not match with networks obtained.")
+			assert.Len(t, got, len(tt.want), "Expected container networks does not match with networks obtained.")
+			for _, network := range tt.want {
+				assert.Contains(t, got, network, "Expected container networks does not match with networks obtained.")
+			}
 		})
 	}
 }

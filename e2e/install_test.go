@@ -59,6 +59,13 @@ func TestInstall_DuplicatedID(t *testing.T) {
 	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
 	defer e2eTest.Cleanup()
 
+	checks := func(t *testing.T, optionReturnerIP string) {
+		checkMonitoringStack(t)
+		checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080") // Expecting 2 targets (node exporter + option-returner)
+		checkGrafanaHealth(t)
+		checkContainerRunning(t, "option-returner")
+	}
+
 	err = runCommand(t,
 		e2eTest.EgnPath(),
 		"install",
@@ -71,16 +78,9 @@ func TestInstall_DuplicatedID(t *testing.T) {
 
 	time.Sleep(monitoringWaitTime)
 
-	checkMonitoringStack(t)
-
 	optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 	assert.NoError(t, err)
-
-	checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080") // Expecting 2 targets (node exporter + option-returner)
-
-	checkGrafanaHealth(t)
-
-	checkContainerRunning(t, "option-returner")
+	checks(t, optionReturnerIP)
 
 	err = runCommand(t,
 		e2eTest.EgnPath(),
@@ -91,6 +91,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		"https://github.com/NethermindEth/mock-avs",
 	)
 	assert.Error(t, err)
+	checks(t, optionReturnerIP)
 }
 
 func TestInstall_MultipleAVS(t *testing.T) {

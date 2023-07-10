@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrInstanceAlreadyExists = errors.New("instance already exists")
 	ErrProfileDoesNotExist   = errors.New("profile does not exist")
+	ErrInstanceNotRunning    = errors.New("instance is not running")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

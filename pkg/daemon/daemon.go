@@ -33,6 +33,12 @@ type Daemon interface {
 	// Init initializes the daemon, making sure that all the necessary components
 	// are installed and running.
 	Init() error
+
+	// RunPlugin runs a plugin with the given arguments on the instance with the
+	// given ID. If there is no installed and running instance with the given ID
+	// an error will be returned. If noDestroyImage is true, the plugin image will
+	// not be removed after the plugin execution.
+	RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error
 }
 
 // PullResult is the result of a Pull operation, containing all the necessary

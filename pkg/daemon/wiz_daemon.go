@@ -376,6 +376,61 @@ func (d *WizDaemon) uninstall(instanceID string, down bool) error {
 	return d.dataDir.RemoveInstance(instanceID)
 }
 
+type composePsItem struct {
+	Id    string `json:"ID"`
+	State string `json:"State"`
+}
+
+// RunPlugin implements Daemon.RunPlugin.
+func (d *WizDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error {
+	instance, err := d.dataDir.Instance(instanceId)
+	if err != nil {
+		return err
+	}
+	composePath := instance.ComposePath()
+	psOutputJSON, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		Path:   composePath,
+		Format: "json",
+	})
+	if err != nil {
+		return err
+	}
+	var psOutput []composePsItem
+	err = json.Unmarshal([]byte(psOutputJSON), &psOutput)
+	if err != nil {
+		return err
+	}
+	if len(psOutput) == 0 {
+		return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
+	}
+	ct := psOutput[0]
+	networks, err := d.docker.ContainerNetworks(ct.Id)
+	if err != nil {
+		return err
+	}
+	if len(networks) == 0 {
+		// TODO: improve error message with more specific error
+		return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
+	}
+	// Create plugin container
+	var image string
+	if instance.Plugin.Image != "" {
+		// Pull image
+		if err = d.docker.Pull(instance.Plugin.Image); err != nil {
+			return err
+		}
+		image = instance.Plugin.Image
+	} else if instance.Plugin.BuildFrom != "" {
+		image = "eigen-plugin-" + instanceId
+		// Build image
+		if err = d.docker.BuildFromURI(instance.Plugin.BuildFrom, image); err != nil {
+			return err
+		}
+	}
+	log.Infof("Running plugin with image %s", image)
+	return d.docker.Run(image, networks[0], pluginArgs)
+}
+
 func instanceNameFromURL(u string) (string, error) {
 	parsedURL, err := url.ParseRequestURI(u)
 	if err != nil {

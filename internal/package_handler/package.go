@@ -309,6 +309,7 @@ func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
 	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
 }
 
+// HasPlugin returns true if the package has a plugin.
 func (p *PackageHandler) HasPlugin() (bool, error) {
 	manifest, err := p.parseManifest()
 	if err != nil {
@@ -318,6 +319,7 @@ func (p *PackageHandler) HasPlugin() (bool, error) {
 	return manifest.Plugin != nil, nil
 }
 
+// Plugin returns the plugin for the package.
 func (p *PackageHandler) Plugin() (*Plugin, error) {
 	manifest, err := p.parseManifest()
 	if err != nil {

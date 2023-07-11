@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -321,12 +320,12 @@ func (d *DockerManager) Run(image string, network string, args []string) (err er
 		case err := <-errChn:
 			if err != nil {
 				log.Debugf("Error while waiting for container to exit")
-				printContainerLogs(d.dockerClient, createResponse.ID)
+				log.Error(containerLogs(d.dockerClient, createResponse.ID))
 				return err
 			}
 		case wait := <-waitChn:
 			log.Debugf("Container exited with status %d", wait.StatusCode)
-			printContainerLogs(d.dockerClient, createResponse.ID)
+			log.Info(containerLogs(d.dockerClient, createResponse.ID))
 			if wait.StatusCode != 0 {
 				return fmt.Errorf("container exited with status %d", wait.StatusCode)
 			}
@@ -335,12 +334,17 @@ func (d *DockerManager) Run(image string, network string, args []string) (err er
 	}
 }
 
-func printContainerLogs(dockerClient client.APIClient, containerID string) error {
-	logs, err := dockerClient.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+func containerLogs(dockerClient client.APIClient, containerID string) string {
+	logsReader, err := dockerClient.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return err
+		log.Errorf("Error getting container logs: %v", err)
+		return ""
 	}
-	defer logs.Close()
-	_, err = io.Copy(os.Stdout, logs)
-	return err
+	defer logsReader.Close()
+	logs, err := io.ReadAll(logsReader)
+	if err != nil {
+		log.Errorf("Error reading container logs: %v", err)
+		return ""
+	}
+	return string(logs)
 }

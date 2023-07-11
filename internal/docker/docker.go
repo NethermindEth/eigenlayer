@@ -294,11 +294,12 @@ func (d *DockerManager) Run(image string, network string, args []string) (err er
 		log.Debugf("Removing container %s", createResponse.ID)
 		removeErr := d.dockerClient.ContainerRemove(context.Background(), createResponse.ID, types.ContainerRemoveOptions{})
 		if removeErr != nil {
-			log.Errorf("Error removing container %s: %v", createResponse.ID, removeErr)
 			// If the main function did not return an error, but the deferred function did,
 			// the deferred function's error is returned.
 			if err == nil {
 				err = removeErr
+			} else {
+				log.Errorf("Error removing container %s: %v", createResponse.ID, removeErr)
 			}
 		}
 	}()

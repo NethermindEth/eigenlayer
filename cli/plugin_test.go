@@ -51,6 +51,17 @@ func TestPluginCmd(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "plugin without arguments",
+			args: []string{"instance1"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon) {
+				gomock.InOrder(
+					d.EXPECT().HasInstance("instance1").Return(true),
+					d.EXPECT().RunPlugin("instance1", []string{}, false).Return(nil),
+				)
+			},
+		},
 	}
 
 	for _, tc := range ts {

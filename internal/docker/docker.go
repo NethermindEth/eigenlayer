@@ -320,14 +320,14 @@ func (d *DockerManager) Run(image string, network string, args []string) (err er
 		case err := <-errChn:
 			if err != nil {
 				log.Debugf("Error while waiting for container to exit")
-				log.Error(containerLogs(d.dockerClient, createResponse.ID))
-				return err
+				return fmt.Errorf("error waiting for container %s: %v. container logs: %s", createResponse.ID, err, containerLogs(d.dockerClient, createResponse.ID))
 			}
 		case wait := <-waitChn:
 			log.Debugf("Container exited with status %d", wait.StatusCode)
-			log.Info(containerLogs(d.dockerClient, createResponse.ID))
 			if wait.StatusCode != 0 {
-				return fmt.Errorf("container exited with status %d", wait.StatusCode)
+				return fmt.Errorf("unexpected exit code %d for container %s. container logs: %s", wait.StatusCode, createResponse.ID, containerLogs(d.dockerClient, createResponse.ID))
+			} else {
+				log.Info(containerLogs(d.dockerClient, createResponse.ID))
 			}
 			return nil
 		}

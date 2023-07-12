@@ -115,9 +115,6 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	if err != nil {
 		return
 	}
-	if err = pkgHandler.Check(); err != nil {
-		return
-	}
 	// Set version
 	if version == "" {
 		version, err = pkgHandler.LatestVersion()
@@ -128,6 +125,9 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	result.Version = version
 	err = pkgHandler.CheckoutVersion(version)
 	if err != nil {
+		return
+	}
+	if err = pkgHandler.Check(); err != nil {
 		return
 	}
 	// Get profiles names and its options

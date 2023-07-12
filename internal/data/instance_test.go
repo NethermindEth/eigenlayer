@@ -149,7 +149,7 @@ func TestNewInstance(t *testing.T) {
 			}
 
 			return testCase{
-				name: "with plugin git url",
+				name: "with plugin build_from",
 				path: testDir,
 				instance: &Instance{
 					Name:    "test_name",
@@ -158,6 +158,36 @@ func TestNewInstance(t *testing.T) {
 					Version: "v0.1.0",
 					Profile: "mainnet",
 					Plugin: &Plugin{
+						BuildFrom: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
+					},
+					path: testDir,
+				},
+				err: nil,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin","image":"nethermind/egn-plugin:latest"}}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "with plugin build_from and image",
+				path: testDir,
+				instance: &Instance{
+					Name:    "test_name",
+					Tag:     "test_tag",
+					URL:     "https://github.com/NethermindEth/mock-avs",
+					Version: "v0.1.0",
+					Profile: "mainnet",
+					Plugin: &Plugin{
+						Image:     "nethermind/egn-plugin:latest",
 						BuildFrom: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
 					},
 					path: testDir,

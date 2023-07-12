@@ -1254,7 +1254,7 @@ func TestDockerManager_Run(t *testing.T) {
 					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
 					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
 					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
-					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBufferString("container logs")), nil),
 					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
 				)
 				return dockerClient
@@ -1262,7 +1262,7 @@ func TestDockerManager_Run(t *testing.T) {
 			image:         "my-image",
 			network:       "my-network",
 			args:          []string{"arg1", "arg2"},
-			expectedError: errors.New("container wait error"),
+			expectedError: errors.New("error waiting for container containerID: container wait error. container logs: container logs"),
 		},
 		{
 			name: "Non-zero exit status",
@@ -1281,7 +1281,7 @@ func TestDockerManager_Run(t *testing.T) {
 					dockerClient.EXPECT().NetworkConnect(gomock.Any(), "my-network", gomock.Any(), gomock.Any()).Return(nil),
 					dockerClient.EXPECT().ContainerWait(gomock.Any(), "containerID", gomock.Any()).Return(waitCh, errCh),
 					dockerClient.EXPECT().ContainerStart(gomock.Any(), "containerID", gomock.Any()).Return(nil),
-					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerLogs(gomock.Any(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBufferString("container logs")), nil),
 					dockerClient.EXPECT().ContainerRemove(gomock.Any(), "containerID", gomock.Any()).Return(nil),
 				)
 				return dockerClient
@@ -1289,7 +1289,7 @@ func TestDockerManager_Run(t *testing.T) {
 			image:         "my-image",
 			network:       "my-network",
 			args:          []string{"arg1", "arg2"},
-			expectedError: fmt.Errorf("container exited with status %d", 1),
+			expectedError: fmt.Errorf("unexpected exit code 1 for container containerID. container logs: container logs"),
 		},
 	}
 

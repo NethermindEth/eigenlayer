@@ -73,7 +73,6 @@ To ensure each instance of the node software is uniquely identified, use the --t
 			if err != nil {
 				return err
 			}
-
 			log.Info("Installed successfully with instance id: ", instanceId)
 
 			if pullResult.HasPlugin {

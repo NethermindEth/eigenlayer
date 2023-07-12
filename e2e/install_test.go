@@ -149,5 +149,4 @@ func TestInstall_MultipleAVS(t *testing.T) {
 			checkContainerRunning(t, container)
 		}
 	}
-
 }

@@ -734,43 +734,61 @@ func TestAddAndRemoveTarget(t *testing.T) {
 		wantErr       bool
 	}{
 		{
-			name:         "add, ok, 1 service",
+			name:         "add, ok, prometheus service",
 			mockerLocker: okLocker,
 			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
-				servicer := mocks.NewMockServiceAPI(ctrl)
-				// Expect the service to be triggered
-				servicer.EXPECT().AddTarget(target, instanceID).Return(nil)
-				servicer.EXPECT().ContainerName().Return("node").Times(2)
-
+				prometheusService := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerNetworks("node").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().NetworkConnect("node", dockerNetwork).Return(nil)
+
+				gomock.InOrder(
+					prometheusService.EXPECT().ContainerName().Return(PrometheusContainerName),
+					dockerManager.EXPECT().ContainerNetworks(PrometheusContainerName).Return([]string{"eigen_default"}, nil),
+					dockerManager.EXPECT().NetworkConnect(PrometheusContainerName, dockerNetwork).Return(nil),
+					prometheusService.EXPECT().AddTarget(target, instanceID).Return(nil),
+				)
 
 				return []ServiceAPI{
-					servicer,
+					prometheusService,
 				}, dockerManager
 			},
 			target: "localhost:9000",
 			add:    true,
 		},
 		{
-			name:         "add, ok, 2 services, one of them was already added to network",
+			name:         "add, ok, 1 service",
 			mockerLocker: okLocker,
 			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
-				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
-				// Expect the service to be triggered
-				service1.EXPECT().AddTarget(target, instanceID).Return(nil)
-				service1.EXPECT().ContainerName().Return("node1").Times(2)
-				service2.EXPECT().AddTarget(target, instanceID).Return(nil)
-				service2.EXPECT().ContainerName().Return("node2")
-
+				service := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerNetworks("node1").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().ContainerNetworks("node2").Return([]string{"eigen_default", dockerNetwork}, nil)
-				dockerManager.EXPECT().NetworkConnect("node1", dockerNetwork).Return(nil)
+
+				gomock.InOrder(
+					service.EXPECT().ContainerName().Return("service1"),
+					service.EXPECT().AddTarget(target, instanceID).Return(nil),
+				)
 
 				return []ServiceAPI{
-					service1,
+					service,
+				}, dockerManager
+			},
+			target: "localhost:9000",
+			add:    true,
+		},
+		{
+			name:         "add, ok, 2 services, prometheus was already added to network",
+			mockerLocker: okLocker,
+			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+				prometheusService, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
+				dockerManager := mocks.NewMockDockerManager(ctrl)
+				gomock.InOrder(
+					prometheusService.EXPECT().ContainerName().Return(PrometheusContainerName),
+					dockerManager.EXPECT().ContainerNetworks(PrometheusContainerName).Return([]string{"eigen_default", dockerNetwork}, nil),
+					prometheusService.EXPECT().AddTarget(target, instanceID).Return(nil),
+					service2.EXPECT().ContainerName().Return("node2"),
+					service2.EXPECT().AddTarget(target, instanceID).Return(nil),
+				)
+
+				return []ServiceAPI{
+					prometheusService,
 					service2,
 				}, dockerManager
 			},
@@ -781,21 +799,20 @@ func TestAddAndRemoveTarget(t *testing.T) {
 			name:         "add, ok, 2 services, 1 AddTarget error",
 			mockerLocker: okLocker,
 			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
-				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
-				// Expect the service to be triggered
-				service1.EXPECT().AddTarget(target, instanceID).Return(nil)
-				service1.EXPECT().ContainerName().Return("node1").Times(2)
-				service2.EXPECT().AddTarget(target, instanceID).Return(errors.New("error"))
-				service2.EXPECT().ContainerName().Return("node2").Times(2)
-
+				prometheusService, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerNetworks("node1").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().ContainerNetworks("node2").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().NetworkConnect("node1", dockerNetwork).Return(nil)
-				dockerManager.EXPECT().NetworkConnect("node2", dockerNetwork).Return(nil)
+
+				gomock.InOrder(
+					prometheusService.EXPECT().ContainerName().Return(PrometheusContainerName),
+					dockerManager.EXPECT().ContainerNetworks(PrometheusContainerName).Return([]string{"eigen_default"}, nil),
+					dockerManager.EXPECT().NetworkConnect(PrometheusContainerName, dockerNetwork).Return(nil),
+					prometheusService.EXPECT().AddTarget(target, instanceID).Return(nil),
+					service2.EXPECT().ContainerName().Return("node2"),
+					service2.EXPECT().AddTarget(target, instanceID).Return(errors.New("error")),
+				)
 
 				return []ServiceAPI{
-					service1,
+					prometheusService,
 					service2,
 				}, dockerManager
 			},
@@ -804,23 +821,21 @@ func TestAddAndRemoveTarget(t *testing.T) {
 			add:     true,
 		},
 		{
-			name:         "add, ok, 2 services, 1 ContainerNetworks error",
+			name:         "add, ok, 2 services, prometheus ContainerNetworks error",
 			mockerLocker: okLocker,
 			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
-				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
-				// Expect the service to be triggered
-				service1.EXPECT().AddTarget(target, instanceID).Return(nil)
-				service1.EXPECT().ContainerName().Return("node1").Times(2)
-				service2.EXPECT().ContainerName().Return("node2")
-
+				prometheusService, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerNetworks("node1").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().ContainerNetworks("node2").Return(nil, errors.New("error"))
-				dockerManager.EXPECT().NetworkConnect("node1", dockerNetwork).Return(nil)
+				gomock.InOrder(
+					service2.EXPECT().ContainerName().Return("node2"),
+					service2.EXPECT().AddTarget(target, instanceID).Return(nil),
+					prometheusService.EXPECT().ContainerName().Return(PrometheusContainerName),
+					dockerManager.EXPECT().ContainerNetworks(PrometheusContainerName).Return(nil, errors.New("error")),
+				)
 
 				return []ServiceAPI{
-					service1,
 					service2,
+					prometheusService,
 				}, dockerManager
 			},
 			target:  "http://localhost:9000",
@@ -828,24 +843,22 @@ func TestAddAndRemoveTarget(t *testing.T) {
 			add:     true,
 		},
 		{
-			name:         "add, ok, 2 services, 1 NetworkConnect error",
+			name:         "add, ok, 2 services, prometheus NetworkConnect error",
 			mockerLocker: okLocker,
 			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
-				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
-				// Expect the service to be triggered
-				service1.EXPECT().AddTarget(target, instanceID).Return(nil)
-				service1.EXPECT().ContainerName().Return("node1").Times(2)
-				service2.EXPECT().ContainerName().Return("node2").Times(2)
-
+				service1, prometheusService := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerNetworks("node1").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().ContainerNetworks("node2").Return([]string{"eigen_default"}, nil)
-				dockerManager.EXPECT().NetworkConnect("node1", dockerNetwork).Return(nil)
-				dockerManager.EXPECT().NetworkConnect("node2", dockerNetwork).Return(errors.New("error"))
+				gomock.InOrder(
+					service1.EXPECT().ContainerName().Return("node1"),
+					service1.EXPECT().AddTarget(target, instanceID).Return(nil),
+					prometheusService.EXPECT().ContainerName().Return(PrometheusContainerName),
+					dockerManager.EXPECT().ContainerNetworks(PrometheusContainerName).Return([]string{"eigen_default"}, nil),
+					dockerManager.EXPECT().NetworkConnect(PrometheusContainerName, dockerNetwork).Return(errors.New("error")),
+				)
 
 				return []ServiceAPI{
 					service1,
-					service2,
+					prometheusService,
 				}, dockerManager
 			},
 			target:  "http://localhost:9000",

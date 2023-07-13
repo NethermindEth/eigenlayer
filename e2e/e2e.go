@@ -7,18 +7,30 @@ import (
 	"testing"
 )
 
+type (
+	e2eArranger func(t *testing.T, egnPath string) error
+	e2eAct      func(t *testing.T, egnPath string)
+	e2eAssert   func(t *testing.T)
+)
+
 type e2eTestCase struct {
 	t        *testing.T
 	testDir  string
 	repoPath string
+	arranger e2eArranger
+	act      e2eAct
+	assert   e2eAssert
 }
 
-func NewE2ETestCase(t *testing.T, repoPath string) *e2eTestCase {
+func newE2ETestCase(t *testing.T, arranger e2eArranger, act e2eAct, assert e2eAssert) *e2eTestCase {
 	t.Helper()
 	tc := &e2eTestCase{
 		t:        t,
 		testDir:  t.TempDir(),
-		repoPath: repoPath,
+		repoPath: repoPath(t),
+		arranger: arranger,
+		act:      act,
+		assert:   assert,
 	}
 	t.Logf("Creating new E2E test case (%p). TestDir: %s", tc, tc.testDir)
 	checkGoInstalled(t)
@@ -27,14 +39,33 @@ func NewE2ETestCase(t *testing.T, repoPath string) *e2eTestCase {
 	return tc
 }
 
+func (e *e2eTestCase) run() {
+	if e.arranger != nil {
+		err := e.arranger(e.t, e.EgnPath())
+		if err != nil {
+			e.t.Fatalf("error in Arrange step: %v", err)
+		}
+	}
+	if e.act != nil {
+		e.act(e.t, e.EgnPath())
+	}
+	if e.assert != nil {
+		e.assert(e.t)
+	}
+	e.Cleanup()
+}
+
 func (e *e2eTestCase) EgnPath() string {
 	return filepath.Join(e.testDir, "egn")
 }
 
 func (e *e2eTestCase) Cleanup() {
 	// Stop and remove monitoring stack
-	dataDir := dataDirPath(e.t)
-	err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down").Run()
+	dataDir, err := dataDirPath()
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	err = exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down").Run()
 	if err != nil {
 		e.t.Fatalf("error removing monitoring stack: %v", err)
 	}

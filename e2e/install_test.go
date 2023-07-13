@@ -1,152 +1,122 @@
 package e2e
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInstall_WithoutArguments(t *testing.T) {
-	// Prepare E2E test case
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
-	defer e2eTest.Cleanup()
-
-	err = runCommand(t, e2eTest.EgnPath(), "install")
-
-	assert.Error(t, err, "install command should fail without arguments")
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "install command should fail without arguments")
+		},
+	)
+	// Run test case
+	e2eTest.run()
 }
 
 func TestInstall_ValidArgument(t *testing.T) {
-	// Prepare E2E test case
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
-	defer e2eTest.Cleanup()
-
-	// Install the mock-avs
-	err = runCommand(t,
-		e2eTest.EgnPath(),
-		"install",
-		"--profile", "option-returner",
-		"--no-prompt",
-		"https://github.com/NethermindEth/mock-avs",
+	// Test context
+	var (
+		runErr error
 	)
-	assert.NoError(t, err)
-
-	// Wait for the monitoring stack to be ready
-	time.Sleep(monitoringWaitTime)
-
-	checkMonitoringStack(t)
-
-	checkContainerRunning(t, "option-returner")
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, runErr, "install command should succeed")
+			checkContainerRunning(t, "option-returner")
+		},
+	)
+	// Run test case
+	e2eTest.run()
 }
 
 func TestInstall_DuplicatedID(t *testing.T) {
-	// Prepare E2E test case
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
-	defer e2eTest.Cleanup()
-
-	checks := func(t *testing.T, optionReturnerIP string) {
-		checkMonitoringStack(t)
-		checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080") // Expecting 2 targets (node exporter + option-returner)
-		checkGrafanaHealth(t)
-		checkContainerRunning(t, "option-returner")
-	}
-
-	err = runCommand(t,
-		e2eTest.EgnPath(),
-		"install",
-		"--profile", "option-returner",
-		"--no-prompt",
-		"--tag", "integration",
-		"https://github.com/NethermindEth/mock-avs",
+	// Test context
+	var (
+		runErr error
 	)
-	assert.NoError(t, err)
-
-	time.Sleep(monitoringWaitTime)
-
-	optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
-	assert.NoError(t, err)
-	checks(t, optionReturnerIP)
-
-	err = runCommand(t,
-		e2eTest.EgnPath(),
-		"install",
-		"--profile", "option-returner",
-		"--no-prompt",
-		"--tag", "integration",
-		"https://github.com/NethermindEth/mock-avs",
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "https://github.com/NethermindEth/mock-avs")
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "install command should fail with duplicated ID")
+		},
 	)
-	assert.Error(t, err)
-	checks(t, optionReturnerIP)
+	// Run test case
+	e2eTest.run()
 }
 
 func TestInstall_MultipleAVS(t *testing.T) {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	e2eTest := NewE2ETestCase(t, filepath.Dir(wd))
-	defer e2eTest.Cleanup()
+	// Test context
+	var (
+		runErr [3]error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "https://github.com/NethermindEth/mock-avs")
+			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "https://github.com/NethermindEth/mock-avs")
+			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--tag", "health-checker", "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			for i, err := range runErr {
+				assert.NoError(t, err, "install command (%d) should succeed", i)
+			}
 
-	commandSequence := []struct {
-		args            []string
-		checkContainers []string
-	}{
-		{
-			args: []string{
-				"install",
-				"--profile", "option-returner",
-				"--no-prompt",
-				"--tag", "option-returner-1",
-				"--option.main-container-name", "main-service-1",
-				"https://github.com/NethermindEth/mock-avs",
-			},
-			checkContainers: []string{"main-service-1"},
-		},
-		{
-			args: []string{
-				"install",
-				"--profile", "option-returner",
-				"--no-prompt",
-				"--tag", "option-returner-2",
-				"--option.main-container-name", "main-service-2",
-				"--option.main-port", "8081",
-				"https://github.com/NethermindEth/mock-avs",
-			},
-			checkContainers: []string{"main-service-1", "main-service-2"},
-		},
-		{
-			args: []string{
-				"install",
-				"--profile", "health-checker",
-				"--no-prompt",
-				"--tag", "health-checker",
-				"https://github.com/NethermindEth/mock-avs",
-			},
-			checkContainers: []string{"main-service-1", "main-service-2", "health-checker"},
-		},
-	}
+			checkContainerRunning(t, "main-service-1", "main-service-2", "health-checker")
 
-	for _, command := range commandSequence {
-		err = runCommand(t, e2eTest.EgnPath(), command.args...)
-		assert.NoError(t, err)
-		checkMonitoringStack(t)
-		for _, container := range command.checkContainers {
-			checkContainerRunning(t, container)
-		}
-	}
+			mainService1IP, err := getContainerIPByName("main-service-1", "eigenlayer")
+			assert.NoError(t, err)
+			mainService2IP, err := getContainerIPByName("main-service-2", "eigenlayer")
+			assert.NoError(t, err)
+			healthCheckerIP, err := getContainerIPByName("health-checker", "eigenlayer")
+			assert.NoError(t, err)
+
+			waitForMonitoring()
+			checkPrometheusTargets(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
+		},
+	)
+	// Run test case
+	e2eTest.run()
 }

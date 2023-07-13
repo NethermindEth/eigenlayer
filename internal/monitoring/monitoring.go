@@ -165,13 +165,16 @@ func (m *MonitoringManager) InstallStack() error {
 func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string) error {
 	for _, service := range m.services {
 		// Check if network was already added to service
-		networks, err := m.dockerManager.ContainerNetworks(service.ContainerName())
-		if err != nil {
-			return err
-		}
-		if !funk.Contains(networks, dockerNetwork) {
-			if err := m.dockerManager.NetworkConnect(service.ContainerName(), dockerNetwork); err != nil {
+		containerName := service.ContainerName()
+		if containerName == PrometheusContainerName {
+			networks, err := m.dockerManager.ContainerNetworks(containerName)
+			if err != nil {
 				return err
+			}
+			if !funk.Contains(networks, dockerNetwork) {
+				if err := m.dockerManager.NetworkConnect(containerName, dockerNetwork); err != nil {
+					return err
+				}
 			}
 		}
 		if err := service.AddTarget(endpoint, instanceID); err != nil {

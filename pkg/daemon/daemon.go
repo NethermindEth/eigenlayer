@@ -1,7 +1,5 @@
 package daemon
 
-import "github.com/NethermindEth/egn/internal/package_handler"
-
 // Daemon is the interface for the egn daemon. It should be used as the entrypoint
 // for all the functionalities of egn.
 type Daemon interface {
@@ -54,9 +52,6 @@ type PullResult struct {
 
 	// Options is map of profile names to their options.
 	Options map[string][]Option
-
-	// PackageHandler is the handler for the pulled package.
-	PackageHandler *package_handler.PackageHandler
 }
 
 // InstallOptions is a set of options for installing a node software package.
@@ -78,7 +73,4 @@ type InstallOptions struct {
 	// Tag is the tag to use for the instance, required to build the instance id
 	// with the format <package_name>-<tag>
 	Tag string
-
-	// PackageHandler is the handler for the package to install.
-	PackageHandler *package_handler.PackageHandler
 }

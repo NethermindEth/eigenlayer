@@ -17,7 +17,6 @@ import (
 	"github.com/NethermindEth/egn/internal/monitoring"
 	"github.com/NethermindEth/egn/internal/package_handler"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/afero"
 )
 
 // Checks that WizDaemon implements Daemon.
@@ -29,28 +28,22 @@ type WizDaemon struct {
 	dockerCompose ComposeManager
 	docker        DockerManager
 	monitoringMgr MonitoringManager
-	fs            afero.Fs
 	locker        locker.Locker
 }
 
 // NewDaemon create a new daemon instance.
 func NewWizDaemon(
+	dataDir *data.DataDir,
 	cmpMgr ComposeManager,
 	dockerMgr DockerManager,
 	mtrMgr MonitoringManager,
-	fs afero.Fs,
 	locker locker.Locker,
 ) (*WizDaemon, error) {
-	dataDir, err := data.NewDataDirDefault(fs, locker)
-	if err != nil {
-		return nil, err
-	}
 	return &WizDaemon{
 		dataDir:       dataDir,
 		dockerCompose: cmpMgr,
 		docker:        dockerMgr,
 		monitoringMgr: mtrMgr,
-		fs:            fs,
 		locker:        locker,
 	}, nil
 }
@@ -111,7 +104,6 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	pkgHandler, err := package_handler.NewPackageHandlerFromURL(package_handler.NewPackageHandlerOptions{
 		Path: tempPath,
 		URL:  url,
-		FS:   d.fs,
 	})
 	if err != nil {
 		return
@@ -173,7 +165,6 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	}
 	result.Options = profileOptions
 	result.HasPlugin, err = pkgHandler.HasPlugin()
-	result.PackageHandler = pkgHandler
 
 	return result, err
 }
@@ -202,6 +193,10 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 	// Get temp folder ID
 	tID := tempID(options.URL)
+	tempPath, err := d.dataDir.TempPath(tID)
+	if err != nil {
+		return "", tID, err
+	}
 
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {
@@ -214,15 +209,17 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
 
+	// Init package handler from temp path
+	pkgHandler := package_handler.NewPackageHandler(tempPath)
 	// Check if selected version is valid
-	if err := options.PackageHandler.HasVersion(options.Version); err != nil {
+	if err := pkgHandler.HasVersion(options.Version); err != nil {
 		return "", tID, err
 	}
-	if err = options.PackageHandler.CheckoutVersion(options.Version); err != nil {
+	if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
 		return "", tID, err
 	}
 
-	pkgProfiles, err := options.PackageHandler.Profiles()
+	pkgProfiles, err := pkgHandler.Profiles()
 	if err != nil {
 		return "", tID, err
 	}
@@ -256,12 +253,12 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 
 	// Build plugin info
 	var plugin *data.Plugin
-	hasPlugin, err := options.PackageHandler.HasPlugin()
+	hasPlugin, err := pkgHandler.HasPlugin()
 	if err != nil {
 		return "", tID, err
 	}
 	if hasPlugin {
-		pkgPlugin, err := options.PackageHandler.Plugin()
+		pkgPlugin, err := pkgHandler.Plugin()
 		if err != nil {
 			return "", tID, err
 		}
@@ -285,7 +282,7 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return instanceId, tID, err
 	}
 
-	if err = instance.Setup(env, options.PackageHandler.ProfilePath(instance.Profile)); err != nil {
+	if err = instance.Setup(env, pkgHandler.ProfilePath(instance.Profile)); err != nil {
 		return instanceId, tID, err
 	}
 

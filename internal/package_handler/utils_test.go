@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/package_handler/testdata"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzHashFile(f *testing.F) {
@@ -33,15 +35,17 @@ func FuzzHashFile(f *testing.F) {
 		if err != nil {
 			t.Fatalf("failed to run sha256sum: %v", err)
 		}
-		fileHash, err := hashFile(filePath)
+		fileHash, err := hashFile(filePath, afero.NewOsFs())
 		assert.NoError(t, err)
 		assert.Equal(t, strings.Split(string(output), " ")[0], fileHash)
 	})
 }
 
 func TestCheckPackageFileExist(t *testing.T) {
-	testDir := t.TempDir()
-	testdata.SetupDir(t, "mock-avs", testDir)
+	afs := afero.NewMemMapFs()
+	testDir, err := afero.TempDir(afs, "", "test")
+	require.NoError(t, err)
+	testdata.SetupDir(t, "mock-avs", testDir, afs)
 
 	ts := []struct {
 		name     string
@@ -69,15 +73,17 @@ func TestCheckPackageFileExist(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			err := checkPackageFileExist(filepath.Join(testDir, "mock-avs"), tc.filePath)
+			err := checkPackageFileExist(filepath.Join(testDir, "mock-avs"), tc.filePath, afs)
 			assert.ErrorIs(t, err, tc.err)
 		})
 	}
 }
 
 func TestCheckPackageDirExist(t *testing.T) {
-	testDir := t.TempDir()
-	testdata.SetupDir(t, "mock-avs", testDir)
+	afs := afero.NewMemMapFs()
+	testDir, err := afero.TempDir(afs, "", "test")
+	require.NoError(t, err)
+	testdata.SetupDir(t, "mock-avs", testDir, afs)
 
 	ts := []struct {
 		name    string
@@ -105,7 +111,7 @@ func TestCheckPackageDirExist(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			err := checkPackageDirExist(filepath.Join(testDir, "mock-avs"), tc.dirPath)
+			err := checkPackageDirExist(filepath.Join(testDir, "mock-avs"), tc.dirPath, afs)
 			assert.ErrorIs(t, err, tc.err)
 		})
 	}
@@ -153,7 +159,7 @@ func TestParseChecksumFile(t *testing.T) {
 			if _, err := file.Write([]byte(tc.content)); err != nil {
 				t.Fatal("failed to write to temp file: " + err.Error())
 			}
-			out, err := parseChecksumFile(filePath)
+			out, err := parseChecksumFile(filePath, afero.NewOsFs())
 			if tc.err == nil {
 				assert.NoError(t, err)
 				assert.Len(t, out, len(tc.out))

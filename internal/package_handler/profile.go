@@ -183,7 +183,6 @@ type Validate struct {
 
 // Monitoring represents the monitoring field of a profile
 type Monitoring struct {
-	Tag     string             `yaml:"tag"`
 	Targets []MonitoringTarget `yaml:"targets"`
 }
 

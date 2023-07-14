@@ -3,10 +3,11 @@ package testdata
 import (
 	"embed"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 //go:embed *
@@ -14,14 +15,14 @@ var TestData embed.FS
 
 // SetupDir copies the testdata directory to the dest directory. testDataPath
 // is a relative path to the testdata directory.
-func SetupDir(t *testing.T, testDataPath string, dest string) {
+func SetupDir(t *testing.T, testDataPath string, dest string, afs afero.Fs) {
 	t.Helper()
 	err := fs.WalkDir(TestData, testDataPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() {
-			if err := os.MkdirAll(filepath.Join(dest, path), 0755); err != nil {
+			if err := afs.MkdirAll(filepath.Join(dest, path), 0755); err != nil {
 				return err
 			}
 		} else {
@@ -37,10 +38,11 @@ func SetupDir(t *testing.T, testDataPath string, dest string) {
 				path = strings.Replace(path, "env", ".env", 1)
 			}
 
-			destFile, err := os.Create(filepath.Join(dest, path))
+			destFile, err := afs.Create(filepath.Join(dest, path))
 			if err != nil {
 				return err
 			}
+			defer destFile.Close()
 			if _, err := destFile.Write(data); err != nil {
 				return err
 			}

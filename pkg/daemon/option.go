@@ -40,11 +40,11 @@ type option struct {
 // OptionInt is a struct representing an integer option. It implements the Option interface.
 type OptionInt struct {
 	option
-	value        int
-	defaultValue int
-	validate     bool
-	MinValue     int
-	MaxValue     int
+	value    int
+	defValue int
+	validate bool
+	MinValue int
+	MaxValue int
 }
 
 // NewOptionInt creates a new OptionInt from a package_handler.Option.
@@ -59,8 +59,8 @@ func NewOptionInt(pkgOption package_handler.Option) (*OptionInt, error) {
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
 		},
-		defaultValue: defaultValue,
-		validate:     pkgOption.ValidateDef != nil,
+		defValue: defaultValue,
+		validate: pkgOption.ValidateDef != nil,
 	}
 	if o.validate {
 		o.MinValue = int(*pkgOption.ValidateDef.MinValue)
@@ -116,7 +116,7 @@ func (oi *OptionInt) Value() string {
 }
 
 func (oi *OptionInt) Default() string {
-	return strconv.Itoa(oi.defaultValue)
+	return strconv.Itoa(oi.defValue)
 }
 
 func (oi *OptionInt) Target() string {

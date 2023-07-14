@@ -4,13 +4,12 @@ import (
 	"embed"
 	"io/fs"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
 )
 
-//go:embed *
+//go:embed all:*
 var TestData embed.FS
 
 // SetupDir copies the testdata directory to the dest directory. testDataPath
@@ -31,13 +30,6 @@ func SetupDir(t *testing.T, testDataPath string, dest string, afs afero.Fs) {
 			if err != nil {
 				return err
 			}
-
-			if d.Name() == "env" {
-				// Embed doesn't allow files to start with a dot, so we have to
-				// rename the "env" file to ".env".
-				path = strings.Replace(path, "env", ".env", 1)
-			}
-
 			destFile, err := afs.Create(filepath.Join(dest, path))
 			if err != nil {
 				return err

@@ -32,12 +32,11 @@ var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 type PackageHandler struct {
 	path string
 	afs  afero.Fs
-	repo *git.Repository
 }
 
 // NewPackageHandler creates a new PackageHandler instance for the given package path.
-func NewPackageHandler(path string, afs afero.Fs, repo *git.Repository) *PackageHandler {
-	return &PackageHandler{path: path, afs: afs, repo: repo}
+func NewPackageHandler(path string) *PackageHandler {
+	return &PackageHandler{path: path, afs: afero.NewOsFs()}
 }
 
 // NewPackageHandlerOptions is used to provide options to the NewPackageHandlerFromURL
@@ -48,8 +47,6 @@ type NewPackageHandlerOptions struct {
 	URL string
 	// GitAuth is used to provide authentication to a private git repository
 	GitAuth *GitAuth
-	// FS is the filesystem to use
-	FS afero.Fs
 }
 
 // GitAuth is used to provide authentication to a private git repository. Two types of
@@ -89,7 +86,7 @@ func (g *NewPackageHandlerOptions) getAuth() *http.BasicAuth {
 // NewPackageHandlerFromURL clones the package from the given URL and returns. The GitAuth
 // field could be used to provide authentication to a private git repository.
 func NewPackageHandlerFromURL(opts NewPackageHandlerOptions) (*PackageHandler, error) {
-	repo, err := cloneRepository(opts.Path, opts.FS, &git.CloneOptions{
+	_, err := git.PlainClone(opts.Path, false, &git.CloneOptions{
 		URL:  opts.URL,
 		Auth: opts.getAuth(),
 	})
@@ -106,7 +103,7 @@ func NewPackageHandlerFromURL(opts NewPackageHandlerOptions) (*PackageHandler, e
 		}
 		return nil, err
 	}
-	return NewPackageHandler(opts.Path, opts.FS, repo), nil
+	return NewPackageHandler(opts.Path), nil
 }
 
 // Check validates a package. It returns an error if the package is invalid.
@@ -130,7 +127,11 @@ func (p *PackageHandler) Check() error {
 // Versions returns the descending sorted list of available versions for the package.
 // A version is a git tag that matches the regex `^v\d+\.\d+\.\d+$`.
 func (p *PackageHandler) Versions() ([]string, error) {
-	tagIter, err := p.repo.Tags()
+	pkgRepo, err := git.PlainOpen(p.path)
+	if err != nil {
+		return nil, err
+	}
+	tagIter, err := pkgRepo.Tags()
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +180,11 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 	if !tagVersionRegex.MatchString(version) {
 		return ErrInvalidVersion
 	}
-	tagIter, err := p.repo.Tags()
+	gitRepo, err := git.PlainOpen(p.path)
+	if err != nil {
+		return err
+	}
+	tagIter, err := gitRepo.Tags()
 	if err != nil {
 		return err
 	}
@@ -193,7 +198,7 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 			return err
 		}
 		if tag.Name().Short() == version {
-			worktree, err := p.repo.Worktree()
+			worktree, err := gitRepo.Worktree()
 			if err != nil {
 				return fmt.Errorf("error getting worktree: %w", err)
 			}
@@ -212,11 +217,15 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 // CurrentVersion returns the current version of the package, which is tha latest
 // tag with version format that points to the current HEAD.
 func (p *PackageHandler) CurrentVersion() (string, error) {
-	head, err := p.repo.Head()
+	gitRepo, err := git.PlainOpen(p.path)
 	if err != nil {
 		return "", err
 	}
-	tagIter, err := p.repo.TagObjects()
+	head, err := gitRepo.Head()
+	if err != nil {
+		return "", err
+	}
+	tagIter, err := gitRepo.TagObjects()
 	if err != nil {
 		return "", err
 	}

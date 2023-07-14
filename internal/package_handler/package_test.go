@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/package_handler/testdata"
-	"github.com/go-git/go-git/v5"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,14 +19,13 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 		path       string
 		url        string
 		pkgHandler *PackageHandler
-		afs        afero.Fs
 		err        error
 	}
 	// TODO: add test case for private repository
 	ts := []testCase{
 		func() testCase {
 			t.Helper()
-			afs := afero.NewMemMapFs()
+			afs := afero.NewOsFs()
 			path, err := afero.TempDir(afs, "", "test")
 			require.NoError(t, err)
 
@@ -37,15 +35,13 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 				url:  "https://github.com/NethermindEth/mock-avs",
 				pkgHandler: &PackageHandler{
 					path: path,
-					afs:  afs,
 				},
-				afs: afs,
 				err: nil,
 			}
 		}(),
 		func() testCase {
 			t.Helper()
-			afs := afero.NewMemMapFs()
+			afs := afero.NewOsFs()
 			path, err := afero.TempDir(afs, "", "test")
 			require.NoError(t, err)
 
@@ -54,7 +50,6 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 				path:       path,
 				url:        "https://github.com/NethermindEth/mock-avs-invalid",
 				pkgHandler: nil,
-				afs:        afs,
 				err: RepositoryNotFoundOrPrivateError{
 					URL: "https://github.com/NethermindEth/mock-avs-invalid",
 				},
@@ -67,13 +62,10 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 				Path:    tc.path,
 				URL:     tc.url,
 				GitAuth: nil,
-				FS:      tc.afs,
 			})
 			assert.ErrorIs(t, err, tc.err)
 			if err == nil {
-				assert.Equal(t, tc.pkgHandler.afs, pkgHandler.afs)
 				assert.Equal(t, tc.pkgHandler.path, pkgHandler.path)
-				assert.NotNil(t, pkgHandler.repo)
 			}
 		})
 	}
@@ -154,8 +146,7 @@ func TestCheck(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			afs := afero.NewOsFs()
-			pkgHandler := NewPackageHandler(tc.pkgFolder, afs, nil)
+			pkgHandler := NewPackageHandler(tc.pkgFolder)
 			err := pkgHandler.Check()
 			assert.ErrorIs(t, err, tc.err)
 		})
@@ -178,7 +169,7 @@ func setupPackage(t *testing.T) string {
 }
 
 func TestProfilesNames(t *testing.T) {
-	afs := afero.NewMemMapFs()
+	afs := afero.NewOsFs()
 	testDir, err := afero.TempDir(afs, "", "test")
 	require.NoError(t, err)
 	testdata.SetupDir(t, "manifests", testDir, afs)
@@ -209,7 +200,7 @@ func TestProfilesNames(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgHandler := NewPackageHandler(filepath.Join(testDir, "manifests", tc.folderPath), afs, nil)
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "manifests", tc.folderPath))
 			profiles, err := pkgHandler.profilesNames()
 			if tc.wantError {
 				assert.Error(t, err)
@@ -222,7 +213,7 @@ func TestProfilesNames(t *testing.T) {
 }
 
 func TestParseProfile(t *testing.T) {
-	afs := afero.NewMemMapFs()
+	afs := afero.NewOsFs()
 	testDir, err := afero.TempDir(afs, "", "test")
 	require.NoError(t, err)
 	testdata.SetupDir(t, "packages", testDir, afs)
@@ -265,7 +256,7 @@ func TestParseProfile(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath), afs, nil)
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
 			profile, err := pkgHandler.parseProfile(tc.profile)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
@@ -278,7 +269,7 @@ func TestParseProfile(t *testing.T) {
 }
 
 func TestProfiles(t *testing.T) {
-	afs := afero.NewMemMapFs()
+	afs := afero.NewOsFs()
 	testDir, err := afero.TempDir(afs, "", "test")
 	require.NoError(t, err)
 	testdata.SetupDir(t, "packages", testDir, afs)
@@ -331,7 +322,7 @@ func TestProfiles(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath), afs, nil)
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
 			profiles, err := pkgHandler.Profiles()
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
@@ -346,7 +337,7 @@ func TestProfiles(t *testing.T) {
 }
 
 func TestDotEnv(t *testing.T) {
-	afs := afero.NewMemMapFs()
+	afs := afero.NewOsFs()
 	testDir, err := afero.TempDir(afs, "", "test")
 	require.NoError(t, err)
 	testdata.SetupDir(t, "packages", testDir, afs)
@@ -392,7 +383,7 @@ func TestDotEnv(t *testing.T) {
 
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath), afs, nil)
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
 			dotEnv, err := pkgHandler.DotEnv(tc.profile)
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
@@ -465,11 +456,7 @@ func TestVersions(t *testing.T) {
 				}
 			}
 
-			repo, err := git.PlainOpen(path)
-			require.NoError(t, err)
-
-			afs := afero.NewMemMapFs()
-			pkgHandler := NewPackageHandler(path, afs, repo)
+			pkgHandler := NewPackageHandler(path)
 			versions, err := pkgHandler.Versions()
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
@@ -544,11 +531,7 @@ func TestLatestVersion(t *testing.T) {
 				}
 			}
 
-			repo, err := git.PlainOpen(path)
-			require.NoError(t, err)
-
-			afs := afero.NewOsFs()
-			pkgHandler := NewPackageHandler(path, afs, repo)
+			pkgHandler := NewPackageHandler(path)
 			latestVersion, err := pkgHandler.LatestVersion()
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
@@ -621,11 +604,7 @@ func TestCheckoutVersion(t *testing.T) {
 				}
 			}
 
-			repo, err := git.PlainOpen(path)
-			require.NoError(t, err)
-
-			afs := afero.NewOsFs()
-			pkgHandler := NewPackageHandler(path, afs, repo)
+			pkgHandler := NewPackageHandler(path)
 			err = pkgHandler.CheckoutVersion(tc.checkoutTo)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
@@ -740,11 +719,7 @@ func TestCurrentVersion(t *testing.T) {
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			repo, err := git.PlainOpen(tc.path)
-			require.NoError(t, err)
-
-			afs := afero.NewOsFs()
-			pkgHandler := NewPackageHandler(tc.path, afs, repo)
+			pkgHandler := NewPackageHandler(tc.path)
 			version, err := pkgHandler.CurrentVersion()
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)

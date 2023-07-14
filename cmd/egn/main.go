@@ -7,6 +7,7 @@ import (
 	"github.com/NethermindEth/egn/cli/prompter"
 	"github.com/NethermindEth/egn/internal/commands"
 	"github.com/NethermindEth/egn/internal/compose"
+	"github.com/NethermindEth/egn/internal/data"
 	"github.com/NethermindEth/egn/internal/docker"
 	"github.com/NethermindEth/egn/internal/locker"
 	"github.com/NethermindEth/egn/internal/monitoring"
@@ -56,8 +57,14 @@ func main() {
 		locker,
 	)
 
+	// Set DataDir
+	dataDir, err := data.NewDataDirDefault(fs, locker)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Initialize daemon
-	daemon, err := daemon.NewWizDaemon(composeManager, dockerManager, monitoringManager, fs, locker)
+	daemon, err := daemon.NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 	if err != nil {
 		log.Fatal(err)
 	}

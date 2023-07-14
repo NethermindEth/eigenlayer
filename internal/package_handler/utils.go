@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/spf13/afero"
 )
 
@@ -114,64 +113,4 @@ func parseChecksumFile(path string, afs afero.Fs) (map[string]string, error) {
 	}
 
 	return checksums, nil
-}
-
-func cloneRepository(dst string, afs afero.Fs, o *git.CloneOptions) (*git.Repository, error) {
-	// Create temp directory
-	tempDir, err := os.MkdirTemp("", "egn-temp-repo")
-	if err != nil {
-		return nil, err
-	}
-
-	repo, err := git.PlainClone(tempDir, false, o)
-	if err != nil {
-		return nil, err
-	}
-
-	// Copy files from temp directory to path directory
-	return repo, filepath.Walk(tempDir, func(path string, info os.FileInfo, ierr error) (err error) {
-		if ierr != nil {
-			return err
-		}
-		relativePath := strings.TrimPrefix(path, tempDir)
-		if len(relativePath) > 1 && relativePath[0] == filepath.Separator {
-			relativePath = relativePath[1:]
-		}
-		if info.IsDir() {
-			// Ignore .git directory
-			if info.Name() == ".git" {
-				return filepath.SkipDir
-			}
-			err = afs.MkdirAll(filepath.Join(dst, relativePath), os.ModePerm)
-			if err != nil {
-				return err
-			}
-		} else {
-			file, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				cerr := file.Close()
-				if err == nil {
-					err = cerr
-				}
-			}()
-			newFile, err := afs.Create(filepath.Join(dst, relativePath))
-			if err != nil {
-				return err
-			}
-			defer func() {
-				cerr := newFile.Close()
-				if err == nil {
-					err = cerr
-				}
-			}()
-			_, err = io.Copy(newFile, file)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }

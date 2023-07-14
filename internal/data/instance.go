@@ -130,7 +130,7 @@ func (i *Instance) init(instancePath string, fs afero.Fs, locker locker.Locker) 
 // Setup creates the instance directory and copies the profile files into it from
 // the given fs.FS. It also creates the .env file with the given environment variables
 // on the env map.
-func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
+func (i *Instance) Setup(env map[string]string, profilePath string) (err error) {
 	err = i.lock()
 	if err != nil {
 		return err
@@ -142,7 +142,7 @@ func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 		}
 	}()
 	// Create .env file
-	envFile, err := os.Create(filepath.Join(i.path, ".env"))
+	envFile, err := i.fs.Create(filepath.Join(i.path, ".env"))
 	if err != nil {
 		return err
 	}
@@ -151,38 +151,31 @@ func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 	}
 	defer envFile.Close()
 
-	// Copy docker-compose.yml
-	pkgComposeFile, err := profileFs.Open("docker-compose.yml")
-	if err != nil {
-		return err
-	}
-	defer pkgComposeFile.Close()
-	composeFile, err := os.Create(filepath.Join(i.path, "docker-compose.yml"))
-	if err != nil {
-		return err
-	}
-	defer composeFile.Close()
-	if _, err := io.Copy(composeFile, pkgComposeFile); err != nil {
-		return err
-	}
-
 	// Copy src directory
-	return fs.WalkDir(profileFs, "src", func(path string, d fs.DirEntry, err error) error {
+	err = afero.Walk(i.fs, profilePath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		targetPath := filepath.Join(i.path, path)
-		if d.IsDir() {
-			if err := os.MkdirAll(targetPath, 0o755); err != nil {
+		relPath, err := filepath.Rel(profilePath, path)
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.Join(i.path, relPath)
+		if info.IsDir() {
+			if err := i.fs.MkdirAll(targetPath, 0o755); err != nil {
 				return err
 			}
 		} else {
-			pkgFile, err := profileFs.Open(path)
+			// Skip .env file
+			if info.Name() == ".env" {
+				return nil
+			}
+			pkgFile, err := i.fs.Open(path)
 			if err != nil {
 				return err
 			}
 			defer pkgFile.Close()
-			targetFile, err := os.Create(targetPath)
+			targetFile, err := i.fs.Create(targetPath)
 			if err != nil {
 				return err
 			}
@@ -192,6 +185,19 @@ func (i *Instance) Setup(env map[string]string, profileFs fs.FS) (err error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// Check if docker-compose.yml exists
+	exists, err := afero.Exists(i.fs, i.ComposePath())
+	if err != nil {
+		return fmt.Errorf("could not check if docker-compose.yml exists: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("%w: docker-compose.yml not found", ErrInvalidInstance)
+	}
+	return nil
 }
 
 // ComposePath returns the path to the docker-compose.yml file of the instance.

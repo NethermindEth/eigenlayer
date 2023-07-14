@@ -1,18 +1,21 @@
 package package_handler
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/NethermindEth/egn/internal/package_handler/testdata"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
 func TestManifestValidate(t *testing.T) {
-	testDir := t.TempDir()
-	testdata.SetupDir(t, "manifests", testDir)
+	afs := afero.NewMemMapFs()
+	testDir, err := afero.TempDir(afs, "", "test")
+	require.NoError(t, err)
+	testdata.SetupDir(t, "manifests", testDir, afs)
 
 	tests := []struct {
 		name      string
@@ -48,7 +51,7 @@ func TestManifestValidate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Helper()
-			data, err := os.ReadFile(filepath.Join(testDir, "manifests", tt.filePath))
+			data, err := afero.ReadFile(afs, filepath.Join(testDir, "manifests", tt.filePath))
 			if err != nil {
 				t.Fatalf("failed reading data from yaml file: %s", err)
 			}

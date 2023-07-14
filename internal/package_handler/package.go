@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -17,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -32,11 +31,13 @@ var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 // path.
 type PackageHandler struct {
 	path string
+	afs  afero.Fs
+	repo *git.Repository
 }
 
 // NewPackageHandler creates a new PackageHandler instance for the given package path.
-func NewPackageHandler(path string) *PackageHandler {
-	return &PackageHandler{path: path}
+func NewPackageHandler(path string, afs afero.Fs, repo *git.Repository) *PackageHandler {
+	return &PackageHandler{path: path, afs: afs, repo: repo}
 }
 
 // NewPackageHandlerOptions is used to provide options to the NewPackageHandlerFromURL
@@ -47,6 +48,8 @@ type NewPackageHandlerOptions struct {
 	URL string
 	// GitAuth is used to provide authentication to a private git repository
 	GitAuth *GitAuth
+	// FS is the filesystem to use
+	FS afero.Fs
 }
 
 // GitAuth is used to provide authentication to a private git repository. Two types of
@@ -86,7 +89,7 @@ func (g *NewPackageHandlerOptions) getAuth() *http.BasicAuth {
 // NewPackageHandlerFromURL clones the package from the given URL and returns. The GitAuth
 // field could be used to provide authentication to a private git repository.
 func NewPackageHandlerFromURL(opts NewPackageHandlerOptions) (*PackageHandler, error) {
-	_, err := git.PlainClone(opts.Path, false, &git.CloneOptions{
+	repo, err := cloneRepository(opts.Path, opts.FS, &git.CloneOptions{
 		URL:  opts.URL,
 		Auth: opts.getAuth(),
 	})
@@ -103,17 +106,17 @@ func NewPackageHandlerFromURL(opts NewPackageHandlerOptions) (*PackageHandler, e
 		}
 		return nil, err
 	}
-	return NewPackageHandler(opts.Path), nil
+	return NewPackageHandler(opts.Path, opts.FS, repo), nil
 }
 
 // Check validates a package. It returns an error if the package is invalid.
 // It checks the existence of some required files and directories and computes the
 // checksums comparing them with the ones listed in the checksum.txt file.
 func (p *PackageHandler) Check() error {
-	if err := checkPackageDirExist(p.path, pkgDirName); err != nil {
+	if err := checkPackageDirExist(p.path, pkgDirName, p.afs); err != nil {
 		return err
 	}
-	err := checkPackageFileExist(p.path, checksumFileName)
+	err := checkPackageFileExist(p.path, checksumFileName, p.afs)
 	if err != nil {
 		var fileNotFoundErr PackageFileNotFoundError
 		if errors.As(err, &fileNotFoundErr) {
@@ -127,11 +130,7 @@ func (p *PackageHandler) Check() error {
 // Versions returns the descending sorted list of available versions for the package.
 // A version is a git tag that matches the regex `^v\d+\.\d+\.\d+$`.
 func (p *PackageHandler) Versions() ([]string, error) {
-	pkgRepo, err := git.PlainOpen(p.path)
-	if err != nil {
-		return nil, err
-	}
-	tagIter, err := pkgRepo.Tags()
+	tagIter, err := p.repo.Tags()
 	if err != nil {
 		return nil, err
 	}
@@ -180,11 +179,7 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 	if !tagVersionRegex.MatchString(version) {
 		return ErrInvalidVersion
 	}
-	gitRepo, err := git.PlainOpen(p.path)
-	if err != nil {
-		return err
-	}
-	tagIter, err := gitRepo.Tags()
+	tagIter, err := p.repo.Tags()
 	if err != nil {
 		return err
 	}
@@ -198,7 +193,7 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 			return err
 		}
 		if tag.Name().Short() == version {
-			worktree, err := gitRepo.Worktree()
+			worktree, err := p.repo.Worktree()
 			if err != nil {
 				return fmt.Errorf("error getting worktree: %w", err)
 			}
@@ -217,15 +212,11 @@ func (p *PackageHandler) CheckoutVersion(version string) error {
 // CurrentVersion returns the current version of the package, which is tha latest
 // tag with version format that points to the current HEAD.
 func (p *PackageHandler) CurrentVersion() (string, error) {
-	gitRepo, err := git.PlainOpen(p.path)
+	head, err := p.repo.Head()
 	if err != nil {
 		return "", err
 	}
-	head, err := gitRepo.Head()
-	if err != nil {
-		return "", err
-	}
-	tagIter, err := gitRepo.TagObjects()
+	tagIter, err := p.repo.TagObjects()
 	if err != nil {
 		return "", err
 	}
@@ -282,7 +273,7 @@ func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
 	env := make(map[string]string)
 	envPath := filepath.Join(p.path, pkgDirName, profile, ".env")
 
-	data, err := os.ReadFile(envPath)
+	data, err := afero.ReadFile(p.afs, envPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ReadingDotEnvError{
 			pkgPath:     p.path,
@@ -304,9 +295,9 @@ func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
 	return env, nil
 }
 
-// ProfileFS returns the filesystem for the given profile.
-func (p *PackageHandler) ProfileFS(profileName string) fs.FS {
-	return os.DirFS(filepath.Join(p.path, pkgDirName, profileName))
+// ProfileFS returns the filesystem path for the given profile.
+func (p *PackageHandler) ProfilePath(profileName string) string {
+	return filepath.Join(p.path, pkgDirName, profileName)
 }
 
 // HasPlugin returns true if the package has a plugin.
@@ -336,7 +327,7 @@ func (p *PackageHandler) Plugin() (*Plugin, error) {
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
 	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
 	// Read the manifest file
-	data, err := os.ReadFile(manifestPath)
+	data, err := afero.ReadFile(p.afs, manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ReadingManifestError{
 			pkgPath: p.path,
@@ -373,7 +364,7 @@ func (p *PackageHandler) profilesNames() ([]string, error) {
 }
 
 func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
-	data, err := os.ReadFile(filepath.Join(p.path, pkgDirName, profileName, profileFileName))
+	data, err := afero.ReadFile(p.afs, filepath.Join(p.path, pkgDirName, profileName, profileFileName))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ReadingProfileError{
 			profileName: profileName,
@@ -392,11 +383,11 @@ func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
 }
 
 func (p *PackageHandler) checkSum() error {
-	currentChecksums, err := parseChecksumFile(filepath.Join(p.path, checksumFileName))
+	currentChecksums, err := parseChecksumFile(filepath.Join(p.path, checksumFileName), p.afs)
 	if err != nil {
 		return err
 	}
-	computedChecksums, err := packageHashes(p.path)
+	computedChecksums, err := packageHashes(p.path, p.afs)
 	if err != nil {
 		return err
 	}

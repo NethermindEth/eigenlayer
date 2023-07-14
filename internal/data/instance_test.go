@@ -2,7 +2,6 @@ package data
 
 import (
 	"io"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewInstance(t *testing.T) {
@@ -314,8 +314,9 @@ func TestInstance_Init(t *testing.T) {
 }
 
 func TestInstance_Setup(t *testing.T) {
-	instancePath := t.TempDir()
-	fs := afero.NewOsFs()
+	fs := afero.NewMemMapFs()
+	instancePath, err := afero.TempDir(fs, "", "instance")
+	require.NoError(t, err)
 
 	// Create a mock locker
 	ctrl := gomock.NewController(t)
@@ -334,24 +335,35 @@ func TestInstance_Setup(t *testing.T) {
 		Profile: "option-returner",
 		Tag:     "test-tag",
 	}
-	err := i.init(instancePath, fs, locker)
+	err = i.init(instancePath, fs, locker)
 	if err != nil {
 		t.Fatal(err)
 	}
 	env := map[string]string{
 		"VAR_1": "value-1",
 	}
-	profileFs := testdata.SetupProfileFS(t, "option-returner")
+	profilePath := testdata.SetupProfileFS(t, "option-returner", fs)
 
-	err = i.Setup(env, profileFs)
+	err = i.Setup(env, profilePath)
 	assert.NoError(t, err)
 
-	assert.NoFileExists(t, filepath.Join(instancePath, "profile.yml"))
-	assert.FileExists(t, filepath.Join(instancePath, ".env"))
-	assert.FileExists(t, filepath.Join(instancePath, "docker-compose.yml"))
-	assert.DirExists(t, filepath.Join(instancePath, "src"))
+	exists, err := afero.Exists(fs, filepath.Join(instancePath, ".env"))
+	assert.NoError(t, err)
+	assert.True(t, exists)
 
-	envFile, err := os.Open(filepath.Join(instancePath, ".env"))
+	exists, err = afero.Exists(fs, filepath.Join(instancePath, "docker-compose.yml"))
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	exists, err = afero.Exists(fs, filepath.Join(instancePath, "src"))
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	exists, err = afero.Exists(fs, filepath.Join(instancePath, "profile.yml"))
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	envFile, err := fs.Open(filepath.Join(instancePath, ".env"))
 	assert.NoError(t, err)
 	envData, err := io.ReadAll(envFile)
 	assert.NoError(t, err)

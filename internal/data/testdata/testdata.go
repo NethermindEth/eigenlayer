@@ -2,11 +2,15 @@ package testdata
 
 import (
 	"embed"
+	"io"
 	"io/fs"
 	"testing"
+
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 )
 
-//go:embed *
+//go:embed all:*
 var TestData embed.FS
 
 //go:embed empty

@@ -73,7 +73,7 @@ type AddInstanceOptions struct {
 // exists, an error is returned.
 func (d *DataDir) InitInstance(instance *Instance) error {
 	instancePath := filepath.Join(d.path, instancesDir, InstanceId(instance.Name, instance.Tag))
-	_, err := os.Stat(instancePath)
+	_, err := d.fs.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
 		return instance.init(instancePath, d.fs, d.locker)
 	}
@@ -94,7 +94,7 @@ func (d *DataDir) HasInstance(instanceId string) bool {
 // InstancePath return the path to the directory of the instance with the given id.
 func (d *DataDir) InstancePath(instanceId string) (string, error) {
 	instancePath := filepath.Join(d.path, instancesDir, instanceId)
-	_, err := os.Stat(instancePath)
+	_, err := d.fs.Stat(instancePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", ErrInstanceNotFound
@@ -107,7 +107,7 @@ func (d *DataDir) InstancePath(instanceId string) (string, error) {
 // RemoveInstance removes the instance with the given id.
 func (d *DataDir) RemoveInstance(instanceId string) error {
 	instancePath := filepath.Join(d.path, instancesDir, instanceId)
-	instanceDir, err := os.Stat(instancePath)
+	instanceDir, err := d.fs.Stat(instancePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceId)
@@ -117,17 +117,17 @@ func (d *DataDir) RemoveInstance(instanceId string) error {
 	if !instanceDir.IsDir() {
 		return fmt.Errorf("%s is not a directory", instanceId)
 	}
-	return os.RemoveAll(instancePath)
+	return d.fs.RemoveAll(instancePath)
 }
 
 // InitTemp creates a new temporary directory for the given id. If already exists,
 // an error is returned.
 func (d *DataDir) InitTemp(id string) (string, error) {
 	tempPath := filepath.Join(d.path, tempDir, id)
-	_, err := os.Stat(tempPath)
+	_, err := d.fs.Stat(tempPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return tempPath, os.MkdirAll(tempPath, 0o755)
+			return tempPath, d.fs.MkdirAll(tempPath, 0o755)
 		}
 		return "", err
 	}
@@ -136,13 +136,13 @@ func (d *DataDir) InitTemp(id string) (string, error) {
 
 // RemoveTemp removes the temporary directory with the given id.
 func (d *DataDir) RemoveTemp(id string) error {
-	return os.RemoveAll(filepath.Join(d.path, tempDir, id))
+	return d.fs.RemoveAll(filepath.Join(d.path, tempDir, id))
 }
 
 // TempPath returns the path to the temporary directory with the given id.
 func (d *DataDir) TempPath(id string) (string, error) {
 	tempPath := filepath.Join(d.path, tempDir, id)
-	tempStat, err := os.Stat(tempPath)
+	tempStat, err := d.fs.Stat(tempPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", ErrTempDirDoesNotExist
@@ -191,9 +191,4 @@ func (d *DataDir) RemoveMonitoringStack() error {
 	}
 
 	return d.fs.RemoveAll(monitoringStackPath)
-}
-
-// RemoveTempDir removes the temporary directory with the given id.
-func (d *DataDir) RemoveTempDir(id string) error {
-	return d.fs.RemoveAll(filepath.Join(d.path, tempDir, id))
 }

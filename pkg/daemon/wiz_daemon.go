@@ -111,6 +111,7 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	pkgHandler, err := package_handler.NewPackageHandlerFromURL(package_handler.NewPackageHandlerOptions{
 		Path: tempPath,
 		URL:  url,
+		FS:   d.fs,
 	})
 	if err != nil {
 		return
@@ -172,6 +173,8 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 	}
 	result.Options = profileOptions
 	result.HasPlugin, err = pkgHandler.HasPlugin()
+	result.PackageHandler = pkgHandler
+
 	return result, err
 }
 
@@ -186,7 +189,7 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 	}
 
 	// Cleanup temp folder
-	if rerr := d.dataDir.RemoveTempDir(tempDirID); rerr != nil {
+	if rerr := d.dataDir.RemoveTemp(tempDirID); rerr != nil {
 		if err != nil {
 			err = fmt.Errorf("install failed: %w. Failed to cleanup temporary folder after installation failure: %w", err, rerr)
 		} else {
@@ -197,12 +200,8 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 }
 
 func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
-	// Get pulled package directory from temp
+	// Get temp folder ID
 	tID := tempID(options.URL)
-	tempPath, err := d.dataDir.TempPath(tID)
-	if err != nil {
-		return "", tID, err
-	}
 
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {
@@ -215,17 +214,15 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
 
-	// Init package handler from temp path
-	pkgHandler := package_handler.NewPackageHandler(tempPath)
 	// Check if selected version is valid
-	if err := pkgHandler.HasVersion(options.Version); err != nil {
+	if err := options.PackageHandler.HasVersion(options.Version); err != nil {
 		return "", tID, err
 	}
-	if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
+	if err = options.PackageHandler.CheckoutVersion(options.Version); err != nil {
 		return "", tID, err
 	}
 
-	pkgProfiles, err := pkgHandler.Profiles()
+	pkgProfiles, err := options.PackageHandler.Profiles()
 	if err != nil {
 		return "", tID, err
 	}
@@ -259,12 +256,12 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 
 	// Build plugin info
 	var plugin *data.Plugin
-	hasPlugin, err := pkgHandler.HasPlugin()
+	hasPlugin, err := options.PackageHandler.HasPlugin()
 	if err != nil {
 		return "", tID, err
 	}
 	if hasPlugin {
-		pkgPlugin, err := pkgHandler.Plugin()
+		pkgPlugin, err := options.PackageHandler.Plugin()
 		if err != nil {
 			return "", tID, err
 		}
@@ -288,7 +285,7 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 		return instanceId, tID, err
 	}
 
-	if err = instance.Setup(env, pkgHandler.ProfileFS(instance.Profile)); err != nil {
+	if err = instance.Setup(env, options.PackageHandler.ProfilePath(instance.Profile)); err != nil {
 		return instanceId, tID, err
 	}
 
@@ -462,7 +459,7 @@ func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 	// Unmarshal docker-compose ps output
 	var psServices []psServiceJSON
 	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("it seems the output ")
 	}
 
 	// Get containerID of monitoring targets
@@ -475,6 +472,13 @@ func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 		}
 	}
 
+	// Validate that all monitoring targets were found
+	for _, serviceName := range serviceNames {
+		if _, ok := monitoringTargets[serviceName]; !ok {
+			return nil, fmt.Errorf("monitoring target %s not found, there is not such service running in the docker compose stack", serviceName)
+		}
+	}
+
 	return monitoringTargets, nil
 }
 
@@ -483,6 +487,7 @@ func (d *WizDaemon) idToEndpoint(id, path, port string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// TODO: We are not using path here, but we should
 	return fmt.Sprintf("http://%s:%s", ip, port), nil
 }
 

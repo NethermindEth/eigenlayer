@@ -467,7 +467,7 @@ func TestInstall(t *testing.T) {
 		options           InstallOptions
 		monitoringTargets data.MonitoringTargets
 		want              string
-		mocker            func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
+		mocker            func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager)
 		wantErr           bool
 		checkCleanup      bool
 	}{
@@ -489,45 +489,25 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			want: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-install")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.128.66.1", nil)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("1").Return("168.128.66.1", nil),
+					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget("http://168.128.66.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-				monitoringManager.EXPECT().AddTarget("http://168.128.66.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
 			},
 		},
 		{
@@ -548,45 +528,25 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			want: "mock-avs-specific",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-install")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-specific", "docker-compose.yml")
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "2", "Service": "main-service"}]`, nil)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("2").Return("168.128.66.2", nil)
-				dockerManager.EXPECT().ContainerNetworks("2").Return([]string{"eigenlayer"}, nil)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-specific", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "2", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("2").Return("168.128.66.2", nil),
+					dockerManager.EXPECT().ContainerNetworks("2").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget("http://168.128.66.2:8080", "mock-avs-specific", "eigenlayer").Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-				monitoringManager.EXPECT().AddTarget("http://168.128.66.2:8080", "mock-avs-specific", "eigenlayer").Return(nil)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
 			},
 		},
 		{
@@ -607,28 +567,7 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			want: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-install")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
-
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 			},
 			wantErr: true,
 		},
@@ -650,43 +589,24 @@ func TestInstall(t *testing.T) {
 				},
 			},
 			want: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-install")
-				require.NoError(t, err)
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error"))
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "3", "Service": "main-service"}]`, nil)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("3").Return("168.128.66.3", nil)
-				dockerManager.EXPECT().ContainerNetworks("3").Return([]string{"eigenerror"}, nil)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "3", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("3").Return("168.128.66.3", nil),
+					dockerManager.EXPECT().ContainerNetworks("3").Return([]string{"eigenerror"}, nil),
+					monitoringManager.EXPECT().RemoveTarget("http://168.128.66.3:8090", "eigenerror").Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-				monitoringManager.EXPECT().RemoveTarget("http://168.128.66.3:8090", "eigenerror").Return(nil)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
 			},
 			wantErr:      true,
 			checkCleanup: true,
@@ -695,7 +615,24 @@ func TestInstall(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, tmp, composeManager, dockerManager, locker, monitoringManager := tt.mocker(t)
+			tmp, err := afero.TempDir(afs, "", "egn-test-install")
+			require.NoError(t, err)
+
+			ctrl := gomock.NewController(t)
+			// Create a mock compose manager
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			// Create a mock docker manager
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			// Create a mock locker
+			locker := mock_locker.NewMockLocker(ctrl)
+			// Create a mock monitoring manager
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			// Create a Datadir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
 			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
@@ -767,51 +704,33 @@ func TestRun(t *testing.T) {
 	tests := []struct {
 		name       string
 		instanceID string
-		mocker     func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
+		mocker     func(string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
 		options    *InstallOptions
 		wantErr    bool
 	}{
 		{
 			name:       "success",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-run")
-				require.NoError(t, err)
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil).Times(2)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
+				// Init, install and run
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil).Times(2)
+				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					Path:   path,
+					Format: "json",
+					All:    true,
+				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
+				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
+				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil).Times(2)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -823,42 +742,23 @@ func TestRun(t *testing.T) {
 		{
 			name:       "failure, not installed instance",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-run")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
-
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 			},
 			wantErr: true,
 		},
 		{
 			name:       "failure, Up error",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-run")
-				require.NoError(t, err)
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init, install and run
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+				)
 				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
 				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -866,30 +766,10 @@ func TestRun(t *testing.T) {
 					Format: "json",
 					All:    true,
 				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
-
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
 				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
-				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
-					locker.EXPECT().Lock().Return(nil),
-					locker.EXPECT().Locked().Return(true),
-					locker.EXPECT().Unlock().Return(nil),
-				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil).Times(2)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -903,7 +783,24 @@ func TestRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, composeManager, dockerManager, locker, monitoringManager := tt.mocker(t)
+			tmp, err := afero.TempDir(afs, "", "egn-test-run")
+			require.NoError(t, err)
+
+			ctrl := gomock.NewController(t)
+			// Create a mock compose manager
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			// Create a mock docker manager
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			// Create a mock locker
+			locker := mock_locker.NewMockLocker(ctrl)
+			// Create a mock monitoring manager
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			// Create a Datadir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
 			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
@@ -941,52 +838,35 @@ func TestStop(t *testing.T) {
 	tests := []struct {
 		name       string
 		instanceID string
-		mocker     func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
+		mocker     func(string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
 		options    *InstallOptions
 		wantErr    bool
 	}{
 		{
 			name:       "success",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-stop")
-				require.NoError(t, err)
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
-				composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(nil)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
+					// Init and install
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
+					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
+					// Stop
+					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -998,73 +878,35 @@ func TestStop(t *testing.T) {
 		{
 			name:       "failure, not installed instance",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-stop")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
-
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 			},
 			wantErr: true,
 		},
 		{
 			name:       "failure, Stop error",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-stop")
-				require.NoError(t, err)
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
-				composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(errors.New("error"))
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
+					// Init and install
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
+					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
+					// Stop
+					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(errors.New("error")),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
-
-				return dataDir, composeManager, dockerManager, locker, monitoringManager
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -1078,7 +920,24 @@ func TestStop(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, composeManager, dockerManager, locker, monitoringManager := tt.mocker(t)
+			tmp, err := afero.TempDir(afs, "", "egn-test-stop")
+			require.NoError(t, err)
+
+			ctrl := gomock.NewController(t)
+			// Create a mock compose manager
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			// Create a mock docker manager
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			// Create a mock locker
+			locker := mock_locker.NewMockLocker(ctrl)
+			// Create a mock monitoring manager
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			// Create a Datadir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
 			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
@@ -1116,54 +975,36 @@ func TestUninstall(t *testing.T) {
 	tests := []struct {
 		name       string
 		instanceID string
-		mocker     func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
+		mocker     func(string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager)
 		options    *InstallOptions
 		wantErr    bool
 	}{
 		{
 			name:       "success",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-uninstall")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil)
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
+				// Init and install
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
+				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					Path:   path,
+					Format: "json",
+					All:    true,
+				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
+				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
+				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
+				// Uninstall
 				monitoringManager.EXPECT().RemoveTarget("http://168.66.44.1:8090", "eigenlayer").Return(nil)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil)
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -1175,75 +1016,36 @@ func TestUninstall(t *testing.T) {
 		{
 			name:       "failure, not installed instance",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-uninstall")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
-
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 			},
 			wantErr: true,
 		},
 		{
 			name:       "failure, Down error",
 			instanceID: "mock-avs-default",
-			mocker: func(t *testing.T) (*data.DataDir, string, *mocks.MockComposeManager, *mocks.MockDockerManager, *mock_locker.MockLocker, *mocks.MockMonitoringManager) {
-				tmp, err := afero.TempDir(afs, "", "egn-test-uninstall")
-				require.NoError(t, err)
-
-				ctrl := gomock.NewController(t)
-
-				// Create a mock compose manager
-				composeManager := mocks.NewMockComposeManager(ctrl)
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error"))
 
-				// Create a mock docker manager
-				dockerManager := mocks.NewMockDockerManager(ctrl)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-
-				// Create a mock locker
-				locker := mock_locker.NewMockLocker(ctrl)
+				// Init and install
 				gomock.InOrder(
 					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 				)
-
-				dataDir, err := data.NewDataDir(tmp, afs, locker)
-				require.NoError(t, err)
-
-				// Create a mock monitoring manager
-				monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
+				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					Path:   path,
+					Format: "json",
+					All:    true,
+				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
+				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
+				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
+				// Uninstall
 				monitoringManager.EXPECT().RemoveTarget("http://168.66.44.1:8090", "eigenlayer").Return(nil)
-
-				return dataDir, tmp, composeManager, dockerManager, locker, monitoringManager
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -1257,7 +1059,24 @@ func TestUninstall(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dataDir, tmp, composeManager, dockerManager, locker, monitoringManager := tt.mocker(t)
+			tmp, err := afero.TempDir(afs, "", "egn-test-uninstall")
+			require.NoError(t, err)
+
+			ctrl := gomock.NewController(t)
+			// Create a mock compose manager
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			// Create a mock docker manager
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			// Create a mock locker
+			locker := mock_locker.NewMockLocker(ctrl)
+			// Create a mock monitoring manager
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			// Create a Datadir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
 			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)

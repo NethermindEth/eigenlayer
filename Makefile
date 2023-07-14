@@ -1,5 +1,8 @@
 include .env
 
+.DEFAULT_GOAL 	:= help
+.PHONY: generate build build-linux build-docker install run gomod_tidy format staticcheck test codecov-test pre-commit install-deps install-gofumpt install-mockgen install-staticcheck help
+
 generate:
 	@go generate ./...
 

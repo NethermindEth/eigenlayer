@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/NethermindEth/egn/internal/utils"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 )
 
 var pathRe = regexp.MustCompile(`^(/|./|../|[^/ ]([^/ ]*/)*[^/ ]*$)`)

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	daemonMock "github.com/NethermindEth/egn/cli/mocks"
-	prompterMock "github.com/NethermindEth/egn/cli/prompter/mocks"
-	"github.com/NethermindEth/egn/pkg/daemon"
+	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
+	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

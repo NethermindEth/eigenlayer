@@ -12,8 +12,8 @@ import (
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/NethermindEth/egn/internal/common"
-	"github.com/NethermindEth/egn/internal/utils"
+	"github.com/NethermindEth/eigenlayer/internal/common"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 )
 
 // NewDockerManager returns a new instance of DockerManager

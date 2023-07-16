@@ -1,14 +1,14 @@
 package cli
 
 import (
-	"github.com/NethermindEth/egn/cli/prompter"
-	"github.com/NethermindEth/egn/pkg/daemon"
+	"github.com/NethermindEth/eigenlayer/cli/prompter"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/spf13/cobra"
 )
 
 func RootCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "egn",
+		Use: "eigenlayer",
 	}
 	cmd.AddCommand(
 		InstallCmd(d, p),

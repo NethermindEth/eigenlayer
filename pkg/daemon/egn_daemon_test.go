@@ -222,7 +222,7 @@ func TestInit(t *testing.T) {
 			monitoringMgr := tt.mocker(t, ctrl)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
 			require.NoError(t, err)
 
 			err = daemon.Init()
@@ -433,7 +433,7 @@ func TestPull(t *testing.T) {
 			dataDir := tt.mocker(t, locker)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, nil, nil, nil, locker)
+			daemon, err := NewEgnDaemon(dataDir, nil, nil, nil, locker)
 			require.NoError(t, err)
 
 			result, err := daemon.Pull(tt.url, tt.version, tt.force)
@@ -635,7 +635,7 @@ func TestInstall(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 			require.NoError(t, err)
 
 			// Pull the package
@@ -803,7 +803,7 @@ func TestRun(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {
@@ -940,7 +940,7 @@ func TestStop(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {
@@ -1079,7 +1079,7 @@ func TestUninstall(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {

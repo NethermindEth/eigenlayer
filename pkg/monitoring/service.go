@@ -1,6 +1,6 @@
 package monitoring
 
-import "github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
+import "github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 
 // ServiceAPI defines the interface for managing a monitoring service. It provides methods for
 // adding and removing targets, retrieving environment variables, setting up the service, and initializing the service.

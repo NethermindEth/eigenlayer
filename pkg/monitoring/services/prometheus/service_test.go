@@ -9,8 +9,8 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/locker/mocks"
-	"github.com/NethermindEth/eigenlayer/internal/monitoring"
-	"github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"

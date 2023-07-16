@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// Initialize daemon
-	daemon, err := daemon.NewWizDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+	daemon, err := daemon.NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
 	if err != nil {
 		log.Fatal(err)
 	}

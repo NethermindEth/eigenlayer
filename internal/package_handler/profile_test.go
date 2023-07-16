@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	"github.com/NethermindEth/egn/internal/package_handler/testdata"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 )
 
 func TestOptionValidate(t *testing.T) {

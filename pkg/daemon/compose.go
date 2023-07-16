@@ -1,6 +1,6 @@
 package daemon
 
-import "github.com/NethermindEth/egn/internal/compose"
+import "github.com/NethermindEth/eigenlayer/internal/compose"
 
 // ComposeManager is an interface that defines methods for managing Docker Compose operations.
 type ComposeManager interface {

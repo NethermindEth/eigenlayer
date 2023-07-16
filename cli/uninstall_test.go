@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	daemonMock "github.com/NethermindEth/egn/cli/mocks"
+	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

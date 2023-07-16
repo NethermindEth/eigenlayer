@@ -1,6 +1,6 @@
 package types
 
-import "github.com/NethermindEth/egn/internal/data"
+import "github.com/NethermindEth/eigenlayer/internal/data"
 
 // ServiceOptions defines the options for initializing a monitoring service. It includes a reference to the monitoring stack
 // and a map of environment variables.

@@ -20,8 +20,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/NethermindEth/egn/internal/common"
-	"github.com/NethermindEth/egn/internal/docker/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/common"
+	"github.com/NethermindEth/eigenlayer/internal/docker/mocks"
 )
 
 // Image tests

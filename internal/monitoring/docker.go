@@ -1,6 +1,6 @@
 package monitoring
 
-import "github.com/NethermindEth/egn/internal/common"
+import "github.com/NethermindEth/eigenlayer/internal/common"
 
 // DockerManager is an interface for managing Docker containers.
 type DockerManager interface {

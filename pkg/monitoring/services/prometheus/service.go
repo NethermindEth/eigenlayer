@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
-	"github.com/NethermindEth/eigenlayer/internal/monitoring"
-	"github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	"gopkg.in/yaml.v3"
 )
 

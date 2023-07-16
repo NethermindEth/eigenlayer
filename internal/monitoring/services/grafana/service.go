@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"text/template"
 
-	datadir "github.com/NethermindEth/egn/internal/data"
-	"github.com/NethermindEth/egn/internal/monitoring"
-	"github.com/NethermindEth/egn/internal/monitoring/services/types"
+	datadir "github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
 )
 
 //go:embed config

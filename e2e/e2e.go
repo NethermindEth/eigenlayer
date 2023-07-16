@@ -112,7 +112,7 @@ func (e *e2eTestCase) buildEgn() {
 	e.t.Helper()
 	outPath := filepath.Join(e.testDir, "egn")
 	e.t.Logf("Building egn to %s", outPath)
-	err := exec.Command("go", "build", "-o", outPath, filepath.Join(e.repoPath, "cmd", "egn", "main.go")).Run()
+	err := exec.Command("go", "build", "-o", outPath, filepath.Join(e.repoPath, "cmd", "eigenlayer", "main.go")).Run()
 	if err != nil {
 		e.t.Fatalf("error building egn: %v", err)
 	} else {

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/NethermindEth/egn/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 )
 
 // This pattern matches Unix-like paths, both absolute and relative

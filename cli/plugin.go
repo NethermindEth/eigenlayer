@@ -3,7 +3,7 @@ package cli
 import (
 	"errors"
 
-	"github.com/NethermindEth/egn/pkg/daemon"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/spf13/cobra"
 )
 

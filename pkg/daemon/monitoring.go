@@ -1,6 +1,6 @@
 package daemon
 
-import "github.com/NethermindEth/egn/internal/common"
+import "github.com/NethermindEth/eigenlayer/internal/common"
 
 type MonitoringManager interface {
 	// Init initializes the monitoring stack. Assumes that the stack is already installed.

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/NethermindEth/egn/internal/package_handler/testdata"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

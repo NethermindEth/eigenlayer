@@ -1,8 +1,8 @@
 package node_exporter
 
 import (
-	"github.com/NethermindEth/egn/internal/monitoring"
-	"github.com/NethermindEth/egn/internal/monitoring/services/types"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
 )
 
 var _ monitoring.ServiceAPI = &NodeExporterService{}

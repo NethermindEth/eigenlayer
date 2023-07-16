@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/NethermindEth/egn/internal/data/testdata"
-	"github.com/NethermindEth/egn/internal/locker/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/data/testdata"
+	"github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"

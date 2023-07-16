@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/NethermindEth/egn/internal/data"
-	"github.com/NethermindEth/egn/internal/monitoring"
-	"github.com/NethermindEth/egn/internal/monitoring/services/types"
+	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring/services/types"
 	"gopkg.in/yaml.v3"
 )
 

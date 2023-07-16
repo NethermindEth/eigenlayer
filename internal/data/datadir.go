@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NethermindEth/egn/internal/locker"
-	"github.com/NethermindEth/egn/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/locker"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/spf13/afero"
 )
 

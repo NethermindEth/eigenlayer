@@ -10,12 +10,12 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/NethermindEth/egn/internal/common"
-	"github.com/NethermindEth/egn/internal/compose"
-	"github.com/NethermindEth/egn/internal/data"
-	"github.com/NethermindEth/egn/internal/locker"
-	"github.com/NethermindEth/egn/internal/monitoring"
-	"github.com/NethermindEth/egn/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/common"
+	"github.com/NethermindEth/eigenlayer/internal/compose"
+	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/locker"
+	"github.com/NethermindEth/eigenlayer/internal/monitoring"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	log "github.com/sirupsen/logrus"
 )
 

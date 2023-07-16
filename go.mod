@@ -1,4 +1,4 @@
-module github.com/NethermindEth/egn
+module github.com/NethermindEth/eigenlayer
 
 go 1.20
 

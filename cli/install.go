@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NethermindEth/egn/cli/prompter"
-	"github.com/NethermindEth/egn/pkg/daemon"
+	"github.com/NethermindEth/eigenlayer/cli/prompter"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"

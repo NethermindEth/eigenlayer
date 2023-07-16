@@ -19,11 +19,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Checks that WizDaemon implements Daemon.
-var _ = Daemon(&WizDaemon{})
+// Checks that EgnDaemon implements Daemon.
+var _ = Daemon(&EgnDaemon{})
 
-// WizDaemon is the main entrypoint for all the functionalities of the daemon.
-type WizDaemon struct {
+// EgnDaemon is the main entrypoint for all the functionalities of the daemon.
+type EgnDaemon struct {
 	dataDir       *data.DataDir
 	dockerCompose ComposeManager
 	docker        DockerManager
@@ -32,14 +32,14 @@ type WizDaemon struct {
 }
 
 // NewDaemon create a new daemon instance.
-func NewWizDaemon(
+func NewEgnDaemon(
 	dataDir *data.DataDir,
 	cmpMgr ComposeManager,
 	dockerMgr DockerManager,
 	mtrMgr MonitoringManager,
 	locker locker.Locker,
-) (*WizDaemon, error) {
-	return &WizDaemon{
+) (*EgnDaemon, error) {
+	return &EgnDaemon{
 		dataDir:       dataDir,
 		dockerCompose: cmpMgr,
 		docker:        dockerMgr,
@@ -49,7 +49,7 @@ func NewWizDaemon(
 }
 
 // Init initializes the daemon.
-func (d *WizDaemon) Init() error {
+func (d *EgnDaemon) Init() error {
 	// *** Monitoring stack initialization. ***
 	// Check if the monitoring stack is installed.
 	installStatus, err := d.monitoringMgr.InstallationStatus()
@@ -90,7 +90,7 @@ func (d *WizDaemon) Init() error {
 }
 
 // Pull implements Daemon.Pull.
-func (d *WizDaemon) Pull(url string, version string, force bool) (result PullResult, err error) {
+func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullResult, err error) {
 	tID := tempID(url)
 	if force {
 		if err = d.dataDir.RemoveTemp(tID); err != nil {
@@ -170,7 +170,7 @@ func (d *WizDaemon) Pull(url string, version string, force bool) (result PullRes
 }
 
 // Install implements Daemon.Install.
-func (d *WizDaemon) Install(options InstallOptions) (string, error) {
+func (d *EgnDaemon) Install(options InstallOptions) (string, error) {
 	instanceId, tempDirID, err := d.install(options)
 	if err != nil && instanceId != "" {
 		// Cleanup if Install fails
@@ -190,7 +190,7 @@ func (d *WizDaemon) Install(options InstallOptions) (string, error) {
 	return instanceId, err
 }
 
-func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
+func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	// Get temp folder ID
 	tID := tempID(options.URL)
 	tempPath, err := d.dataDir.TempPath(tID)
@@ -309,12 +309,12 @@ func (d *WizDaemon) install(options InstallOptions) (string, string, error) {
 	return instanceId, tID, nil
 }
 
-func (d *WizDaemon) HasInstance(instanceID string) bool {
+func (d *EgnDaemon) HasInstance(instanceID string) bool {
 	return d.dataDir.HasInstance(instanceID)
 }
 
 // Run implements Daemon.Run.
-func (d *WizDaemon) Run(instanceID string) error {
+func (d *EgnDaemon) Run(instanceID string) error {
 	// Add target just in case
 	if err := d.addTarget(instanceID); err != nil {
 		return err
@@ -331,7 +331,7 @@ func (d *WizDaemon) Run(instanceID string) error {
 }
 
 // Stop implements Daemon.Stop.
-func (d *WizDaemon) Stop(instanceID string) error {
+func (d *EgnDaemon) Stop(instanceID string) error {
 	instancePath, err := d.dataDir.InstancePath(instanceID)
 	if err != nil {
 		return err
@@ -343,11 +343,11 @@ func (d *WizDaemon) Stop(instanceID string) error {
 }
 
 // Uninstall implements Daemon.Uninstall.
-func (d *WizDaemon) Uninstall(instanceID string) error {
+func (d *EgnDaemon) Uninstall(instanceID string) error {
 	return d.uninstall(instanceID, true)
 }
 
-func (d *WizDaemon) uninstall(instanceID string, down bool) error {
+func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 	if err := d.removeTarget(instanceID); err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ type composePsItem struct {
 }
 
 // RunPlugin implements Daemon.RunPlugin.
-func (d *WizDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error {
+func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error {
 	instance, err := d.dataDir.Instance(instanceId)
 	if err != nil {
 		return err
@@ -443,7 +443,7 @@ type psServiceJSON struct {
 	Service string `json:"Service"`
 }
 
-func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePath string) (map[string]string, error) {
+func (d *EgnDaemon) monitoringTargetsEndpoints(serviceNames []string, composePath string) (map[string]string, error) {
 	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 		Path:   composePath,
 		Format: "json",
@@ -479,7 +479,7 @@ func (d *WizDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 	return monitoringTargets, nil
 }
 
-func (d *WizDaemon) idToEndpoint(id, path, port string) (string, error) {
+func (d *EgnDaemon) idToEndpoint(id, path, port string) (string, error) {
 	ip, err := d.docker.ContainerIP(id)
 	if err != nil {
 		return "", err
@@ -488,7 +488,7 @@ func (d *WizDaemon) idToEndpoint(id, path, port string) (string, error) {
 	return fmt.Sprintf("http://%s:%s", ip, port), nil
 }
 
-func (d *WizDaemon) addTarget(instanceID string) error {
+func (d *EgnDaemon) addTarget(instanceID string) error {
 	// Get monitoring targets
 	instance, err := d.dataDir.Instance(instanceID)
 	if err != nil {
@@ -521,7 +521,7 @@ func (d *WizDaemon) addTarget(instanceID string) error {
 	return nil
 }
 
-func (d *WizDaemon) removeTarget(instanceID string) error {
+func (d *EgnDaemon) removeTarget(instanceID string) error {
 	// Get monitoring targets
 	instance, err := d.dataDir.Instance(instanceID)
 	if err != nil {

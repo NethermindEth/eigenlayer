@@ -21,6 +21,7 @@ type Profile struct {
 	PluginOverrides               PluginOverrides               `yaml:"plugin_overrides"`
 	Options                       []Option                      `yaml:"options"`
 	Monitoring                    Monitoring                    `yaml:"monitoring"`
+	API                           *APITarget                    `yaml:"api,omitempty"`
 }
 
 // Validate validates the profile file
@@ -184,6 +185,12 @@ type Validate struct {
 // Monitoring represents the monitoring field of a profile
 type Monitoring struct {
 	Targets []MonitoringTarget `yaml:"targets"`
+}
+
+// API represents the api field of a profile
+type APITarget struct {
+	Service string `yaml:"service"`
+	Port    int    `yaml:"port"`
 }
 
 // MonitoringTarget represents a monitoring target within the targets field of a monitoring

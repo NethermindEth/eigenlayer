@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
@@ -87,6 +89,132 @@ func (d *EgnDaemon) Init() error {
 	}
 	// *** Monitoring stack initialization. ***
 	return nil
+}
+
+// ListInstances implements Daemon.ListInstances.
+func (d *EgnDaemon) ListInstances() ([]ListInstanceItem, error) {
+	var result []ListInstanceItem
+	instanceIds, err := d.dataDir.ListInstances()
+	if err != nil {
+		return result, err
+	}
+	for _, instanceId := range instanceIds {
+		running, err := d.instanceRunning(instanceId)
+		if err != nil {
+			result = append(result, ListInstanceItem{
+				ID:      instanceId,
+				Health:  NodeHealthUnknown,
+				Comment: fmt.Sprintf("Failed to get instance status: %v", err),
+			})
+			continue
+		}
+		var item ListInstanceItem
+		if running {
+			item = d.instanceHealth(instanceId)
+		}
+		item.ID = instanceId
+		item.Running = running
+		result = append(result, item)
+	}
+	return result, nil
+}
+
+func (d *EgnDaemon) instanceRunning(instanceId string) (bool, error) {
+	instance, err := d.dataDir.Instance(instanceId)
+	if err != nil {
+		return false, err
+	}
+	composePath := instance.ComposePath()
+	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		Path:   composePath,
+		Format: "json",
+	})
+	if err != nil {
+		return false, err
+	}
+	var psServices []psServiceJSON
+	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
+		return false, err
+	}
+	return len(psServices) > 0, nil
+}
+
+func (d *EgnDaemon) instanceHealth(instanceId string) (out ListInstanceItem) {
+	out.ID = instanceId
+	out.Health = NodeHealthUnknown // Default health is unknown
+
+	// Get instance
+	instance, err := d.dataDir.Instance(instanceId)
+	if err != nil {
+		return
+	}
+
+	if instance.APITarget == nil {
+		// Instance does not have an API target
+		out.Comment = "Instance does not have an API target"
+		return
+	}
+
+	var psOut []composePsItem
+	psOutRaw, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		ServiceName: instance.APITarget.Service,
+		Path:        instance.ComposePath(),
+		Format:      "json",
+		All:         true,
+	})
+	if err != nil {
+		out.Comment = fmt.Sprintf("Failed to get API container status: %v", err)
+		return
+	}
+	err = json.Unmarshal([]byte(psOutRaw), &psOut)
+	if err != nil {
+		out.Comment = fmt.Sprintf("Failed to get API container status: %v", err)
+		return
+	}
+	if len(psOut) == 0 {
+		out.Comment = "No API container found"
+		return
+	}
+	if psOut[0].State != "running" {
+		out.Comment = "API container is not running"
+		return
+	}
+	apiCtIP, err := d.docker.ContainerIP(psOut[0].Id)
+	if err != nil {
+		out.Comment = fmt.Sprintf("Failed to get API container IP: %v", err)
+	}
+	nodeHealth, err := checkHealth(apiCtIP, instance.APITarget.Port)
+	if err != nil {
+		out.Comment = fmt.Sprintf("API container is running but health check failed: %v", err)
+	}
+	out.Health = nodeHealth
+	return
+}
+
+func checkHealth(ip string, port string) (NodeHealth, error) {
+	url := fmt.Sprintf("http://%s:%s/eigen/node/health", ip, port)
+
+	// HTTP client with timeout
+	client := &http.Client{
+		Timeout: time.Second * 10, // Timeout after 10 seconds
+	}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return NodeHealthUnknown, err
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case 200:
+		return NodeHealthy, nil
+	case 206:
+		return NodePartiallyHealthy, nil
+	case 503:
+		return NodeUnhealthy, nil
+	default:
+		return NodeHealthUnknown, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 }
 
 // Pull implements Daemon.Pull.
@@ -268,6 +396,15 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		}
 	}
 
+	// Build API target info
+	var apiTarget *data.APITarget
+	if selectedProfile.API != nil {
+		apiTarget = &data.APITarget{
+			Service: selectedProfile.API.Service,
+			Port:    strconv.Itoa(selectedProfile.API.Port),
+		}
+	}
+
 	// Init instance
 	instance := data.Instance{
 		Name:              instanceName,
@@ -276,6 +413,7 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		URL:               options.URL,
 		Tag:               options.Tag,
 		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},
+		APITarget:         apiTarget,
 		Plugin:            plugin,
 	}
 	if err = d.dataDir.InitInstance(&instance); err != nil {

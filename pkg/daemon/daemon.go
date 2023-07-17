@@ -39,6 +39,40 @@ type Daemon interface {
 	// an error will be returned. If noDestroyImage is true, the plugin image will
 	// not be removed after the plugin execution.
 	RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error
+
+	// ListInstances returns a list of all the installed instances and their health.
+	ListInstances() ([]ListInstanceItem, error)
+}
+
+// ListInstanceItem is an item in the list of instances returned by ListInstances.
+type ListInstanceItem struct {
+	ID      string
+	Health  NodeHealth
+	Running bool
+	Comment string
+}
+
+// NodeHealth is the health of a node, matching the HTTP status codes.
+type NodeHealth int
+
+const (
+	NodeHealthUnknown    NodeHealth = 0
+	NodeHealthy          NodeHealth = 200
+	NodePartiallyHealthy NodeHealth = 206
+	NodeUnhealthy        NodeHealth = 503
+)
+
+func (n NodeHealth) String() string {
+	switch n {
+	case NodeHealthy:
+		return "healthy"
+	case NodePartiallyHealthy:
+		return "partially healthy"
+	case NodeUnhealthy:
+		return "unhealthy"
+	default:
+		return "unknown"
+	}
 }
 
 // PullResult is the result of a Pull operation, containing all the necessary

@@ -244,7 +244,7 @@ func TestPull(t *testing.T) {
 	afs := afero.NewOsFs()
 
 	pullResult302 := PullResult{
-		Version: MockAVSLatestVersion,
+		Version: "v3.0.2",
 		Options: map[string][]Option{
 			"option-returner": {
 				&OptionID{
@@ -404,7 +404,7 @@ func TestPull(t *testing.T) {
 		{
 			name:    "pull -> success, fixed version",
 			url:     "https://github.com/NethermindEth/mock-avs",
-			version: MockAVSLatestVersion,
+			version: "v3.0.2",
 			want:    pullResult302,
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")

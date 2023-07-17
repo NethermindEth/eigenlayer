@@ -29,7 +29,7 @@ func TestRun(t *testing.T) {
 			mocker: nil,
 		},
 		{
-			name: "valid arguments, and stop success",
+			name: "valid arguments, and run success",
 			args: []string{"mock-avs-default"},
 			err:  nil,
 			mocker: func(d *daemonMock.MockDaemon) {
@@ -37,11 +37,11 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			name: "valid arguments, and stop error",
+			name: "valid arguments, and run error",
 			args: []string{"mock-avs-default"},
-			err:  errors.New("stop error"),
+			err:  assert.AnError,
 			mocker: func(d *daemonMock.MockDaemon) {
-				d.EXPECT().Run("mock-avs-default").Return(errors.New("stop error"))
+				d.EXPECT().Run("mock-avs-default").Return(assert.AnError)
 			},
 		},
 	}

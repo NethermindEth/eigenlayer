@@ -192,3 +192,27 @@ func (d *DataDir) RemoveMonitoringStack() error {
 
 	return d.fs.RemoveAll(monitoringStackPath)
 }
+
+// ListInstances returns the ID list of all the installed instances.
+func (d *DataDir) ListInstances() ([]string, error) {
+	nodesDirPath := filepath.Join(d.path, nodesDirName)
+	_, err := d.fs.Stat(nodesDirPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Return empty list if the nodes directory does not exist
+			return []string{}, nil
+		}
+		return nil, err
+	}
+	instances, err := afero.ReadDir(d.fs, nodesDirPath)
+	if err != nil {
+		return nil, err
+	}
+	instanceIds := make([]string, len(instances))
+	for i, instance := range instances {
+		if instance.IsDir() {
+			instanceIds[i] = instance.Name()
+		}
+	}
+	return instanceIds, nil
+}

@@ -26,6 +26,7 @@ type Instance struct {
 	Profile           string            `json:"profile"`
 	Tag               string            `json:"tag"`
 	MonitoringTargets MonitoringTargets `json:"monitoring"`
+	APITarget         *APITarget        `json:"api,omitempty"`
 	Plugin            *Plugin           `json:"plugin,omitempty"`
 	path              string
 	fs                afero.Fs
@@ -40,6 +41,11 @@ type MonitoringTarget struct {
 	Service string `json:"service"`
 	Port    string `json:"port"`
 	Path    string `json:"path"`
+}
+
+type APITarget struct {
+	Service string `json:"service"`
+	Port    string `json:"port"`
 }
 
 type Plugin struct {

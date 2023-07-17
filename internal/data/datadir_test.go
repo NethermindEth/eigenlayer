@@ -85,12 +85,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, nodesDirName, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := fs.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
+			stateFile, err := fs.Create(filepath.Join(path, nodesDirName, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -108,7 +108,7 @@ func TestDataDir_Instance(t *testing.T) {
 					Version: "v2.0.2",
 					Tag:     "default",
 					Profile: "option-returner",
-					path:    filepath.Join(path, instancesDir, "mock-avs-default"),
+					path:    filepath.Join(path, nodesDirName, "mock-avs-default"),
 					fs:      fs,
 				},
 				err: nil,
@@ -117,12 +117,12 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create instance dir path
-			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, nodesDirName, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
 			// Create state.json file
-			stateFile, err := fs.Create(filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
+			stateFile, err := fs.Create(filepath.Join(path, nodesDirName, "mock-avs-default", "state.json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -141,7 +141,7 @@ func TestDataDir_Instance(t *testing.T) {
 		func() testCase {
 			path := t.TempDir()
 			// Create nodes dir
-			err := fs.MkdirAll(filepath.Join(path, instancesDir), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, nodesDirName), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -192,7 +192,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 	ts := []testCase{
 		func() testCase {
 			path := t.TempDir()
-			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, nodesDirName, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -230,7 +230,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 				},
 				err: ErrInvalidInstance,
 				afterCheck: func(t *testing.T) {
-					assert.NoDirExists(t, filepath.Join(path, instancesDir, "mock-avs-default"))
+					assert.NoDirExists(t, filepath.Join(path, nodesDirName, "mock-avs-default"))
 				},
 			}
 		}(),
@@ -239,7 +239,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 			// Create a mock locker
 			ctrl := gomock.NewController(t)
 			locker := mocks.NewMockLocker(ctrl)
-			locker.EXPECT().New(filepath.Join(path, instancesDir, "mock-avs-default", ".lock")).Return(locker)
+			locker.EXPECT().New(filepath.Join(path, nodesDirName, "mock-avs-default", ".lock")).Return(locker)
 
 			return testCase{
 				name: "valid instance",
@@ -256,9 +256,9 @@ func TestDataDir_InitInstance(t *testing.T) {
 				err:    nil,
 				locker: locker,
 				afterCheck: func(t *testing.T) {
-					assert.DirExists(t, filepath.Join(path, instancesDir, "mock-avs-default"))
-					assert.FileExists(t, filepath.Join(path, instancesDir, "mock-avs-default", "state.json"))
-					assert.FileExists(t, filepath.Join(path, instancesDir, "mock-avs-default", ".lock"))
+					assert.DirExists(t, filepath.Join(path, nodesDirName, "mock-avs-default"))
+					assert.FileExists(t, filepath.Join(path, nodesDirName, "mock-avs-default", "state.json"))
+					assert.FileExists(t, filepath.Join(path, nodesDirName, "mock-avs-default", ".lock"))
 				},
 			}
 		}(),
@@ -370,7 +370,7 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 			locker := mocks.NewMockLocker(ctrl)
 
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, instancesDir, "mock_avs-latest"), 0o755)
+			err := os.MkdirAll(filepath.Join(testDir, nodesDirName, "mock_avs-latest"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -391,11 +391,11 @@ func TestDataDir_RemoveInstance(t *testing.T) {
 			locker := mocks.NewMockLocker(ctrl)
 
 			testDir := t.TempDir()
-			err := os.MkdirAll(filepath.Join(testDir, instancesDir), 0o755)
+			err := os.MkdirAll(filepath.Join(testDir, nodesDirName), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = os.Create(filepath.Join(testDir, instancesDir, "mock_avs-test"))
+			_, err = os.Create(filepath.Join(testDir, nodesDirName, "mock_avs-test"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -436,7 +436,7 @@ func TestDataDir_InstancePath(t *testing.T) {
 	tests := []testCase{
 		func() testCase {
 			path := t.TempDir()
-			err := fs.MkdirAll(filepath.Join(path, instancesDir, "mock-avs-default"), 0o755)
+			err := fs.MkdirAll(filepath.Join(path, nodesDirName, "mock-avs-default"), 0o755)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -444,7 +444,7 @@ func TestDataDir_InstancePath(t *testing.T) {
 				name:       "instance dir exists",
 				path:       path,
 				instanceId: "mock-avs-default",
-				want:       filepath.Join(path, instancesDir, "mock-avs-default"),
+				want:       filepath.Join(path, nodesDirName, "mock-avs-default"),
 				wantErr:    nil,
 			}
 		}(),

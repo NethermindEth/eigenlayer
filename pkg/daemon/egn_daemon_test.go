@@ -384,9 +384,10 @@ func TestPull(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "pull -> success",
-			url:  "https://github.com/NethermindEth/mock-avs",
-			want: pullResult302,
+			name:    "pull -> success",
+			url:     "https://github.com/NethermindEth/mock-avs",
+			want:    pullResult302,
+			version: "v3.0.2",
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -409,10 +410,11 @@ func TestPull(t *testing.T) {
 			},
 		},
 		{
-			name:  "pull -> success, force",
-			url:   "https://github.com/NethermindEth/mock-avs",
-			force: true,
-			want:  pullResult302,
+			name:    "pull -> success, force",
+			url:     "https://github.com/NethermindEth/mock-avs",
+			force:   true,
+			want:    pullResult302,
+			version: "v3.0.2",
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)

@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const MockAVSLatestVersion = "v3.0.2"
+const MockAVSLatestVersion = "v3.0.3"
 
 func TestInit(t *testing.T) {
 	// Silence logger

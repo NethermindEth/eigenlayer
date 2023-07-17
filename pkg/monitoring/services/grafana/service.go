@@ -24,7 +24,9 @@ var _ monitoring.ServiceAPI = &GrafanaService{}
 
 // GrafanaService implements the ServiceAPI interface for a Grafana service.
 type GrafanaService struct {
-	stack *datadir.MonitoringStack
+	containerIP string
+	port        string
+	stack       *datadir.MonitoringStack
 }
 
 // NewGrafana creates a new GrafanaService.
@@ -34,6 +36,15 @@ func NewGrafana() *GrafanaService {
 
 // Init initializes the Grafana service with the given options.
 func (g *GrafanaService) Init(opts types.ServiceOptions) error {
+	// Validate dotEnv
+	grafanaPort, ok := opts.Dotenv["GRAFANA_PORT"]
+	if !ok {
+		return fmt.Errorf("%w: %s missing in options", ErrInvalidOptions, "GRAFANA_PORT")
+	} else if grafanaPort == "" {
+		return fmt.Errorf("%w: %s can't be empty", ErrInvalidOptions, "GRAFANA_PORT")
+	}
+
+	g.port = opts.Dotenv["GRAFANA_PORT"]
 	g.stack = opts.Stack
 	return nil
 }
@@ -155,8 +166,13 @@ func (g *GrafanaService) copyDashboards(dst string) (err error) {
 }
 
 func (g *GrafanaService) SetContainerIP(ip string) {
+	g.containerIP = ip
 }
 
 func (g *GrafanaService) ContainerName() string {
 	return monitoring.GrafanaContainerName
+}
+
+func (g *GrafanaService) Endpoint() string {
+	return fmt.Sprintf("http://%s:%s", g.containerIP, g.port)
 }

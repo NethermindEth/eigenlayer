@@ -35,18 +35,43 @@ func TestInit(t *testing.T) {
 	stack, err := dataDir.MonitoringStack()
 	require.NoError(t, err)
 
-	// Create a new Prometheus service
-	prometheus := NewPrometheus()
-	err = prometheus.Init(types.ServiceOptions{
-		Stack: stack,
-		Dotenv: map[string]string{
-			"PROM_PORT": "9999",
+	tests := []struct {
+		name    string
+		options types.ServiceOptions
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			options: types.ServiceOptions{
+				Dotenv: map[string]string{
+					"PROM_PORT": "9999",
+				},
+				Stack: stack,
+			},
 		},
-	})
+		{
+			name: "missing prometheus port",
+			options: types.ServiceOptions{
+				Dotenv: map[string]string{},
+				Stack:  stack,
+			},
+			wantErr: true,
+		},
+	}
 
-	assert.NoError(t, err)
-	assert.Equal(t, stack, prometheus.stack)
-	assert.Equal(t, "9999", prometheus.port)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prometheus := NewPrometheus()
+			err := prometheus.Init(tt.options)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, stack, prometheus.stack)
+				assert.Equal(t, tt.options.Dotenv["PROM_PORT"], prometheus.port)
+			}
+		})
+	}
 }
 
 func TestInitError(t *testing.T) {
@@ -830,6 +855,35 @@ func TestContainerIP(t *testing.T) {
 	}
 }
 
+func TestSetContainerIP(t *testing.T) {
+	tests := []struct {
+		name string
+		ip   string
+	}{
+		{
+			name: "ok",
+			ip:   "127.0.0.1",
+		},
+		{
+			name: "empty",
+			ip:   "",
+		},
+		{
+			name: "domain name",
+			ip:   "node-exporter",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new Prometheus service
+			prometheus := NewPrometheus()
+			prometheus.SetContainerIP(tt.ip)
+			assert.Equal(t, tt.ip, prometheus.containerIP)
+		})
+	}
+}
+
 func TestContainerName(t *testing.T) {
 	tests := []struct {
 		name string
@@ -847,4 +901,22 @@ func TestContainerName(t *testing.T) {
 			assert.Equal(t, tt.want, prometheus.ContainerName())
 		})
 	}
+}
+
+func TestEndpoint(t *testing.T) {
+	dotenv := map[string]string{
+		"PROM_PORT": "9999",
+	}
+	want := "http://prometheus:9999"
+
+	// Create a new Prometheus service
+	prometheus := NewPrometheus()
+	err := prometheus.Init(types.ServiceOptions{
+		Dotenv: dotenv,
+	})
+	require.NoError(t, err)
+	prometheus.SetContainerIP("prometheus")
+
+	endpoint := prometheus.Endpoint()
+	assert.Equal(t, want, endpoint)
 }

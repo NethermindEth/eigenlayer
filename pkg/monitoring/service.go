@@ -26,4 +26,7 @@ type ServiceAPI interface {
 
 	// ContainerName returns the name of the service's container.
 	ContainerName() string
+
+	// Endpoint returns the endpoint of the service.
+	Endpoint() string
 }

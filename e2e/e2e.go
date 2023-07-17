@@ -111,12 +111,12 @@ func (e *e2eTestCase) installGoModules() {
 func (e *e2eTestCase) buildEgn() {
 	e.t.Helper()
 	outPath := filepath.Join(e.testDir, "egn")
-	e.t.Logf("Building egn to %s", outPath)
+	e.t.Logf("Building eigenlayer to %s", outPath)
 	err := exec.Command("go", "build", "-o", outPath, filepath.Join(e.repoPath, "cmd", "eigenlayer", "main.go")).Run()
 	if err != nil {
-		e.t.Fatalf("error building egn: %v", err)
+		e.t.Fatalf("error building eigenlayer: %v", err)
 	} else {
-		e.t.Logf("egn built")
+		e.t.Logf("eigenlayer built")
 	}
 }
 

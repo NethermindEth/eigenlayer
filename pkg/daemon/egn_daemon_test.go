@@ -1,11 +1,16 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
@@ -1112,4 +1117,480 @@ func TestUninstall(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestListInstances(t *testing.T) {
+	afs := afero.NewOsFs()
+
+	type mockerData struct {
+		dataDirPath       string
+		fs                afero.Fs
+		apiPort           string
+		apiMux            *http.ServeMux
+		composeManager    *mocks.MockComposeManager
+		dockerManager     *mocks.MockDockerManager
+		locker            *mock_locker.MockLocker
+		monitoringManager *mocks.MockMonitoringManager
+	}
+
+	tests := []struct {
+		name   string
+		mocker func(t *testing.T, m *mockerData)
+		out    []ListInstanceItem
+		err    error
+	}{
+		{
+			name: "success, no instances",
+			out:  nil,
+			err:  nil,
+		},
+		{
+			name: "one instance, running",
+			mocker: func(t *testing.T, d *mockerData) {
+				d.apiMux.HandleFunc("/eigen/node/health", func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{"status": "OK"}`))
+				})
+
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", []byte(`{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"api": {
+						"service": "main-service",
+						"port": "`+d.apiPort+`"
+					}
+				}`))
+
+				// Mocks
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format: "json",
+					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						ServiceName: "main-service",
+						Path:        filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:      "json",
+						All:         true,
+					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
+					d.dockerManager.EXPECT().ContainerIP("abc123").Return("127.0.0.1", nil),
+				)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-default",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "more than one instance, all running",
+			mocker: func(t *testing.T, d *mockerData) {
+				d.apiMux.HandleFunc("/eigen/node/health", func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{"status": "OK"}`))
+				})
+				instances := []struct {
+					id        string
+					stateJSON []byte
+				}{
+					{
+						id: "mock-avs-0",
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "0",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+					},
+					{
+						id: "mock-avs-1",
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "1",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+					},
+					{
+						id: "mock-avs-2",
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "2",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+					},
+				}
+
+				var mockCalls []*gomock.Call
+				for _, instance := range instances {
+					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
+					mockCalls = append(mockCalls,
+						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+							Path:   filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
+							Format: "json",
+						}).Return(`[{"ID": "`+instance.id+`", "State": "running"}]`, nil),
+						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+							ServiceName: "main-service",
+							Path:        filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
+							Format:      "json",
+							All:         true,
+						}).Return(`[{"ID": "`+instance.id+`", "State": "running"}]`, nil),
+						d.dockerManager.EXPECT().ContainerIP(instance.id).Return("127.0.0.1", nil),
+					)
+				}
+				gomock.InOrder(mockCalls...)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-0",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+				{
+					ID:      "mock-avs-1",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+				{
+					ID:      "mock-avs-2",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "two instances, one running, one not running",
+			mocker: func(t *testing.T, d *mockerData) {
+				d.apiMux.HandleFunc("/eigen/node/health", func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{"status": "OK"}`))
+				})
+
+				instances := []struct {
+					id        string
+					stateJSON []byte
+					running   bool
+					mocks     []*gomock.Call
+				}{
+					{
+						id:      "mock-avs-0",
+						running: true,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "0",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+						mocks: []*gomock.Call{
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+								Format: "json",
+							}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								ServiceName: "main-service",
+								Path:        filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+								Format:      "json",
+								All:         true,
+							}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
+							d.dockerManager.EXPECT().ContainerIP("mock-avs-0").Return("127.0.0.1", nil),
+						},
+					},
+					{
+						id:      "mock-avs-1",
+						running: false,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "1",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+						mocks: []*gomock.Call{
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
+								Format: "json",
+							}).Return(`[]`, nil),
+						},
+					},
+				}
+
+				var mockCalls []*gomock.Call
+				for _, instance := range instances {
+					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
+					mockCalls = append(mockCalls, instance.mocks...)
+				}
+				gomock.InOrder(mockCalls...)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-0",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+				{
+					ID:      "mock-avs-1",
+					Health:  NodeHealthUnknown,
+					Running: false,
+					Comment: "",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "two instances, one running, one running and without api",
+			mocker: func(t *testing.T, d *mockerData) {
+				d.apiMux.HandleFunc("/eigen/node/health", func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{"status": "OK"}`))
+				})
+
+				instances := []struct {
+					id        string
+					stateJSON []byte
+					running   bool
+					mocks     []*gomock.Call
+				}{
+					{
+						id:      "mock-avs-0",
+						running: true,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "0",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+						mocks: []*gomock.Call{
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+								Format: "json",
+							}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								ServiceName: "main-service",
+								Path:        filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+								Format:      "json",
+								All:         true,
+							}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
+							d.dockerManager.EXPECT().ContainerIP("mock-avs-0").Return("127.0.0.1", nil),
+						},
+					},
+					{
+						id:      "mock-avs-1",
+						running: false,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "1",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs"
+						}`),
+						mocks: []*gomock.Call{
+							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+								Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
+								Format: "json",
+							}).Return(`[{"ID": "mock-avs-1", "State": "running"}]`, nil),
+						},
+					},
+				}
+
+				var mockCalls []*gomock.Call
+				for _, instance := range instances {
+					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
+					mockCalls = append(mockCalls, instance.mocks...)
+				}
+				gomock.InOrder(mockCalls...)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-0",
+					Health:  NodeHealthy,
+					Running: true,
+					Comment: "",
+				},
+				{
+					ID:      "mock-avs-1",
+					Health:  NodeHealthUnknown,
+					Running: true,
+					Comment: "Instance does not have an API target",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "two instances, one not running, one not running and without api",
+			mocker: func(t *testing.T, d *mockerData) {
+				instances := []struct {
+					id        string
+					stateJSON []byte
+					running   bool
+				}{
+					{
+						id:      "mock-avs-0",
+						running: true,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "0",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs",
+							"api": {
+								"service": "main-service",
+								"port": "` + d.apiPort + `"
+							}
+						}`),
+					},
+					{
+						id:      "mock-avs-1",
+						running: false,
+						stateJSON: []byte(`{
+							"name": "mock-avs",
+							"tag": "1",
+							"version": "v3.0.3",
+							"profile": "option-returner",
+							"url": "https://github.com/NethermindEth/mock-avs"
+						}`),
+					},
+				}
+
+				var mockCalls []*gomock.Call
+				for _, instance := range instances {
+					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
+					mockCalls = append(mockCalls, d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
+						Format: "json",
+					}).Return(`[]`, nil))
+				}
+				gomock.InOrder(mockCalls...)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-0",
+					Health:  NodeHealthUnknown,
+					Running: false,
+					Comment: "",
+				},
+				{
+					ID:      "mock-avs-1",
+					Health:  NodeHealthUnknown,
+					Running: false,
+					Comment: "",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mocks
+			ctrl := gomock.NewController(t)
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			locker := mock_locker.NewMockLocker(ctrl)
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			tmp, err := afero.TempDir(afs, "", "egn-test-install")
+			require.NoError(t, err)
+			// Create a Data dir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			// Mock API server
+			l, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
+			tcpAddress, ok := l.Addr().(*net.TCPAddr)
+			require.True(t, ok)
+			apiServerMux := http.NewServeMux()
+			apiServer := http.Server{
+				Handler: apiServerMux,
+			}
+			go func() {
+				err := apiServer.Serve(l)
+				require.ErrorIs(t, err, http.ErrServerClosed)
+			}()
+			defer func() {
+				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+				err := apiServer.Shutdown(ctx)
+				require.NoError(t, err)
+			}()
+
+			// Set up mocks
+			if tt.mocker != nil {
+				tt.mocker(t, &mockerData{
+					dataDirPath:       tmp,
+					fs:                afs,
+					apiPort:           fmt.Sprintf("%d", tcpAddress.Port),
+					apiMux:            apiServerMux,
+					composeManager:    composeManager,
+					dockerManager:     dockerManager,
+					locker:            locker,
+					monitoringManager: monitoringManager,
+				})
+			}
+
+			// Create a daemon
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			require.NoError(t, err)
+
+			// List instances
+			instances, err := daemon.ListInstances()
+			if tt.err != nil {
+				assert.Error(t, err)
+				assert.EqualError(t, err, tt.err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.out, instances)
+			}
+		})
+	}
+}
+
+func initInstanceDir(t *testing.T, fs afero.Fs, dataDir string, instanceID string, stateJSON []byte) {
+	// Create a node dir
+	err := fs.MkdirAll(filepath.Join(dataDir, "nodes", instanceID), 0o755)
+	require.NoError(t, err)
+	// Create a state.json
+	stateFile, err := fs.Create(filepath.Join(dataDir, "nodes", instanceID, "state.json"))
+	require.NoError(t, err)
+	_, err = stateFile.Write(stateJSON)
+	require.NoError(t, err)
 }

@@ -45,6 +45,62 @@ type ExemplarTraceIdDestination struct {
 	Name          string `yaml:"name"`
 }
 
+func TestInit(t *testing.T) {
+	// Create an in-memory filesystem
+	afs := afero.NewMemMapFs()
+
+	// Create a mock locker
+	ctrl := gomock.NewController(t)
+	locker := mocks.NewMockLocker(ctrl)
+
+	// Expect the lock to be acquired
+	locker.EXPECT().New("/monitoring/.lock").Return(locker)
+
+	// Create a new DataDir with the in-memory filesystem
+	dataDir, err := data.NewDataDir("/", afs, locker)
+	require.NoError(t, err)
+	stack, err := dataDir.MonitoringStack()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		options types.ServiceOptions
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			options: types.ServiceOptions{
+				Dotenv: map[string]string{
+					"GRAFANA_PORT": "3000",
+				},
+				Stack: stack,
+			},
+		},
+		{
+			name: "missing grafana port",
+			options: types.ServiceOptions{
+				Dotenv: map[string]string{},
+				Stack:  stack,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			grafana := NewGrafana()
+			err := grafana.Init(tt.options)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, stack, grafana.stack)
+				assert.Equal(t, tt.options.Dotenv["GRAFANA_PORT"], grafana.port)
+			}
+		})
+	}
+}
+
 func TestSetup(t *testing.T) {
 	okLocker := func(t *testing.T) *mocks.MockLocker {
 		// Create a mock locker
@@ -87,20 +143,24 @@ func TestSetup(t *testing.T) {
 			name:   "ok",
 			mocker: okLocker,
 			options: map[string]string{
-				"PROM_PORT": "9090",
+				"PROM_PORT":    "9090",
+				"GRAFANA_PORT": "3000",
 			},
 		},
 		{
-			name:    "missing prometheus port",
-			mocker:  onlyNewLocker,
-			options: map[string]string{},
+			name:   "missing prometheus port",
+			mocker: onlyNewLocker,
+			options: map[string]string{
+				"GRAFANA_PORT": "3000",
+			},
 			wantErr: true,
 		},
 		{
 			name:   "empty prometheus port",
 			mocker: onlyNewLocker,
 			options: map[string]string{
-				"PROM_PORT": "",
+				"PROM_PORT":    "",
+				"GRAFANA_PORT": "3000",
 			},
 			wantErr: true,
 		},
@@ -119,7 +179,8 @@ func TestSetup(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT": "9090",
+				"PROM_PORT":    "9090",
+				"GRAFANA_PORT": "3000",
 			},
 			wantErr: true,
 		},
@@ -139,7 +200,8 @@ func TestSetup(t *testing.T) {
 				return locker
 			},
 			options: map[string]string{
-				"PROM_PORT": "9090",
+				"PROM_PORT":    "9090",
+				"GRAFANA_PORT": "3000",
 			},
 			wantErr: true,
 		},
@@ -159,7 +221,8 @@ func TestSetup(t *testing.T) {
 			// Create a new Grafana service
 			grafana := NewGrafana()
 			grafana.Init(types.ServiceOptions{
-				Stack: stack,
+				Stack:  stack,
+				Dotenv: tt.options,
 			})
 
 			// Setup the Grafana service
@@ -223,6 +286,35 @@ func TestDotEnv(t *testing.T) {
 	assert.EqualValues(t, dotEnv, grafana.DotEnv())
 }
 
+func TestSetContainerIP(t *testing.T) {
+	tests := []struct {
+		name string
+		ip   string
+	}{
+		{
+			name: "ok",
+			ip:   "127.0.0.1",
+		},
+		{
+			name: "empty",
+			ip:   "",
+		},
+		{
+			name: "domain name",
+			ip:   "grafana",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new Grafana service
+			grafana := NewGrafana()
+			grafana.SetContainerIP(tt.ip)
+			assert.Equal(t, tt.ip, grafana.containerIP)
+		})
+	}
+}
+
 func TestContainerName(t *testing.T) {
 	tests := []struct {
 		name string
@@ -241,4 +333,22 @@ func TestContainerName(t *testing.T) {
 			assert.Equal(t, tt.want, grafana.ContainerName())
 		})
 	}
+}
+
+func TestEndpoint(t *testing.T) {
+	dotenv := map[string]string{
+		"GRAFANA_PORT": "3333",
+	}
+	want := "http://grafana:3333"
+
+	// Create a new Grafana service
+	grafana := NewGrafana()
+	err := grafana.Init(types.ServiceOptions{
+		Dotenv: dotenv,
+	})
+	require.NoError(t, err)
+	grafana.SetContainerIP("grafana")
+
+	endpoint := grafana.Endpoint()
+	assert.Equal(t, want, endpoint)
 }

@@ -244,6 +244,10 @@ func (p *PrometheusService) ContainerName() string {
 	return monitoring.PrometheusContainerName
 }
 
+func (p *PrometheusService) Endpoint() string {
+	return fmt.Sprintf("http://%s:%s", p.containerIP, p.port)
+}
+
 // reloadConfig reloads the Prometheus config by making a POST request to the /-/reload endpoint
 func (p *PrometheusService) reloadConfig() error {
 	resp, err := http.Post(fmt.Sprintf("http://%s:%s/-/reload", p.containerIP, p.port), "", nil)

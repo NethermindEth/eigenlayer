@@ -1594,3 +1594,35 @@ func TestCleanup(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceEndpoints(t *testing.T) {
+	want := map[string]string{
+		GrafanaContainerName:      "http://grafana:3005",
+		PrometheusContainerName:   "http://prometheus:9095",
+		NodeExporterContainerName: "http://node-exporter:9105",
+	}
+
+	// Setup mocks
+	ctrl := gomock.NewController(t)
+	grafanaMock := mocks.NewMockServiceAPI(ctrl)
+	promMock := mocks.NewMockServiceAPI(ctrl)
+	nodeExporterMock := mocks.NewMockServiceAPI(ctrl)
+
+	// Expect the service to be triggered
+	grafanaMock.EXPECT().ContainerName().Return(GrafanaContainerName)
+	promMock.EXPECT().ContainerName().Return(PrometheusContainerName)
+	nodeExporterMock.EXPECT().ContainerName().Return(NodeExporterContainerName)
+
+	grafanaMock.EXPECT().Endpoint().Return("http://grafana:3005")
+	promMock.EXPECT().Endpoint().Return("http://prometheus:9095")
+	nodeExporterMock.EXPECT().Endpoint().Return("http://node-exporter:9105")
+
+	// Init monitoring manager and services
+	manager := MonitoringManager{
+		services: []ServiceAPI{grafanaMock, promMock, nodeExporterMock},
+	}
+
+	// Check endpoints
+	endpoints := manager.ServiceEndpoints()
+	assert.Equal(t, want, endpoints)
+}

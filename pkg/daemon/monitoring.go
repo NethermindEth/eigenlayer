@@ -32,4 +32,7 @@ type MonitoringManager interface {
 
 	// Cleanup removes the monitoring stack. If force is true, it will remove the stack directly bypassing any checks.
 	Cleanup(force bool) error
+
+	// ServiceEndpoints returns the endpoints of the monitoring services.
+	ServiceEndpoints() map[string]string
 }

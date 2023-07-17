@@ -288,6 +288,15 @@ func (m *MonitoringManager) Cleanup(force bool) error {
 	return nil
 }
 
+// ServiceEndpoints returns a map of the service's container names and their endpoints.
+func (m *MonitoringManager) ServiceEndpoints() map[string]string {
+	endpoints := make(map[string]string)
+	for _, service := range m.services {
+		endpoints[service.ContainerName()] = service.Endpoint()
+	}
+	return endpoints
+}
+
 func (m *MonitoringManager) idToIP(id string) (string, error) {
 	ip, err := m.dockerManager.ContainerIP(id)
 	if err != nil {

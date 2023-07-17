@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	instancesDir = "nodes"
+	nodesDirName = "nodes"
 	tempDir      = "temp"
 )
 
@@ -56,7 +56,7 @@ func NewDataDirDefault(fs afero.Fs, locker locker.Locker) (*DataDir, error) {
 
 // Instance returns the instance with the given id.
 func (d *DataDir) Instance(instanceId string) (*Instance, error) {
-	instancePath := filepath.Join(d.path, instancesDir, instanceId)
+	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
 	return newInstance(instancePath, d.fs, d.locker)
 }
 
@@ -72,7 +72,7 @@ type AddInstanceOptions struct {
 // InitInstance initializes a new instance. If an instance with the same id already
 // exists, an error is returned.
 func (d *DataDir) InitInstance(instance *Instance) error {
-	instancePath := filepath.Join(d.path, instancesDir, InstanceId(instance.Name, instance.Tag))
+	instancePath := filepath.Join(d.path, nodesDirName, InstanceId(instance.Name, instance.Tag))
 	_, err := d.fs.Stat(instancePath)
 	if err != nil && os.IsNotExist(err) {
 		return instance.init(instancePath, d.fs, d.locker)
@@ -86,14 +86,14 @@ func (d *DataDir) InitInstance(instance *Instance) error {
 // HasInstance returns true if an instance with the given id already exists in the
 // data dir.
 func (d *DataDir) HasInstance(instanceId string) bool {
-	instancePath := filepath.Join(d.path, instancesDir, instanceId)
+	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
 	_, err := d.fs.Stat(instancePath)
 	return err == nil
 }
 
 // InstancePath return the path to the directory of the instance with the given id.
 func (d *DataDir) InstancePath(instanceId string) (string, error) {
-	instancePath := filepath.Join(d.path, instancesDir, instanceId)
+	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
 	_, err := d.fs.Stat(instancePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -106,7 +106,7 @@ func (d *DataDir) InstancePath(instanceId string) (string, error) {
 
 // RemoveInstance removes the instance with the given id.
 func (d *DataDir) RemoveInstance(instanceId string) error {
-	instancePath := filepath.Join(d.path, instancesDir, instanceId)
+	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
 	instanceDir, err := d.fs.Stat(instancePath)
 	if err != nil {
 		if os.IsNotExist(err) {

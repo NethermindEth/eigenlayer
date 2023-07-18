@@ -98,23 +98,11 @@ func TestSetContainerIP(t *testing.T) {
 }
 
 func TestContainerName(t *testing.T) {
-	tests := []struct {
-		name string
-		want string
-	}{
-		{
-			name: "ok",
-			want: monitoring.NodeExporterContainerName,
-		},
-	}
+	want := monitoring.NodeExporterContainerName
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a new Node Exporter service
-			nodeExporter := NewNodeExporter()
-			assert.Equal(t, tt.want, nodeExporter.ContainerName())
-		})
-	}
+	// Create a new Node Exporter service
+	nodeExporter := NewNodeExporter()
+	assert.Equal(t, want, nodeExporter.ContainerName())
 }
 
 func TestEndpoint(t *testing.T) {

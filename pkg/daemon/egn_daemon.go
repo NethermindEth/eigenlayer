@@ -151,7 +151,7 @@ func (d *EgnDaemon) instanceHealth(instanceId string) (out ListInstanceItem) {
 
 	if instance.APITarget == nil {
 		// Instance does not have an API target
-		out.Comment = "Instance does not have an API target"
+		out.Comment = "Instance's package does not specifies an API target for the AVS Specification Metrics's API"
 		return
 	}
 

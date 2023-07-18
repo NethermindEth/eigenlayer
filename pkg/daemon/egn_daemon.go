@@ -199,6 +199,7 @@ func checkHealth(ip string, port string) (NodeHealth, error) {
 		Timeout: time.Second * 10, // Timeout after 10 seconds
 	}
 
+	log.Debug("Checking health of node at ", url)
 	resp, err := client.Get(url)
 	if err != nil {
 		return NodeHealthUnknown, err

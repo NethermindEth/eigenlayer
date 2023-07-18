@@ -2,8 +2,10 @@ package prometheus
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -68,7 +70,7 @@ func TestInit(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, stack, prometheus.stack)
-				assert.Equal(t, tt.options.Dotenv["PROM_PORT"], prometheus.port)
+				assert.Equal(t, tt.options.Dotenv["PROM_PORT"], strconv.Itoa(int(prometheus.port)))
 			}
 		})
 	}
@@ -502,8 +504,10 @@ func TestAddTarget(t *testing.T) {
 				defer server.Close()
 				split := strings.Split(server.URL, ":")
 				host, port := split[1][2:], split[2]
-				prometheus.containerIP = host
-				prometheus.port = port
+				prometheus.containerIP = net.ParseIP(host)
+				p, err := strconv.Atoi(port)
+				require.NoError(t, err)
+				prometheus.port = uint16(p)
 			}
 
 			// Add the targets
@@ -782,8 +786,10 @@ func TestRemoveTarget(t *testing.T) {
 				defer server.Close()
 				split := strings.Split(server.URL, ":")
 				host, port := split[1][2:], split[2]
-				prometheus.containerIP = host
-				prometheus.port = port
+				prometheus.containerIP = net.ParseIP(host)
+				p, err := strconv.Atoi(port)
+				require.NoError(t, err)
+				prometheus.port = uint16(p)
 			}
 
 			// Read the prom.yml file
@@ -833,44 +839,18 @@ func TestRemoveTarget(t *testing.T) {
 	}
 }
 
-func TestContainerIP(t *testing.T) {
-	tests := []struct {
-		name string
-		ip   string
-		want string
-	}{
-		{
-			name: "Prometheus container name",
-			ip:   "127.0.0.1",
-			want: "127.0.0.1",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			prometheus := NewPrometheus()
-			prometheus.SetContainerIP(tt.ip)
-			assert.Equal(t, tt.want, prometheus.containerIP)
-		})
-	}
-}
-
 func TestSetContainerIP(t *testing.T) {
 	tests := []struct {
 		name string
-		ip   string
+		ip   net.IP
 	}{
 		{
 			name: "ok",
-			ip:   "127.0.0.1",
+			ip:   net.ParseIP("127.0.0.1"),
 		},
 		{
 			name: "empty",
-			ip:   "",
-		},
-		{
-			name: "domain name",
-			ip:   "node-exporter",
+			ip:   nil,
 		},
 	}
 
@@ -895,7 +875,7 @@ func TestEndpoint(t *testing.T) {
 	dotenv := map[string]string{
 		"PROM_PORT": "9999",
 	}
-	want := "http://prometheus:9999"
+	want := "http://168.44.55.66:9999"
 
 	// Create a new Prometheus service
 	prometheus := NewPrometheus()
@@ -903,7 +883,7 @@ func TestEndpoint(t *testing.T) {
 		Dotenv: dotenv,
 	})
 	require.NoError(t, err)
-	prometheus.SetContainerIP("prometheus")
+	prometheus.SetContainerIP(net.ParseIP("168.44.55.66"))
 
 	endpoint := prometheus.Endpoint()
 	assert.Equal(t, want, endpoint)

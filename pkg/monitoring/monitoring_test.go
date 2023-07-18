@@ -3,6 +3,7 @@ package monitoring
 import (
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -79,7 +80,7 @@ func TestInit(t *testing.T) {
 						Dotenv: dotenv,
 					}).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.0.0.1").Return(),
+					servicer.EXPECT().SetContainerIP(net.ParseIP("127.0.0.1")).Return(),
 				)
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
@@ -117,8 +118,8 @@ func TestInit(t *testing.T) {
 					service2.EXPECT().ContainerName().Return("node2"),
 				)
 
-				service1.EXPECT().SetContainerIP("127.0.0.1").Return()
-				service2.EXPECT().SetContainerIP("127.0.0.2").Return()
+				service1.EXPECT().SetContainerIP(net.ParseIP("127.0.0.1")).Return()
+				service2.EXPECT().SetContainerIP(net.ParseIP("127.0.0.2")).Return()
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("node1").Return("127.0.0.1", nil)
@@ -173,6 +174,32 @@ func TestInit(t *testing.T) {
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("node").Return("", errors.New("error"))
+
+				return []ServiceAPI{
+					servicer,
+				}, dockerManager
+			},
+			setupDotEnv: dotEnvFileWriter,
+			dotenv: map[string]string{
+				"NODE_PORT": "9000",
+			},
+			wantErr: true,
+		},
+		{
+			name: "error, 1 service, ContainerIP gives an invalid IP",
+			mocker: func(t *testing.T, ctrl *gomock.Controller, stack *data.MonitoringStack, dotenv map[string]string) ([]ServiceAPI, *mocks.MockDockerManager) {
+				servicer := mocks.NewMockServiceAPI(ctrl)
+				// Expect the service to be triggered
+				gomock.InOrder(
+					servicer.EXPECT().Init(types.ServiceOptions{
+						Stack:  stack,
+						Dotenv: dotenv,
+					}).Return(nil),
+					servicer.EXPECT().ContainerName().Return("node"),
+				)
+
+				dockerManager := mocks.NewMockDockerManager(ctrl)
+				dockerManager.EXPECT().ContainerIP("node").Return("nethermind-loves-eigenlayer", nil)
 
 				return []ServiceAPI{
 					servicer,
@@ -299,7 +326,7 @@ func TestInstallStack(t *testing.T) {
 					}).Return(nil),
 					servicer.EXPECT().Setup(dotenv).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.0.0.1").Return(),
+					servicer.EXPECT().SetContainerIP(net.ParseIP("127.0.0.1")).Return(),
 				)
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
@@ -347,8 +374,8 @@ func TestInstallStack(t *testing.T) {
 					service2.EXPECT().Setup(dotenv).Return(nil),
 					service2.EXPECT().ContainerName().Return("node2"),
 				)
-				service1.EXPECT().SetContainerIP("168.0.2.1").Return()
-				service2.EXPECT().SetContainerIP("168.0.3.1").Return()
+				service1.EXPECT().SetContainerIP(net.ParseIP("168.0.2.1")).Return()
+				service2.EXPECT().SetContainerIP(net.ParseIP("168.0.3.1")).Return()
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: filepath.Join(stack.Path(), "docker-compose.yml")}).Return(nil)
@@ -386,7 +413,7 @@ func TestInstallStack(t *testing.T) {
 					}).Return(nil),
 					servicer.EXPECT().Setup(dotenv).Return(nil),
 					servicer.EXPECT().ContainerName().Return("node"),
-					servicer.EXPECT().SetContainerIP("127.1.1.6").Return(),
+					servicer.EXPECT().SetContainerIP(net.ParseIP("127.1.1.6")).Return(),
 				)
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
@@ -1039,8 +1066,8 @@ func TestRun(t *testing.T) {
 				service1.EXPECT().ContainerName().Return("node1")
 				service2.EXPECT().ContainerName().Return("node2")
 
-				service1.EXPECT().SetContainerIP("168.0.2.1").Return()
-				service2.EXPECT().SetContainerIP("168.0.3.1").Return()
+				service1.EXPECT().SetContainerIP(net.ParseIP("168.0.2.1")).Return()
+				service2.EXPECT().SetContainerIP(net.ParseIP("168.0.3.1")).Return()
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				// Expect the compose manager to be triggered

@@ -3,8 +3,10 @@ package prometheus
 import (
 	"embed"
 	"fmt"
+	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -45,8 +47,8 @@ var _ monitoring.ServiceAPI = &PrometheusService{}
 // PrometheusService implements the ServiceAPI interface for a Prometheus service.
 type PrometheusService struct {
 	stack       *data.MonitoringStack
-	containerIP string
-	port        string
+	containerIP net.IP
+	port        uint16
 }
 
 // NewPrometheus creates a new PrometheusService.
@@ -64,8 +66,12 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 		return fmt.Errorf("%w: %s can't be empty", ErrInvalidOptions, "PROM_PORT")
 	}
 
+	port, err := strconv.ParseUint(opts.Dotenv["PROM_PORT"], 10, 16)
+	if err != nil {
+		return fmt.Errorf("%w: %s is not a valid port", ErrInvalidOptions, "PROM_PORT")
+	}
+	p.port = uint16(port)
 	p.stack = opts.Stack
-	p.port = opts.Dotenv["PROM_PORT"]
 	return nil
 }
 
@@ -236,7 +242,7 @@ func (p *PrometheusService) Setup(options map[string]string) error {
 }
 
 // SetContainerIP sets the container IP for the Prometheus service.
-func (p *PrometheusService) SetContainerIP(ip string) {
+func (p *PrometheusService) SetContainerIP(ip net.IP) {
 	p.containerIP = ip
 }
 
@@ -245,12 +251,12 @@ func (p *PrometheusService) ContainerName() string {
 }
 
 func (p *PrometheusService) Endpoint() string {
-	return fmt.Sprintf("http://%s:%s", p.containerIP, p.port)
+	return fmt.Sprintf("http://%s:%d", p.containerIP, p.port)
 }
 
 // reloadConfig reloads the Prometheus config by making a POST request to the /-/reload endpoint
 func (p *PrometheusService) reloadConfig() error {
-	resp, err := http.Post(fmt.Sprintf("http://%s:%s/-/reload", p.containerIP, p.port), "", nil)
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/-/reload", p.containerIP, p.port), "", nil)
 	if err != nil {
 		return err
 	}

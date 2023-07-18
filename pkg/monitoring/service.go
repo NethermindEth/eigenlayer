@@ -1,6 +1,10 @@
 package monitoring
 
-import "github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+import (
+	"net"
+
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+)
 
 // ServiceAPI defines the interface for managing a monitoring service. It provides methods for
 // adding and removing targets, retrieving environment variables, setting up the service, and initializing the service.
@@ -22,7 +26,7 @@ type ServiceAPI interface {
 	Init(types.ServiceOptions) error
 
 	// SetContainerIP sets the container IP of the service.
-	SetContainerIP(ip string)
+	SetContainerIP(ip net.IP)
 
 	// ContainerName returns the name of the service's container.
 	ContainerName() string

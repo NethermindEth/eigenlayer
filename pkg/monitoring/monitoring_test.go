@@ -1609,13 +1609,14 @@ func TestServiceEndpoints(t *testing.T) {
 	nodeExporterMock := mocks.NewMockServiceAPI(ctrl)
 
 	// Expect the service to be triggered
-	grafanaMock.EXPECT().ContainerName().Return(GrafanaContainerName)
-	promMock.EXPECT().ContainerName().Return(PrometheusContainerName)
-	nodeExporterMock.EXPECT().ContainerName().Return(NodeExporterContainerName)
-
-	grafanaMock.EXPECT().Endpoint().Return("http://grafana:3005")
-	promMock.EXPECT().Endpoint().Return("http://prometheus:9095")
-	nodeExporterMock.EXPECT().Endpoint().Return("http://node-exporter:9105")
+	gomock.InOrder(
+		grafanaMock.EXPECT().ContainerName().Return(GrafanaContainerName),
+		grafanaMock.EXPECT().Endpoint().Return("http://grafana:3005"),
+		promMock.EXPECT().ContainerName().Return(PrometheusContainerName),
+		promMock.EXPECT().Endpoint().Return("http://prometheus:9095"),
+		nodeExporterMock.EXPECT().ContainerName().Return(NodeExporterContainerName),
+		nodeExporterMock.EXPECT().Endpoint().Return("http://node-exporter:9105"),
+	)
 
 	// Init monitoring manager and services
 	manager := MonitoringManager{

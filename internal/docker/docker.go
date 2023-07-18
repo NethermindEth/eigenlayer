@@ -1,9 +1,11 @@
 package docker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -120,6 +122,55 @@ func (d *DockerManager) ContainerLogs(container string) (string, error) {
 		log.Debugf("Container logs: %s", string(logs))
 	}
 	return string(logs), err
+}
+
+type ContainerLogsMergedOptions struct {
+	Follow     bool
+	Since      string
+	Until      string
+	Timestamps bool
+	Tail       string
+}
+
+// ContainerLogsMerged retrieves the merge of all logs of specified Docker containers.
+// Spin up a goroutine for each container and write the logs to the provided io.Writer,
+// and wait for all goroutines to finish. To cancel the process, use the provided context.
+func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, services map[string]string, opts ContainerLogsMergedOptions) error {
+	wLock := new(sync.Mutex)
+	waitGroup := new(sync.WaitGroup)
+
+	for serviceName, id := range services {
+		waitGroup.Add(1)
+		go func(serviceName, id string) {
+			defer waitGroup.Done()
+
+			logReader, err := d.dockerClient.ContainerLogs(ctx, id, types.ContainerLogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Follow:     opts.Follow,
+				Since:      opts.Since,
+				Until:      opts.Until,
+				Timestamps: opts.Timestamps,
+				Tail:       opts.Tail,
+			})
+			if err != nil {
+				log.Errorf("Error getting container logs: %v", err)
+				return
+			}
+			defer logReader.Close()
+
+			scanner := bufio.NewScanner(logReader)
+			for scanner.Scan() {
+				wLock.Lock()
+				w.Write([]byte(serviceName + ": "))
+				w.Write(scanner.Bytes())
+				w.Write([]byte("\n"))
+				wLock.Unlock()
+			}
+		}(serviceName, id)
+	}
+	waitGroup.Wait()
+	return nil
 }
 
 // Wait waits for a specified Docker container to reach a certain condition.

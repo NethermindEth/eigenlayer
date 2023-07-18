@@ -42,6 +42,15 @@ func TestList(t *testing.T) {
 			),
 		},
 		{
+			name: "success, empty list",
+			mocker: func(d *daemonMock.MockDaemon) {
+				d.EXPECT().ListInstances().Return([]daemon.ListInstanceItem{}, nil)
+			},
+			stdOut: []byte(
+				"AVS Instance ID\tRUNNING\tHEALTH\tCOMMENT\t\n",
+			),
+		},
+		{
 			name: "daemon list error",
 			mocker: func(d *daemonMock.MockDaemon) {
 				d.EXPECT().ListInstances().Return(nil, assert.AnError)

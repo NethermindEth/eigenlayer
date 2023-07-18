@@ -1518,6 +1518,50 @@ func TestListInstances(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "one instance, many services, api service not running",
+			mocker: func(t *testing.T, d *mockerData) {
+				d.apiMux.HandleFunc("/eigen/node/health", func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(`{"status": "OK"}`))
+				})
+
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", []byte(`{
+				"name": "mock-avs",
+				"tag": "default",
+				"version": "v3.0.3",
+				"profile": "option-returner",
+				"url": "https://github.com/NethermindEth/mock-avs",
+				"api": {
+					"service": "main-service",
+					"port": "`+d.apiPort+`"
+				}
+			}`))
+
+				// Mocks
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format: "json",
+					}).Return(`[{"ID": "0abc123", "State": "running"}]`, nil),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						ServiceName: "main-service",
+						Path:        filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:      "json",
+						All:         true,
+					}).Return(`[{"ID": "1abc123", "State": "exited"}]`, nil),
+				)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-default",
+					Health:  NodeHealthUnknown,
+					Running: true,
+					Comment: "API container is not running",
+				},
+			},
+			err: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -316,23 +316,11 @@ func TestSetContainerIP(t *testing.T) {
 }
 
 func TestContainerName(t *testing.T) {
-	tests := []struct {
-		name string
-		want string
-	}{
-		{
-			name: "ok",
-			want: monitoring.GrafanaContainerName,
-		},
-	}
+	want := monitoring.GrafanaContainerName
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a new Grafana service
-			grafana := NewGrafana()
-			assert.Equal(t, tt.want, grafana.ContainerName())
-		})
-	}
+	// Create a new Grafana service
+	grafana := NewGrafana()
+	assert.Equal(t, want, grafana.ContainerName())
 }
 
 func TestEndpoint(t *testing.T) {

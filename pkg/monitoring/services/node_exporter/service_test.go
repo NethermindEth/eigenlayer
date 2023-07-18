@@ -1,6 +1,8 @@
 package node_exporter
 
 import (
+	"net"
+	"strconv"
 	"testing"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -62,7 +64,7 @@ func TestInit(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.options.Dotenv["NODE_EXPORTER_PORT"], nodeExporter.port)
+				assert.Equal(t, tt.options.Dotenv["NODE_EXPORTER_PORT"], strconv.Itoa(int(nodeExporter.port)))
 			}
 		})
 	}
@@ -71,19 +73,15 @@ func TestInit(t *testing.T) {
 func TestSetContainerIP(t *testing.T) {
 	tests := []struct {
 		name string
-		ip   string
+		ip   net.IP
 	}{
 		{
 			name: "ok",
-			ip:   "127.0.0.1",
+			ip:   net.ParseIP("127.0.0.1"),
 		},
 		{
 			name: "empty",
-			ip:   "",
-		},
-		{
-			name: "domain name",
-			ip:   "node-exporter",
+			ip:   nil,
 		},
 	}
 
@@ -109,7 +107,7 @@ func TestEndpoint(t *testing.T) {
 	dotenv := map[string]string{
 		"NODE_EXPORTER_PORT": "6666",
 	}
-	want := "http://node-exporter:6666"
+	want := "http://168.77.88.99:6666"
 
 	// Create a new Node exporter service
 	nodeExporter := NewNodeExporter()
@@ -117,7 +115,7 @@ func TestEndpoint(t *testing.T) {
 		Dotenv: dotenv,
 	})
 	require.NoError(t, err)
-	nodeExporter.SetContainerIP("node-exporter")
+	nodeExporter.SetContainerIP(net.ParseIP("168.77.88.99"))
 
 	endpoint := nodeExporter.Endpoint()
 	assert.Equal(t, want, endpoint)

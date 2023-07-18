@@ -2,6 +2,8 @@ package node_exporter
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
@@ -10,8 +12,8 @@ import (
 var _ monitoring.ServiceAPI = &NodeExporterService{}
 
 type NodeExporterService struct {
-	containerIP string
-	port        string
+	containerIP net.IP
+	port        uint16
 }
 
 func NewNodeExporter() *NodeExporterService {
@@ -27,7 +29,11 @@ func (n *NodeExporterService) Init(opts types.ServiceOptions) error {
 		return fmt.Errorf("%w: %s can't be empty", ErrInvalidOptions, "NODE_EXPORTER_PORT")
 	}
 
-	n.port = opts.Dotenv["NODE_EXPORTER_PORT"]
+	port, err := strconv.ParseUint(opts.Dotenv["NODE_EXPORTER_PORT"], 10, 16)
+	if err != nil {
+		return fmt.Errorf("%w: %s is not a valid port", ErrInvalidOptions, "NODE_EXPORTER_PORT")
+	}
+	n.port = uint16(port)
 	return nil
 }
 
@@ -47,7 +53,7 @@ func (n *NodeExporterService) Setup(options map[string]string) error {
 	return nil
 }
 
-func (n *NodeExporterService) SetContainerIP(ip string) {
+func (n *NodeExporterService) SetContainerIP(ip net.IP) {
 	n.containerIP = ip
 }
 
@@ -56,5 +62,5 @@ func (n *NodeExporterService) ContainerName() string {
 }
 
 func (n *NodeExporterService) Endpoint() string {
-	return fmt.Sprintf("http://%s:%s", n.containerIP, n.port)
+	return fmt.Sprintf("http://%s:%d", n.containerIP, n.port)
 }

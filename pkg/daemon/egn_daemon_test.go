@@ -1452,7 +1452,7 @@ func TestListInstances(t *testing.T) {
 					ID:      "mock-avs-1",
 					Health:  NodeHealthUnknown,
 					Running: true,
-					Comment: "Instance does not have an API target",
+					Comment: "Instance's package does not specifies an API target for the AVS Specification Metrics's API",
 				},
 			},
 			err: nil,

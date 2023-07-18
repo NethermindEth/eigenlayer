@@ -1,11 +1,13 @@
 package daemon
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,6 +17,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/docker"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
@@ -512,6 +515,7 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 
 type composePsItem struct {
 	Id    string `json:"ID"`
+	Name  string `json:"Name"`
 	State string `json:"State"`
 }
 
@@ -563,6 +567,39 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyI
 	}
 	log.Infof("Running plugin with image %s", image)
 	return d.docker.Run(image, networks[0], pluginArgs)
+}
+
+// NodeLogs implements Daemon.NodeLogs.
+func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error {
+	i, err := d.dataDir.Instance(instanceID)
+	if err != nil {
+		return err
+	}
+	psRaw, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		Path:   i.ComposePath(),
+		Format: "json",
+		All:    true,
+	})
+	if err != nil {
+		return err
+	}
+	var ps []composePsItem
+	err = json.Unmarshal([]byte(psRaw), &ps)
+	if err != nil {
+		return err
+	}
+	services := make(map[string]string, len(ps))
+	for _, p := range ps {
+		services[p.Name] = p.Id
+	}
+
+	return d.docker.ContainerLogsMerged(ctx, w, services, docker.ContainerLogsMergedOptions{
+		Follow:     opts.Follow,
+		Since:      opts.Since,
+		Until:      opts.Until,
+		Timestamps: opts.Timestamps,
+		Tail:       opts.Tail,
+	})
 }
 
 func instanceNameFromURL(u string) (string, error) {

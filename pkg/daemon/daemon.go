@@ -1,5 +1,10 @@
 package daemon
 
+import (
+	"context"
+	"io"
+)
+
 // Daemon is the interface for the egn daemon. It should be used as the entrypoint
 // for all the functionalities of egn.
 type Daemon interface {
@@ -42,6 +47,10 @@ type Daemon interface {
 
 	// ListInstances returns a list of all the installed instances and their health.
 	ListInstances() ([]ListInstanceItem, error)
+
+	// NodeLogs returns the logs of the node with the given ID. If there is no
+	// installed instance with the given ID an error will be returned.
+	NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error
 }
 
 // ListInstanceItem is an item in the list of instances returned by ListInstances.
@@ -73,6 +82,14 @@ func (n NodeHealth) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+type NodeLogsOptions struct {
+	Follow     bool
+	Since      string
+	Until      string
+	Timestamps bool
+	Tail       string
 }
 
 // PullResult is the result of a Pull operation, containing all the necessary

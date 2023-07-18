@@ -21,7 +21,7 @@ func (i tableItem) String() string {
 
 func ListCmd(d daemon.Daemon) *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
+		Use:   "ls",
 		Short: "List all installed AVS nodes and their health status.",
 		Long: `List all installed AVS nodes and their health status. If the AVS node is not running the health check will not be
 performed. An AVS node is considered running if it is installed and has at least one running service. The health check

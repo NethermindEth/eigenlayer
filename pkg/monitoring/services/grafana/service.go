@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"path/filepath"
+	"strconv"
 	"text/template"
 
 	datadir "github.com/NethermindEth/eigenlayer/internal/data"
@@ -24,8 +26,8 @@ var _ monitoring.ServiceAPI = &GrafanaService{}
 
 // GrafanaService implements the ServiceAPI interface for a Grafana service.
 type GrafanaService struct {
-	containerIP string
-	port        string
+	containerIP net.IP
+	port        uint16
 	stack       *datadir.MonitoringStack
 }
 
@@ -44,7 +46,11 @@ func (g *GrafanaService) Init(opts types.ServiceOptions) error {
 		return fmt.Errorf("%w: %s can't be empty", ErrInvalidOptions, "GRAFANA_PORT")
 	}
 
-	g.port = opts.Dotenv["GRAFANA_PORT"]
+	port, err := strconv.ParseUint(opts.Dotenv["GRAFANA_PORT"], 10, 16)
+	if err != nil {
+		return fmt.Errorf("%w: %s is not a valid port", ErrInvalidOptions, "GRAFANA_PORT")
+	}
+	g.port = uint16(port)
 	g.stack = opts.Stack
 	return nil
 }
@@ -165,7 +171,7 @@ func (g *GrafanaService) copyDashboards(dst string) (err error) {
 	})
 }
 
-func (g *GrafanaService) SetContainerIP(ip string) {
+func (g *GrafanaService) SetContainerIP(ip net.IP) {
 	g.containerIP = ip
 }
 
@@ -174,5 +180,5 @@ func (g *GrafanaService) ContainerName() string {
 }
 
 func (g *GrafanaService) Endpoint() string {
-	return fmt.Sprintf("http://%s:%s", g.containerIP, g.port)
+	return fmt.Sprintf("http://%s:%d", g.containerIP, g.port)
 }

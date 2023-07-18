@@ -2,6 +2,8 @@ package grafana
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 	"testing"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -95,7 +97,7 @@ func TestInit(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, stack, grafana.stack)
-				assert.Equal(t, tt.options.Dotenv["GRAFANA_PORT"], grafana.port)
+				assert.Equal(t, tt.options.Dotenv["GRAFANA_PORT"], strconv.Itoa(int(grafana.port)))
 			}
 		})
 	}
@@ -289,19 +291,15 @@ func TestDotEnv(t *testing.T) {
 func TestSetContainerIP(t *testing.T) {
 	tests := []struct {
 		name string
-		ip   string
+		ip   net.IP
 	}{
 		{
 			name: "ok",
-			ip:   "127.0.0.1",
+			ip:   net.ParseIP("127.0.0.1"),
 		},
 		{
 			name: "empty",
-			ip:   "",
-		},
-		{
-			name: "domain name",
-			ip:   "grafana",
+			ip:   nil,
 		},
 	}
 
@@ -327,7 +325,7 @@ func TestEndpoint(t *testing.T) {
 	dotenv := map[string]string{
 		"GRAFANA_PORT": "3333",
 	}
-	want := "http://grafana:3333"
+	want := "http://168.66.77.88:3333"
 
 	// Create a new Grafana service
 	grafana := NewGrafana()
@@ -335,7 +333,7 @@ func TestEndpoint(t *testing.T) {
 		Dotenv: dotenv,
 	})
 	require.NoError(t, err)
-	grafana.SetContainerIP("grafana")
+	grafana.SetContainerIP(net.ParseIP("168.66.77.88"))
 
 	endpoint := grafana.Endpoint()
 	assert.Equal(t, want, endpoint)

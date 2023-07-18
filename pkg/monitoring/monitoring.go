@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"net"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -312,7 +313,11 @@ func (m *MonitoringManager) saveServiceIP() error {
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
 		}
-		service.SetContainerIP(ip)
+		parsedIP := net.ParseIP(ip)
+		if parsedIP == nil {
+			return fmt.Errorf("%w: failed to save the IP address of the monitoring service %s: %s is not a valid IP address", ErrInitializingMonitoringMngr, name, ip)
+		}
+		service.SetContainerIP(parsedIP)
 	}
 	return nil
 }

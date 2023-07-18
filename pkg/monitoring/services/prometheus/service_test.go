@@ -885,22 +885,10 @@ func TestSetContainerIP(t *testing.T) {
 }
 
 func TestContainerName(t *testing.T) {
-	tests := []struct {
-		name string
-		want string
-	}{
-		{
-			name: "Prometheus container name",
-			want: monitoring.PrometheusContainerName,
-		},
-	}
+	want := monitoring.PrometheusContainerName
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			prometheus := NewPrometheus()
-			assert.Equal(t, tt.want, prometheus.ContainerName())
-		})
-	}
+	prometheus := NewPrometheus()
+	assert.Equal(t, want, prometheus.ContainerName())
 }
 
 func TestEndpoint(t *testing.T) {

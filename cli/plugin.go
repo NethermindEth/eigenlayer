@@ -13,9 +13,10 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		noDestroyImage bool
 	)
 	cmd := cobra.Command{
-		Use:  "plugin [FLAGS] [INSTANCE_ID] [PLUGIN ARGS]",
-		Long: `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
-		Args: cobra.MinimumNArgs(1),
+		Use:   "plugin [FLAGS] [INSTANCE_ID] [PLUGIN ARGS]",
+		Short: "Run an AVS node plugin",
+		Long:  `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
+		Args:  cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			instanceId = args[0]
 			if !d.HasInstance(instanceId) {

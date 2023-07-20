@@ -136,7 +136,7 @@ func (m *MonitoringManager) InstallStack() error {
 	}
 
 	// Setup services
-	log.Info("Setting up monitoring stack...")
+	log.Debug("Setting up monitoring stack...")
 	for _, service := range m.services {
 		if err = service.Setup(dotEnv); err != nil {
 			return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
@@ -148,7 +148,7 @@ func (m *MonitoringManager) InstallStack() error {
 		return fmt.Errorf("%w: %w", ErrInstallingMonitoringMngr, err)
 	}
 
-	log.Info("Starting monitoring stack...")
+	log.Debug("Starting monitoring stack...")
 	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
 	}
@@ -210,7 +210,7 @@ func (m *MonitoringManager) Run() error {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
 	}
 
-	log.Info("Starting monitoring stack...")
+	log.Debug("Starting monitoring stack...")
 	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
 	}

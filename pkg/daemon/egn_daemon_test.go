@@ -1163,8 +1163,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						ServiceName: "main-service",
@@ -1258,8 +1259,9 @@ func TestListInstances(t *testing.T) {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
 					mockCalls = append(mockCalls,
 						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-							Path:   filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
-							Format: "json",
+							Path:          filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
+							Format:        "json",
+							FilterRunning: true,
 						}).Return(`[{"ID": "`+instance.id+`", "State": "running"}]`, nil),
 						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 							ServiceName: "main-service",
@@ -1321,8 +1323,9 @@ func TestListInstances(t *testing.T) {
 						}`,
 							mocks: []*gomock.Call{
 								d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-									Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
-									Format: "json",
+									Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+									Format:        "json",
+									FilterRunning: true,
 								}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
 								d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 									ServiceName: "main-service",
@@ -1352,8 +1355,9 @@ func TestListInstances(t *testing.T) {
 						}`,
 							mocks: []*gomock.Call{
 								d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-									Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
-									Format: "json",
+									Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
+									Format:        "json",
+									FilterRunning: true,
 								}).Return(`[]`, nil),
 							},
 						}
@@ -1410,8 +1414,9 @@ func TestListInstances(t *testing.T) {
 						}`,
 							mocks: []*gomock.Call{
 								d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-									Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
-									Format: "json",
+									Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", "docker-compose.yml"),
+									Format:        "json",
+									FilterRunning: true,
 								}).Return(`[{"ID": "mock-avs-0", "State": "running"}]`, nil),
 								d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 									ServiceName: "main-service",
@@ -1434,8 +1439,9 @@ func TestListInstances(t *testing.T) {
 						}`,
 						mocks: []*gomock.Call{
 							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-								Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
-								Format: "json",
+								Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", "docker-compose.yml"),
+								Format:        "json",
+								FilterRunning: true,
 							}).Return(`[{"ID": "mock-avs-1", "State": "running"}]`, nil),
 						},
 					},
@@ -1506,8 +1512,9 @@ func TestListInstances(t *testing.T) {
 				for _, instance := range instances {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
 					mockCalls = append(mockCalls, d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[]`, nil))
 				}
 				gomock.InOrder(mockCalls...)
@@ -1548,8 +1555,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[{"ID": "0abc123", "State": "running"}]`, nil),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						ServiceName: "main-service",
@@ -1590,8 +1598,9 @@ func TestListInstances(t *testing.T) {
 					// Mocks
 					gomock.InOrder(
 						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-							Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-							Format: "json",
+							Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+							Format:        "json",
+							FilterRunning: true,
 						}).Return(`[{"ID": "0abc123", "State": "running"},{"ID": "1abc123", "State": "running"}]`, nil),
 						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 							ServiceName: "main-service",
@@ -1634,8 +1643,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return("", assert.AnError),
 				)
 			},
@@ -1669,8 +1679,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						ServiceName: "main-service",
@@ -1711,8 +1722,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						ServiceName: "main-service",
@@ -1753,8 +1765,9 @@ func TestListInstances(t *testing.T) {
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format: "json",
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
 					}).Return(`[{"ID": "abc123", "State": "running"}]`, nil),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						ServiceName: "main-service",
@@ -1771,6 +1784,42 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: true,
 					Comment: fmt.Sprintf("API container is running but health check failed: unexpected status code: %d", http.StatusFound),
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "1 instance without any service running",
+			mocker: func(t *testing.T, d *mockerData) {
+				apiServer, apiServerURL := httptestHealth(t, http.StatusFound)
+				t.Cleanup(apiServer.Close)
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"api": {
+						"service": "main-service",
+						"port": "`+apiServerURL.Port()+`"
+					}
+				}`)
+
+				// Mocks
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
+					}).Return("[]", nil),
+				)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-default",
+					Health:  NodeHealthUnknown,
+					Running: false,
+					Comment: "",
 				},
 			},
 			err: nil,
@@ -1842,7 +1891,6 @@ func httptestHealth(t *testing.T, statusCode int) (*httptest.Server, *url.URL) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	t.Cleanup(server.Close)
 	serverURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
 	return server, serverURL

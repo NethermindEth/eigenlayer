@@ -163,7 +163,9 @@ func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, se
 			for scanner.Scan() {
 				wLock.Lock()
 				w.Write([]byte(serviceName + ": "))
-				w.Write(scanner.Bytes())
+				scannerBytes := scanner.Bytes()
+				logPayload := scannerBytes[8:]
+				w.Write(logPayload)
 				w.Write([]byte("\n"))
 				wLock.Unlock()
 			}

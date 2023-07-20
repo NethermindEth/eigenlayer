@@ -12,18 +12,21 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/docker"
+	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
-	log "github.com/sirupsen/logrus"
 )
 
 // Checks that EgnDaemon implements Daemon.
@@ -333,6 +336,16 @@ func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullRes
 	}
 	result.Options = profileOptions
 	result.HasPlugin, err = pkgHandler.HasPlugin()
+
+	requirements := make(map[string]package_handler.HardwareRequirements, len(profiles))
+	for _, profile := range profiles {
+		req, err := pkgHandler.HardwareRequirements(profile.Name)
+		if err != nil {
+			continue
+		}
+		requirements[profile.Name] = req
+	}
+	result.HardwareRequirements = requirements
 
 	return result, err
 }
@@ -699,6 +712,18 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 
 	// remove instance directory
 	return d.dataDir.RemoveInstance(instanceID)
+}
+
+// CheckHardwareRequirements implements Daemon.CheckHardwareRequirements
+func (d *EgnDaemon) CheckHardwareRequirements(requirements hardwarechecker.HardwareMetrics) (bool, error) {
+	address := d.monitoringMgr.ServiceEndpoints()[monitoring.PrometheusContainerName]
+	// address := "http://demo.robustperception.io:9090"
+	// log.Println(">>> ADDRESS FROM PROMETHEUS >>>", address)
+	metrics, err := hardwarechecker.GetHardwareMetrics(address)
+	if err != nil {
+		return false, err
+	}
+	return metrics.Meets(requirements), nil
 }
 
 type composePsItem struct {

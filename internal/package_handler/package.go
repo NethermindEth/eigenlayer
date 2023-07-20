@@ -9,13 +9,12 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/spf13/afero"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -352,6 +351,33 @@ func (p *PackageHandler) parseManifest() (*Manifest, error) {
 	}
 
 	return &manifest, nil
+}
+
+// HardwareRequirements returns the hardware requirements for the specified profile.
+// It takes a profile name as input and returns the hardware requirements as a HardwareRequirements struct.
+// If the profile does not have any hardware requirements overrides, it returns the hardware requirements
+// from the package manifest. If there is an error parsing the manifest or the profile, an error is returned.
+func (p *PackageHandler) HardwareRequirements(profileName string) (HardwareRequirements, error) {
+	manifest, err := p.parseManifest()
+	if err != nil {
+		return HardwareRequirements{}, err
+	}
+
+	hr := manifest.HardwareRequirements
+	profile, err := p.parseProfile(profileName)
+	if err != nil {
+		return HardwareRequirements{}, err
+	}
+	//TODO: Check if we will have to override all the requirements instead of only defined
+	if profile.HardwareRequirementsOverrides != nil {
+		return HardwareRequirements{
+			MinCPUCores:  profile.HardwareRequirementsOverrides.MinCPUCores,
+			MinRAM:       profile.HardwareRequirementsOverrides.MinRAM,
+			MinFreeSpace: profile.HardwareRequirementsOverrides.MinFreeSpace,
+		}, nil
+	}
+
+	return hr, nil
 }
 
 func (p *PackageHandler) profilesNames() ([]string, error) {

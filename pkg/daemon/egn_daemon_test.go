@@ -1824,6 +1824,48 @@ func TestListInstances(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			name: "1 instance running and the api service is restarting",
+			mocker: func(t *testing.T, d *mockerData) {
+				apiServer, apiServerURL := httptestHealth(t, http.StatusOK)
+				t.Cleanup(apiServer.Close)
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"api": {
+						"service": "main-service",
+						"port": "`+apiServerURL.Port()+`"
+					}
+				}`)
+
+				// Mocks
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+						FilterRunning: true,
+					}).Return(`[{"ID": "0abc123", "State": "running"}]`, nil),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						ServiceName: "main-service",
+						Path:        filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:      "json",
+						All:         true,
+					}).Return(`[{"ID": "1abc123", "State": "restarting"}]`, nil),
+				)
+			},
+			out: []ListInstanceItem{
+				{
+					ID:      "mock-avs-default",
+					Health:  NodeHealthUnknown,
+					Running: true,
+					Comment: "API container is restarting",
+				},
+			},
+			err: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

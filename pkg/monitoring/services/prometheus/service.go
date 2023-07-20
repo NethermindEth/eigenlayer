@@ -12,6 +12,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v3"
 )
 
@@ -77,7 +78,7 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 
 // AddTarget adds a new target to the Prometheus config and reloads the Prometheus configuration.
 // Assumes endpoint is in the form http://<ip/domain>:<port>
-func (p *PrometheusService) AddTarget(endpoint, instanceID string) error {
+func (p *PrometheusService) AddTarget(endpoint, instanceID, jobName string) error {
 	path := filepath.Join("prometheus", "prometheus.yml")
 	// Read the existing config
 	rawConfig, err := p.stack.ReadFile(path)
@@ -102,7 +103,7 @@ func (p *PrometheusService) AddTarget(endpoint, instanceID string) error {
 	}
 
 	job := ScrapeConfig{
-		JobName: endpoint,
+		JobName: jobName,
 		StaticConfigs: []StaticConfig{
 			{
 				Targets: []string{endpoint},
@@ -132,54 +133,53 @@ func (p *PrometheusService) AddTarget(endpoint, instanceID string) error {
 }
 
 // RemoveTarget removes a target from the Prometheus config and reloads the Prometheus configuration.
-// Assumes endpoint is in the form http://<ip/domain>:<port>
-func (p *PrometheusService) RemoveTarget(endpoint string) error {
+func (p *PrometheusService) RemoveTarget(instanceID string) (string, error) {
 	path := filepath.Join("prometheus", "prometheus.yml")
 	// Read the existing config
 	rawConfig, err := p.stack.ReadFile(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Unmarshal the YAML data into the Config struct
 	var config Config
 	if err = yaml.Unmarshal(rawConfig, &config); err != nil {
-		return err
+		return "", err
 	}
 
-	// Remove the endpoint from the jobs
-	prevLen := len(config.ScrapeConfigs)
-	endpoint = strings.TrimPrefix(endpoint, "http://")
-	for i, job := range config.ScrapeConfigs {
-		if job.JobName == endpoint {
-			config.ScrapeConfigs = append(config.ScrapeConfigs[:i], config.ScrapeConfigs[i+1:]...)
-			break
+	// Remove the target from the jobs
+	var network string
+	config.ScrapeConfigs = funk.Filter(config.ScrapeConfigs, func(job ScrapeConfig) bool {
+		if strings.Contains(job.JobName, instanceID) {
+			network = strings.Split(strings.TrimPrefix(job.JobName, instanceID), "++")[1]
+			return false
 		}
-	}
+		return true
+	}).([]ScrapeConfig)
 
-	// Check if the endpoint was removed
-	if len(config.ScrapeConfigs) == prevLen {
-		// The endpoint was not removed because it was not in the targets
-		return fmt.Errorf("%w: %s", ErrNonexistingEndpoint, endpoint)
+	// Check if the target was removed
+	if network == "" {
+		// The target was not removed because it was not in the targets
+		return "", fmt.Errorf("%w: %s", ErrNonexistingTarget, instanceID)
 	}
 
 	// Marshal the updated config back to YAML
 	newConfig, err := yaml.Marshal(&config)
 	if err != nil {
-		return err
+		return network, err
 	}
 
 	// Write the updated YAML data back to the file
 	if err = p.stack.WriteFile(path, newConfig); err != nil {
-		return err
+		return network, err
 	}
 
 	// Reload the config
 	if err = p.reloadConfig(); err != nil {
-		return err
+		return network, err
 	}
 
-	return nil
+	return network, nil
 }
 
 // DotEnv returns the dotenv variables and default values for the Prometheus service.

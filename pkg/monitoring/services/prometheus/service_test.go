@@ -308,12 +308,18 @@ func TestAddTarget(t *testing.T) {
 		return locker
 	}
 
+	type target struct {
+		instanceID string
+		network    string
+		endpoint   string
+	}
+
 	tests := []struct {
 		name        string
 		mocker      func(t *testing.T, times int) *mocks.MockLocker
 		options     map[string]string
-		toAdd       []string
-		targets     []string
+		toAdd       []target
+		targets     []ScrapeConfig
 		badEndpoint bool
 		wantErr     bool
 	}{
@@ -324,12 +330,37 @@ func TestAddTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"http://localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "http://localhost:8000",
+				},
 			},
-			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
-				"localhost:8000",
+			targets: []ScrapeConfig{
+				{
+					JobName: fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+							},
+						},
+					},
+				},
+				{
+					JobName: "test-avs--0++testnet",
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								"localhost:8000",
+							},
+							Labels: map[string]string{
+								"instanceID": "test-avs",
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -339,49 +370,55 @@ func TestAddTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"http://localhost:8000",
-				"http://168.0.0.66:8001",
+			toAdd: []target{
+				{
+					instanceID: "test-avs1",
+					network:    "testnet1",
+					endpoint:   "http://localhost:8000",
+				},
+				{
+					instanceID: "test-avs2",
+					network:    "testnet2",
+					endpoint:   "http://168.0.0.66:8001",
+				},
 			},
-			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
-				"localhost:8000",
-				"168.0.0.66:8001",
-			},
-		},
-		{
-			name: "ok, already existing target",
-			mocker: func(t *testing.T, times int) *mocks.MockLocker {
-				// Create a mock locker
-				ctrl := gomock.NewController(t)
-				locker := mocks.NewMockLocker(ctrl)
-
-				// Expect the lock to be acquired
-				gomock.InOrder(
-					locker.EXPECT().New("/monitoring/.lock").Return(locker),
-					locker.EXPECT().Lock().Return(nil),
-					locker.EXPECT().Locked().Return(true),
-					locker.EXPECT().Unlock().Return(nil),
-				)
-				for i := 0; i < times+1; i++ {
-					gomock.InOrder(
-						locker.EXPECT().Lock().Return(nil),
-						locker.EXPECT().Locked().Return(true),
-						locker.EXPECT().Unlock().Return(nil),
-					)
-				}
-
-				return locker
-			},
-			options: map[string]string{
-				"PROM_PORT":          "9999",
-				"NODE_EXPORTER_PORT": "9100",
-			},
-			toAdd: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
-			},
-			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+			targets: []ScrapeConfig{
+				{
+					JobName: fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+							},
+						},
+					},
+				},
+				{
+					JobName: "test-avs1--0++testnet1",
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								"localhost:8000",
+							},
+							Labels: map[string]string{
+								"instanceID": "test-avs1",
+							},
+						},
+					},
+				},
+				{
+					JobName: "test-avs2--1++testnet2",
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								"168.0.0.66:8001",
+							},
+							Labels: map[string]string{
+								"instanceID": "test-avs2",
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -391,12 +428,37 @@ func TestAddTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"http://localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "http://localhost:8000",
+				},
 			},
-			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
-				"localhost:8000",
+			targets: []ScrapeConfig{
+				{
+					JobName: fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+							},
+						},
+					},
+				},
+				{
+					JobName: "test-avs--0++testnet",
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								"localhost:8000",
+							},
+							Labels: map[string]string{
+								"instanceID": "test-avs",
+							},
+						},
+					},
+				},
 			},
 			badEndpoint: true,
 		},
@@ -424,8 +486,12 @@ func TestAddTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"http://localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "http://localhost:8000",
+				},
 			},
 			wantErr: true,
 		},
@@ -456,8 +522,12 @@ func TestAddTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"http://localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "http://localhost:8000",
+				},
 			},
 			wantErr: true,
 		},
@@ -511,9 +581,8 @@ func TestAddTarget(t *testing.T) {
 			}
 
 			// Add the targets
-			for _, target := range tt.toAdd {
-				id := strings.TrimPrefix(target, "http://")
-				err = prometheus.AddTarget(target, id)
+			for i, target := range tt.toAdd {
+				err = prometheus.AddTarget(target.endpoint, target.instanceID, fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network))
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
 					return
@@ -533,9 +602,7 @@ func TestAddTarget(t *testing.T) {
 					// Skip node exporter
 					continue
 				}
-				assert.Equal(t, target, prom.ScrapeConfigs[i].StaticConfigs[0].Targets[0])
-				assert.Equal(t, target, prom.ScrapeConfigs[i].JobName)
-				assert.Equal(t, target, prom.ScrapeConfigs[i].StaticConfigs[0].Labels["instanceID"])
+				assert.EqualValues(t, target, prom.ScrapeConfigs[i], target)
 			}
 		})
 	}
@@ -565,12 +632,18 @@ func TestRemoveTarget(t *testing.T) {
 		return locker
 	}
 
+	type target struct {
+		instanceID string
+		network    string
+		endpoint   string
+	}
+
 	tests := []struct {
 		name        string
 		mocker      func(t *testing.T, times int) *mocks.MockLocker
 		options     map[string]string
-		toAdd       []string
-		toRem       []string
+		toAdd       []target
+		toRem       []target
 		targets     []string
 		badEndpoint bool
 		wantErr     bool
@@ -582,47 +655,80 @@ func TestRemoveTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "localhost:8000",
+				},
 			},
-			toRem: []string{
-				"http://localhost:8000",
-			},
-			targets: []string{
-				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
-			},
-		},
-		{
-			name:   "ok, 2 targets",
-			mocker: okLocker,
-			options: map[string]string{
-				"PROM_PORT":          "9999",
-				"NODE_EXPORTER_PORT": "9100",
-			},
-			toAdd: []string{
-				"localhost:8000",
-				"168.0.0.66:8001",
-			},
-			toRem: []string{
-				"http://localhost:8000",
-				"http://168.0.0.66:8001",
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+				},
 			},
 			targets: []string{
 				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
 			},
 		},
 		{
-			name:   "ok, already existing target",
+			name:   "ok, 2 targets, different instances",
 			mocker: okLocker,
 			options: map[string]string{
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs1",
+					network:    "testnet1",
+					endpoint:   "localhost:8000",
+				},
+				{
+					instanceID: "test-avs2",
+					network:    "testnet2",
+					endpoint:   "168.0.0.66:8001",
+				},
 			},
-			toRem: []string{
-				"http://localhost:8000",
+			toRem: []target{
+				{
+					instanceID: "test-avs1",
+					network:    "testnet1",
+				},
+				{
+					instanceID: "test-avs2",
+					network:    "testnet2",
+				},
+			},
+			targets: []string{
+				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+			},
+		},
+		{
+			name:   "ok, 2 targets, same instance",
+			mocker: okLocker,
+			options: map[string]string{
+				"PROM_PORT":          "9999",
+				"NODE_EXPORTER_PORT": "9100",
+			},
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "localhost:8000",
+				},
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "168.0.0.66:8001",
+				},
+			},
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+				},
 			},
 			targets: []string{
 				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
@@ -656,8 +762,11 @@ func TestRemoveTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toRem: []string{
-				"http://localhost:8000",
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+				},
 			},
 			targets: []string{
 				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
@@ -671,11 +780,19 @@ func TestRemoveTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toAdd: []string{
-				"localhost:8000",
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "localhost:8000",
+				},
 			},
-			toRem: []string{
-				"http://localhost:8000",
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "localhost:8000",
+				},
 			},
 			targets: []string{
 				fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
@@ -706,8 +823,11 @@ func TestRemoveTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toRem: []string{
-				"localhost:8000",
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+				},
 			},
 			wantErr: true,
 		},
@@ -738,8 +858,12 @@ func TestRemoveTarget(t *testing.T) {
 				"PROM_PORT":          "9999",
 				"NODE_EXPORTER_PORT": "9100",
 			},
-			toRem: []string{
-				"localhost:8000",
+			toRem: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					endpoint:   "localhost:8000",
+				},
 			},
 			wantErr: true,
 		},
@@ -799,13 +923,13 @@ func TestRemoveTarget(t *testing.T) {
 			err = yaml.Unmarshal(promYml, &prom)
 			assert.NoError(t, err)
 			// Add the targets
-			for _, target := range tt.toAdd {
+			for i, target := range tt.toAdd {
 				job := ScrapeConfig{
-					JobName: target,
+					JobName: fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network),
 					StaticConfigs: []StaticConfig{
 						{
-							Targets: []string{target},
-							Labels:  map[string]string{"instanceID": target},
+							Targets: []string{target.endpoint},
+							Labels:  map[string]string{"instanceID": target.instanceID},
 						},
 					},
 				}
@@ -819,12 +943,13 @@ func TestRemoveTarget(t *testing.T) {
 
 			// Remove the targets
 			for _, target := range tt.toRem {
-				err = prometheus.RemoveTarget(target)
+				network, err := prometheus.RemoveTarget(target.instanceID)
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
 					return
 				}
 				assert.NoError(t, err)
+				assert.Equal(t, target.network, network)
 			}
 
 			// Read the prom.yml file

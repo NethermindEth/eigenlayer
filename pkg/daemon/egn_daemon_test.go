@@ -604,14 +604,7 @@ func TestInstall(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
-					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   path,
-						Format: "json",
-						All:    true,
-					}).Return(`[{"ID": "3", "Service": "main-service"}]`, nil),
-					dockerManager.EXPECT().ContainerIP("3").Return("168.128.66.3", nil),
-					dockerManager.EXPECT().ContainerNetworks("3").Return([]string{"eigenerror"}, nil),
-					monitoringManager.EXPECT().RemoveTarget("http://168.128.66.3:8090", "eigenerror").Return(nil),
+					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
 				)
 			},
 			wantErr:      true,
@@ -1004,12 +997,12 @@ func TestUninstall(t *testing.T) {
 					Path:   path,
 					Format: "json",
 					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
+				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
+				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
+				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
 				// Uninstall
-				monitoringManager.EXPECT().RemoveTarget("http://168.66.44.1:8090", "eigenlayer").Return(nil)
+				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
 				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil)
 			},
 			options: &InstallOptions{
@@ -1023,6 +1016,7 @@ func TestUninstall(t *testing.T) {
 			name:       "failure, not installed instance",
 			instanceID: "mock-avs-default",
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
 			},
 			wantErr: true,
 		},
@@ -1045,12 +1039,12 @@ func TestUninstall(t *testing.T) {
 					Path:   path,
 					Format: "json",
 					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
+				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
+				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
+				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
 				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
 				// Uninstall
-				monitoringManager.EXPECT().RemoveTarget("http://168.66.44.1:8090", "eigenlayer").Return(nil)
+				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
 				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{

@@ -55,12 +55,12 @@ func (g *GrafanaService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (g *GrafanaService) AddTarget(endpoint, instanceID string) error {
+func (g *GrafanaService) AddTarget(endpoint, instanceID, jobName string) error {
 	return nil
 }
 
-func (g *GrafanaService) RemoveTarget(endpoint string) error {
-	return nil
+func (g *GrafanaService) RemoveTarget(endpoint string) (string, error) {
+	return "", nil
 }
 
 // DotEnv returns the dotenv variables and default values for the Grafana service.

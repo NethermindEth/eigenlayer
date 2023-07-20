@@ -488,7 +488,7 @@ func (d *EgnDaemon) Uninstall(instanceID string) error {
 }
 
 func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
-	if err := d.removeTarget(instanceID); err != nil {
+	if err := d.monitoringMgr.RemoveTarget(instanceID); err != nil {
 		return err
 	}
 
@@ -654,39 +654,6 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 			return err
 		}
 		if err = d.monitoringMgr.AddTarget(endpoint, instanceID, networks[0]); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (d *EgnDaemon) removeTarget(instanceID string) error {
-	// Get monitoring targets
-	instance, err := d.dataDir.Instance(instanceID)
-	if err != nil {
-		return err
-	}
-	// Get containerID of monitoring targets
-	serviceNames := make([]string, 0)
-	for _, target := range instance.MonitoringTargets.Targets {
-		serviceNames = append(serviceNames, target.Service)
-	}
-	nameToID, err := d.monitoringTargetsEndpoints(serviceNames, instance.ComposePath())
-	if err != nil {
-		return err
-	}
-	// Remove monitoring targets
-	for _, target := range instance.MonitoringTargets.Targets {
-		endpoint, err := d.idToEndpoint(nameToID[target.Service], target.Path, target.Port)
-		if err != nil {
-			return err
-		}
-		networks, err := d.docker.ContainerNetworks(nameToID[target.Service])
-		if err != nil {
-			return err
-		}
-		if err = d.monitoringMgr.RemoveTarget(endpoint, networks[0]); err != nil {
 			return err
 		}
 	}

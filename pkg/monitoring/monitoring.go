@@ -195,8 +195,9 @@ func (m *MonitoringManager) RemoveTarget(instanceID string) error {
 		}
 		// Disconnect may fail if the network was already disconnected or if the container was already removed
 		// so we ignore the error
-		if err := m.dockerManager.NetworkDisconnect(service.ContainerName(), network); err != nil {
-			log.Error(err)
+		serviceName := service.ContainerName()
+		if err := m.dockerManager.NetworkDisconnect(serviceName, network); err != nil {
+			log.Debugf("Error disconnecting %s from %s: %s", serviceName, network, err)
 		}
 	}
 	return nil

@@ -705,10 +705,11 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 
 // CheckHardwareRequirements implements Daemon.CheckHardwareRequirements
 func (d *EgnDaemon) CheckHardwareRequirements(requirements hardwarechecker.HardwareMetrics) (bool, error) {
-	address := d.monitoringMgr.ServiceEndpoints()[monitoring.PrometheusContainerName]
+	// address := d.monitoringMgr.ServiceEndpoints()[monitoring.PrometheusContainerName]
 	// address := "http://demo.robustperception.io:9090"
 	// log.Println(">>> ADDRESS FROM PROMETHEUS >>>", address)
-	metrics, err := hardwarechecker.GetHardwareMetrics(address)
+	// metrics, err := hardwarechecker.GetHardwareMetrics(address)
+	metrics, err := hardwarechecker.GetMetrics()
 	if err != nil {
 		return false, err
 	}

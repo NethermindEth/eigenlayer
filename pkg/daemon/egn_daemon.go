@@ -61,7 +61,7 @@ func (d *EgnDaemon) Init() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Monitoring stack installation status: %v", installStatus == common.Installed)
+	log.Debugf("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is not installed, install it.
 	if installStatus == common.NotInstalled {
 		err = d.monitoringMgr.InstallStack()

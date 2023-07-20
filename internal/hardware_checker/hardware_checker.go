@@ -1,13 +1,10 @@
 package hardwarechecker
 
 import (
-	"context"
 	"fmt"
-	"time"
-
-	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
+	"os"
+	"runtime"
+	"syscall"
 )
 
 // HardwareMetrics represents hardware metrics such as CPU, RAM, and disk space.
@@ -50,28 +47,33 @@ func GetHardwareMetrics(address string) (hardwareMetrics HardwareMetrics, err er
 	return hardwareMetrics, nil
 }
 
-// QueryNodeExporter queries the Prometheus server at the specified address with the given query.
-func QueryNodeExporter(address, query string) (float64, error) {
-	client, err := api.NewClient(api.Config{
-		Address: address,
-	})
+// GetHardwareMetrics retrieves hardware metrics from a Linux computer
+func GetMetrics() (hardwareMetrics HardwareMetrics, err error) {
+	// CPU Cores
+	cpuCores := runtime.NumCPU()
+	hardwareMetrics.CPU = float64(cpuCores)
+
+	// Total Memory RAM
+	memInfo := &syscall.Sysinfo_t{}
+	err = syscall.Sysinfo(memInfo)
 	if err != nil {
-		return 0, fmt.Errorf("error creating client: %v", err)
+		return hardwareMetrics, fmt.Errorf("failed to get memory info: %w", err)
 	}
+	totalMemory := float64(memInfo.Totalram*uint64(memInfo.Unit)) / (1024 * 1024) // Convert to Mb
+	hardwareMetrics.RAM = totalMemory
 
-	v1api := v1.NewAPI(client)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	result, _, err := v1api.Query(ctx, query, time.Now(), v1.WithTimeout(5*time.Second))
+	// Disk Free Space
+	wd, err := os.Getwd()
 	if err != nil {
-		return 0, fmt.Errorf("error querying Prometheus: %v", err)
+		return hardwareMetrics, fmt.Errorf("failed to get current working directory: %w", err)
 	}
-
-	vectorResult, ok := result.(model.Vector)
-	if !ok || len(vectorResult) == 0 {
-		return 0, fmt.Errorf("no data found for query: %s", query)
+	var stat syscall.Statfs_t
+	err = syscall.Statfs(wd, &stat)
+	if err != nil {
+		return hardwareMetrics, fmt.Errorf("failed to get disk free space: %w", err)
 	}
+	freeSpace := float64(stat.Bavail*uint64(stat.Bsize)) / (1024 * 1024) // Convert to Mb
+	hardwareMetrics.DiskSpace = freeSpace
 
-	// Return the first value
-	return float64(vectorResult[0].Value), nil
+	return hardwareMetrics, nil
 }

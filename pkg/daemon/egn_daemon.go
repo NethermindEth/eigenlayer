@@ -126,8 +126,9 @@ func (d *EgnDaemon) instanceRunning(instanceId string) (bool, error) {
 	}
 	composePath := instance.ComposePath()
 	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
-		Path:   composePath,
-		Format: "json",
+		Path:          composePath,
+		Format:        "json",
+		FilterRunning: true,
 	})
 	if err != nil {
 		return false, err

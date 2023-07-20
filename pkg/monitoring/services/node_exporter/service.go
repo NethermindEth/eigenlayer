@@ -37,12 +37,12 @@ func (n *NodeExporterService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (n *NodeExporterService) AddTarget(endpoint, instanceID string) error {
+func (n *NodeExporterService) AddTarget(endpoint, instanceID, jobName string) error {
 	return nil
 }
 
-func (n *NodeExporterService) RemoveTarget(endpoint string) error {
-	return nil
+func (n *NodeExporterService) RemoveTarget(instanceID string) (string, error) {
+	return "", nil
 }
 
 func (n *NodeExporterService) DotEnv() map[string]string {

@@ -178,7 +178,7 @@ func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string
 				}
 			}
 		}
-		if err := service.AddTarget(endpoint, instanceID); err != nil {
+		if err := service.AddTarget(endpoint, instanceID, instanceID+"--"+containerName+"++"+dockerNetwork); err != nil {
 			return err
 		}
 	}
@@ -187,20 +187,16 @@ func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string
 
 // RemoveTarget removes a target from all services in the monitoring stack.
 // It also disconnects the target from the docker network of the monitoring stack if it isn't already disconnected.
-func (m *MonitoringManager) RemoveTarget(endpoint, dockerNetwork string) error {
+func (m *MonitoringManager) RemoveTarget(instanceID string) error {
 	for _, service := range m.services {
-		// Check if network hasn't already been removed from service
-		networks, err := m.dockerManager.ContainerNetworks(service.ContainerName())
+		network, err := service.RemoveTarget(instanceID)
 		if err != nil {
 			return err
 		}
-		if funk.Contains(networks, dockerNetwork) {
-			if err := m.dockerManager.NetworkDisconnect(service.ContainerName(), dockerNetwork); err != nil {
-				return err
-			}
-		}
-		if err := service.RemoveTarget(endpoint); err != nil {
-			return err
+		// Disconnect may fail if the network was already disconnected or if the container was already removed
+		// so we ignore the error
+		if err := m.dockerManager.NetworkDisconnect(service.ContainerName(), network); err != nil {
+			log.Error(err)
 		}
 	}
 	return nil

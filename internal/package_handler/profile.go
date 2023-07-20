@@ -17,12 +17,12 @@ var pathRe = regexp.MustCompile(`^(/|./|../|[^/ ]([^/ ]*/)*[^/ ]*$)`)
 
 // Profile represents a profile file of a package
 type Profile struct {
-	Name                          string                        `yaml:"-"`
-	HardwareRequirementsOverrides HardwareRequirementsOverrides `yaml:"hardware_requirements_overrides"`
-	PluginOverrides               PluginOverrides               `yaml:"plugin_overrides"`
-	Options                       []Option                      `yaml:"options"`
-	Monitoring                    Monitoring                    `yaml:"monitoring"`
-	API                           *APITarget                    `yaml:"api,omitempty"`
+	Name                          string                         `yaml:"-"`
+	HardwareRequirementsOverrides *HardwareRequirementsOverrides `yaml:"hardware_requirements_overrides,omitempty"`
+	PluginOverrides               PluginOverrides                `yaml:"plugin_overrides"`
+	Options                       []Option                       `yaml:"options"`
+	Monitoring                    Monitoring                     `yaml:"monitoring"`
+	API                           *APITarget                     `yaml:"api,omitempty"`
 }
 
 // Validate validates the profile file
@@ -62,9 +62,10 @@ func (p *Profile) Validate() error {
 
 // HardwareRequirementsOverrides represents the hardware requirements overrides field of a profile
 type HardwareRequirementsOverrides struct {
-	MinCPUCores  int `yaml:"min_cpu_cores"`
-	MinRAM       int `yaml:"min_ram"`
-	MinFreeSpace int `yaml:"min_free_space"`
+	MinCPUCores                 int  `yaml:"min_cpu_cores"`
+	MinRAM                      int  `yaml:"min_ram"`
+	MinFreeSpace                int  `yaml:"min_free_space"`
+	StopIfRequirementsAreNotMet bool `yaml:"stop_if_requirements_are_not_met"`
 }
 
 // TODO: add validation for hardware requirements overrides

@@ -22,6 +22,10 @@ func (h *HardwareMetrics) Meets(hm HardwareMetrics) bool {
 	return h.CPU <= hm.CPU && h.RAM <= hm.RAM && h.DiskSpace <= hm.DiskSpace
 }
 
+func (h *HardwareMetrics) String() string {
+	return fmt.Sprintf("CPU: %.2f Cores, RAM: %.2f Mb, Disk Space: %.2f Mb", h.CPU, h.RAM, h.DiskSpace)
+}
+
 // GetHardwareMetrics retrieves hardware metrics from a Prometheus server using the provided address.
 func GetHardwareMetrics(address string) (hardwareMetrics HardwareMetrics, err error) {
 	cpuQuery := "count(count(node_cpu_seconds_total) by (cpu))"

@@ -3,11 +3,11 @@ package cli
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/spf13/cobra"
 )
 
 func InstallCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
@@ -99,6 +99,21 @@ the user to know which options are available for each profile.
 					return err
 				}
 			}
+
+			// // Check profile hardware requirements
+			// requirements := pullResult.HardwareRequirements[profile]
+			// metric := hardwarechecker.HardwareMetrics{
+			// 	CPU:       float64(requirements.MinCPUCores),
+			// 	RAM:       float64(requirements.MinRAM),
+			// 	DiskSpace: float64(requirements.MinFreeSpace),
+			// }
+			// ok, err := d.CheckHardwareRequirements(metric)
+			// if err != nil {
+			// 		return err
+			// }
+			// if !ok && requirements.StopIfRequirementsAreNotMet {
+			// 	log.Println("Hardware requirements not met")
+			// }
 
 			profileOptions, ok := pullResult.Options[profile]
 			if !ok {

@@ -177,7 +177,7 @@ func (d *EgnDaemon) instanceHealth(instanceId string) (out ListInstanceItem) {
 		return
 	}
 	if psOut[0].State != "running" {
-		out.Comment = "API container is not running"
+		out.Comment = "API container is " + psOut[0].State
 		return
 	}
 	apiCtIP, err := d.docker.ContainerIP(psOut[0].Id)

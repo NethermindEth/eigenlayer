@@ -1572,7 +1572,7 @@ func TestListInstances(t *testing.T) {
 					ID:      "mock-avs-default",
 					Health:  NodeHealthUnknown,
 					Running: true,
-					Comment: "API container is not running",
+					Comment: "API container is exited",
 				},
 			},
 			err: nil,

@@ -422,6 +422,124 @@ func TestContainerLogs(t *testing.T) {
 	assert.Equal(t, wantLogs, logs)
 }
 
+func TestContainerLogsMerged(t *testing.T) {
+	const serviceLogs = `--------INFO:     Started server process [1]
+--------INFO:     Waiting for application startup.
+--------INFO:     Application startup complete.
+--------INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+--------INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
+--------INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`
+	type testCase struct {
+		name      string
+		services  map[string]string
+		opts      ContainerLogsMergedOptions
+		mocker    func(t *testing.T, dockerClient *mocks.MockAPIClient)
+		wantLines []string
+		wantErr   error
+	}
+
+	tc := []testCase{
+		{
+			name: "success with 3 services",
+			services: map[string]string{
+				"service-1": "id1",
+				"service-2": "id2",
+				"service-3": "id3",
+			},
+			mocker: func(t *testing.T, dockerClient *mocks.MockAPIClient) {
+				for i := 0; i < 3; i++ {
+					serviceReader := new(bytes.Buffer)
+					serviceReader.WriteString(serviceLogs)
+					dockerClient.EXPECT().ContainerLogs(context.Background(), fmt.Sprintf("id%d", i+1), types.ContainerLogsOptions{
+						ShowStdout: true,
+						ShowStderr: true,
+					}).Return(io.NopCloser(serviceReader), nil)
+				}
+			},
+			wantLines: []string{
+				"service-1: INFO:     Started server process [1]",
+				"service-1: INFO:     Waiting for application startup.",
+				"service-1: INFO:     Application startup complete.",
+				"service-1: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)",
+				`service-1: INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect`,
+				`service-1: INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`,
+				"service-2: INFO:     Started server process [1]",
+				"service-2: INFO:     Waiting for application startup.",
+				"service-2: INFO:     Application startup complete.",
+				"service-2: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)",
+				`service-2: INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect`,
+				`service-2: INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`,
+				"service-3: INFO:     Started server process [1]",
+				"service-3: INFO:     Waiting for application startup.",
+				"service-3: INFO:     Application startup complete.",
+				"service-3: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)",
+				`service-3: INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect`,
+				`service-3: INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`,
+			},
+		},
+		{
+			name: "3 services, 1 error",
+			services: map[string]string{
+				"service-1": "id1",
+				"service-2": "id2",
+				"service-3": "id3",
+			},
+			mocker: func(t *testing.T, dockerClient *mocks.MockAPIClient) {
+				for i := 0; i < 2; i++ {
+					serviceReader := new(bytes.Buffer)
+					serviceReader.WriteString(serviceLogs)
+					dockerClient.EXPECT().ContainerLogs(context.Background(), fmt.Sprintf("id%d", i+1), types.ContainerLogsOptions{
+						ShowStdout: true,
+						ShowStderr: true,
+					}).Return(io.NopCloser(serviceReader), nil)
+				}
+				dockerClient.EXPECT().ContainerLogs(context.Background(), "id3", types.ContainerLogsOptions{
+					ShowStdout: true,
+					ShowStderr: true,
+				}).Return(nil, assert.AnError)
+			},
+			wantLines: []string{
+				"service-1: INFO:     Started server process [1]",
+				"service-1: INFO:     Waiting for application startup.",
+				"service-1: INFO:     Application startup complete.",
+				"service-1: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)",
+				`service-1: INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect`,
+				`service-1: INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`,
+				"service-2: INFO:     Started server process [1]",
+				"service-2: INFO:     Waiting for application startup.",
+				"service-2: INFO:     Application startup complete.",
+				"service-2: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)",
+				`service-2: INFO:     172.29.0.3:38684 - "GET /metrics HTTP/1.1" 307 Temporary Redirect`,
+				`service-2: INFO:     172.29.0.3:38684 - "GET / HTTP/1.1" 200 OK`,
+			},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			tt.mocker(t, dockerClient)
+			out := new(bytes.Buffer)
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.ContainerLogsMerged(context.Background(), out, tt.services, tt.opts)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				allOut, err := io.ReadAll(out)
+				assert.NoError(t, err)
+				for _, line := range tt.wantLines {
+					assert.Contains(t, string(allOut), line)
+				}
+				assert.Len(t, strings.Split(string(allOut), "\n"), len(tt.wantLines)+1)
+			}
+		})
+	}
+}
+
 // Wait tests
 func TestWaitErrCh(t *testing.T) {
 	ctrl := gomock.NewController(t)

@@ -1,6 +1,8 @@
 package daemon
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +16,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/docker"
 	mock_locker "github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
@@ -1930,4 +1933,116 @@ func httptestHealth(t *testing.T, statusCode int) (*httptest.Server, *url.URL) {
 	serverURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
 	return server, serverURL
+}
+
+func TestNodeLogs(t *testing.T) {
+	afs := afero.NewOsFs()
+	w := new(bytes.Buffer)
+	type mockerData struct {
+		dataDirPath       string
+		fs                afero.Fs
+		composeManager    *mocks.MockComposeManager
+		dockerManager     *mocks.MockDockerManager
+		locker            *mock_locker.MockLocker
+		monitoringManager *mocks.MockMonitoringManager
+	}
+	tc := []struct {
+		name       string
+		mocker     func(t *testing.T, d *mockerData)
+		ctx        context.Context
+		w          io.Writer
+		instanceID string
+		opts       NodeLogsOptions
+		wantErr    bool
+	}{
+		{
+			name:       "success",
+			wantErr:    false,
+			instanceID: "mock-avs-default",
+			ctx:        context.Background(),
+			w:          w,
+			opts:       NodeLogsOptions{},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs"
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format: "json",
+					All:    true,
+				}).Return(`[{"ID":"abc123","name":"main-service","state":"running"}]`, nil)
+				d.dockerManager.EXPECT().ContainerLogsMerged(context.Background(), w, map[string]string{
+					"main-service": "abc123",
+				}, docker.ContainerLogsMergedOptions{})
+			},
+		},
+		{
+			name:       "instance not found",
+			instanceID: "mock-avs-default",
+			wantErr:    true,
+		},
+		{
+			name:       "error getting instance containers (docker compose ps -> error)",
+			wantErr:    true,
+			instanceID: "mock-avs-default",
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs"
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format: "json",
+					All:    true,
+				}).Return("", assert.AnError)
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mocks
+			ctrl := gomock.NewController(t)
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			locker := mock_locker.NewMockLocker(ctrl)
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			tmp, err := afero.TempDir(afs, "", "egn-test-install")
+			require.NoError(t, err)
+			// Create a Data dir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			// Set up mocks
+			if tt.mocker != nil {
+				tt.mocker(t, &mockerData{
+					dataDirPath:       tmp,
+					fs:                afs,
+					composeManager:    composeManager,
+					dockerManager:     dockerManager,
+					locker:            locker,
+					monitoringManager: monitoringManager,
+				})
+			}
+
+			// Create a daemon
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			require.NoError(t, err)
+
+			err = daemon.NodeLogs(tt.ctx, tt.w, tt.instanceID, tt.opts)
+			t.Log(err)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

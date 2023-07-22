@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -162,9 +164,12 @@ func setupPackage(t *testing.T) string {
 
 	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, tag, pkgFolder)
 
-	if err := exec.Command("git", "clone", "--single-branch", "-b", tag, mockTapRepo, pkgFolder).Run(); err != nil {
-		t.Fatal("error cloning the mock tap repo: " + err.Error())
-	}
+	_, err := git.PlainClone(pkgFolder, false, &git.CloneOptions{
+		SingleBranch:  true,
+		ReferenceName: plumbing.NewTagReferenceName(tag),
+		URL:           mockTapRepo,
+	})
+	require.NoError(t, err, "error cloning the mock tap repo")
 	return pkgFolder
 }
 
@@ -435,25 +440,13 @@ func TestVersions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for _, cmd := range []*exec.Cmd{
-				exec.Command("git", "-C", path, "init"),
-				exec.Command("git", "-C", path, "add", "readme.txt"),
-				exec.Command("git", "-C", path, "config", "user.name", "user"),
-				exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
-				exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
-			} {
-				err := cmd.Run()
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
+			gitRepo := initGitRepo(t, path)
+			gitStageFiles(t, gitRepo, "readme.txt")
+			gitCommit(t, gitRepo, "Initial commit")
 
 			// Add tags
 			for _, tag := range tc.gitTags {
-				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
-				if err != nil {
-					t.Fatal(err)
-				}
+				gitCreateAnnotatedTag(t, gitRepo, tag, "Version: "+tag)
 			}
 
 			pkgHandler := NewPackageHandler(path)
@@ -510,25 +503,13 @@ func TestLatestVersion(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			for _, cmd := range []*exec.Cmd{
-				exec.Command("git", "-C", path, "init"),
-				exec.Command("git", "-C", path, "add", "readme.txt"),
-				exec.Command("git", "-C", path, "config", "user.name", "user"),
-				exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
-				exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
-			} {
-				err := cmd.Run()
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
+			r := initGitRepo(t, path)
+			gitStageFiles(t, r, "readme.txt")
+			gitCommit(t, r, "Initial commit")
 
 			// Add tags
 			for _, tag := range tc.gitTags {
-				err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag).Run()
-				if err != nil {
-					t.Fatal(err)
-				}
+				gitCreateAnnotatedTag(t, r, tag, "Version: "+tag)
 			}
 
 			pkgHandler := NewPackageHandler(path)
@@ -573,10 +554,7 @@ func TestCheckoutVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			path := t.TempDir()
 			// Initialize git repo
-			err := exec.Command("git", "-C", path, "init").Run()
-			if err != nil {
-				t.Fatal(err)
-			}
+			r := initGitRepo(t, path)
 
 			// Add version tags
 			for i, tag := range tc.versions {
@@ -590,22 +568,13 @@ func TestCheckoutVersion(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				for _, cmd := range []*exec.Cmd{
-					exec.Command("git", "-C", path, "add", file),
-					exec.Command("git", "-C", path, "config", "user.name", "user"),
-					exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
-					exec.Command("git", "-C", path, "commit", "-m", fmt.Sprintf("Commit %d", i)),
-					exec.Command("git", "-C", path, "tag", "-a", tag, "-m", "Version: "+tag),
-				} {
-					err := cmd.Run()
-					if err != nil {
-						t.Fatal(err)
-					}
-				}
+				gitStageFiles(t, r, file)
+				gitCommit(t, r, "Initial commit")
+				gitCreateAnnotatedTag(t, r, tag, "Version: "+tag)
 			}
 
 			pkgHandler := NewPackageHandler(path)
-			err = pkgHandler.CheckoutVersion(tc.checkoutTo)
+			err := pkgHandler.CheckoutVersion(tc.checkoutTo)
 			if tc.err != nil {
 				assert.ErrorIs(t, err, tc.err)
 			} else {
@@ -635,23 +604,11 @@ func TestCurrentVersion(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, cmd := range []*exec.Cmd{
-			exec.Command("git", "-C", path, "init"),
-			exec.Command("git", "-C", path, "add", "readme.txt"),
-			exec.Command("git", "-C", path, "config", "user.name", "user"),
-			exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
-			exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
-		} {
-			err := cmd.Run()
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
+		r := initGitRepo(t, path)
+		gitStageFiles(t, r, "readme.txt")
+		gitCommit(t, r, "Initial commit")
 		for _, tag := range tags {
-			err = exec.Command("git", "-C", path, "tag", "-a", tag, "-m", tag).Run()
-			if err != nil {
-				t.Fatal(err)
-			}
+			gitCreateAnnotatedTag(t, r, tag, "Version: "+tag)
 		}
 	}
 
@@ -729,4 +686,44 @@ func TestCurrentVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func initGitRepo(t *testing.T, path string) *git.Repository {
+	t.Helper()
+	r, err := git.PlainInit(path, false)
+	require.NoError(t, err)
+	rConf, err := r.Config()
+	require.NoError(t, err)
+	rConf.User.Name = "eigenlayer"
+	rConf.User.Email = "eigenlayer@email.com"
+	err = r.SetConfig(rConf)
+	require.NoError(t, err)
+	return r
+}
+
+func gitCommit(t *testing.T, r *git.Repository, message string) {
+	t.Helper()
+	w, err := r.Worktree()
+	require.NoError(t, err)
+	w.Commit(message, &git.CommitOptions{})
+}
+
+func gitStageFiles(t *testing.T, r *git.Repository, files ...string) {
+	t.Helper()
+	w, err := r.Worktree()
+	require.NoError(t, err)
+	for _, file := range files {
+		_, err := w.Add(file)
+		require.NoError(t, err)
+	}
+}
+
+func gitCreateAnnotatedTag(t *testing.T, r *git.Repository, tag string, message string) {
+	t.Helper()
+	headRef, err := r.Head()
+	require.NoError(t, err)
+	_, err = r.CreateTag(tag, headRef.Hash(), &git.CreateTagOptions{
+		Message: message,
+	})
+	require.NoError(t, err)
 }

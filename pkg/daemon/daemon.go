@@ -48,6 +48,11 @@ type Daemon interface {
 	// ListInstances returns a list of all the installed instances and their health.
 	ListInstances() ([]ListInstanceItem, error)
 
+	// LocalInstall installs a node software package from a local tarball. This
+	// installation method is only intended for development purposes and is not
+	// secure. It returns the instance ID of the installed package.
+	LocalInstall(pkgTar io.Reader, options LocalInstallOptions) (string, error)
+
 	// NodeLogs returns the logs of the node with the given ID. If there is no
 	// installed instance with the given ID an error will be returned.
 	NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error
@@ -124,4 +129,23 @@ type InstallOptions struct {
 	// Tag is the tag to use for the instance, required to build the instance id
 	// with the format <package_name>-<tag>
 	Tag string
+}
+
+// LocalInstallOptions is a set of options for installing a node software package
+// from a local tarball.
+type LocalInstallOptions struct {
+	// Name is the name of the package.
+	Name string
+
+	// Tag is the tag to use for the instance, required to build the instance id
+	// with the format <package_name>-<tag>
+	Tag string
+
+	// Profile is the name of the profile to use for the instance.
+	Profile string
+
+	// Options is the list of options to use for the instance. These options are
+	// passed as strings because the local installation method is for development
+	// purposes only, and the user is responsible for passing the correct options.
+	Options map[string]string
 }

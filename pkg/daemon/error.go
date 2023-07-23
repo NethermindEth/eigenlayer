@@ -6,6 +6,7 @@ var (
 	ErrInstanceAlreadyExists = errors.New("instance already exists")
 	ErrProfileDoesNotExist   = errors.New("profile does not exist")
 	ErrInstanceNotRunning    = errors.New("instance is not running")
+	ErrOptionWithoutValue    = errors.New("option without value")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

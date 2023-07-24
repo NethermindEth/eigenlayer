@@ -138,10 +138,11 @@ type ContainerLogsMergedOptions struct {
 func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, services map[string]string, opts ContainerLogsMergedOptions) error {
 	wLock := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
+	errCh := make(chan error, len(services))
 
 	for serviceName, id := range services {
 		waitGroup.Add(1)
-		go func(serviceName, id string) {
+		go func(serviceName, id string, out chan error) {
 			defer waitGroup.Done()
 
 			logReader, err := d.dockerClient.ContainerLogs(ctx, id, types.ContainerLogsOptions{
@@ -154,7 +155,7 @@ func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, se
 				Tail:       opts.Tail,
 			})
 			if err != nil {
-				log.Errorf("Error getting container logs: %v", err)
+				out <- fmt.Errorf("error getting logs for %s: %w", serviceName, err)
 				return
 			}
 			defer logReader.Close()
@@ -177,10 +178,23 @@ func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, se
 				w.Write([]byte("\n"))
 				wLock.Unlock()
 			}
-		}(serviceName, id)
+			out <- nil
+		}(serviceName, id, errCh)
 	}
 	waitGroup.Wait()
-	return nil
+	// Build error
+	var err error
+	for len(errCh) > 0 {
+		if e := <-errCh; e != nil {
+			if err == nil {
+				err = e
+			} else {
+				err = fmt.Errorf("%w. %w", err, e)
+			}
+		}
+	}
+	close(errCh)
+	return err
 }
 
 // Wait waits for a specified Docker container to reach a certain condition.

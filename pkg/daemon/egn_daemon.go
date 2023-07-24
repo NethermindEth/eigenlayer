@@ -321,8 +321,8 @@ func (d *EgnDaemon) LocalInstall(pkgTar io.Reader, options LocalInstallOptions) 
 func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) (string, string, error) {
 	instanceID := data.InstanceId(options.Name, options.Tag)
 	// Check if instance already exists
-	if err := d.checkInstanceNotExists(instanceID); err != nil {
-		return instanceID, "", err
+	if d.dataDir.HasInstance(instanceID) {
+		return instanceID, "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
 	}
 	// Decompress package to temp folder
 	tID := tempID(options.Name)
@@ -493,8 +493,8 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	}
 	instanceId := data.InstanceId(instanceName, options.Tag)
 
-	if err := d.checkInstanceNotExists(instanceId); err != nil {
-		return "", tID, err
+	if d.dataDir.HasInstance(instanceId) {
+		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
 
 	// Init package handler from temp path
@@ -624,13 +624,6 @@ func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, instal
 		}
 	}
 	return installErr
-}
-
-func (d *EgnDaemon) checkInstanceNotExists(instanceId string) error {
-	if d.dataDir.HasInstance(instanceId) {
-		return fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
-	}
-	return nil
 }
 
 func (d *EgnDaemon) decompressTar(tarFile io.Reader, dest string) error {

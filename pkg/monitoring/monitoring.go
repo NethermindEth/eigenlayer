@@ -163,7 +163,7 @@ func (m *MonitoringManager) InstallStack() error {
 
 // AddTarget adds a new target to all services in the monitoring stack.
 // It also connects the target to the docker network of the monitoring stack if it isn't already connected.
-func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string) error {
+func (m *MonitoringManager) AddTarget(target types.MonitoringTarget, instanceID, dockerNetwork string) error {
 	for _, service := range m.services {
 		// Check if network was already added to service
 		containerName := service.ContainerName()
@@ -178,7 +178,7 @@ func (m *MonitoringManager) AddTarget(endpoint, instanceID, dockerNetwork string
 				}
 			}
 		}
-		if err := service.AddTarget(endpoint, instanceID, instanceID+"--"+containerName+"++"+dockerNetwork); err != nil {
+		if err := service.AddTarget(target, instanceID, instanceID+"--"+containerName+"++"+dockerNetwork); err != nil {
 			return err
 		}
 	}

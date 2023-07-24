@@ -34,6 +34,7 @@ type GlobalConfig struct {
 type ScrapeConfig struct {
 	JobName       string         `yaml:"job_name"`
 	StaticConfigs []StaticConfig `yaml:"static_configs"`
+	MetricsPath   string         `yaml:"metrics_path,omitempty"`
 }
 
 // StaticConfig represents the static configuration for a Prometheus scrape job.
@@ -78,7 +79,7 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 
 // AddTarget adds a new target to the Prometheus config and reloads the Prometheus configuration.
 // Assumes endpoint is in the form http://<ip/domain>:<port>
-func (p *PrometheusService) AddTarget(endpoint, instanceID, jobName string) error {
+func (p *PrometheusService) AddTarget(target types.MonitoringTarget, instanceID, jobName string) error {
 	path := filepath.Join("prometheus", "prometheus.yml")
 	// Read the existing config
 	rawConfig, err := p.stack.ReadFile(path)
@@ -93,23 +94,28 @@ func (p *PrometheusService) AddTarget(endpoint, instanceID, jobName string) erro
 	}
 
 	// Add a new job for the new endpoint
-	endpoint = strings.TrimPrefix(endpoint, "http://")
 	// Check if the job already exists
 	for _, job := range config.ScrapeConfigs {
-		if job.JobName == endpoint {
+		if job.JobName == jobName {
 			// There is no need to add the job if it already exists
 			return nil
 		}
 	}
 
+	// Default to /metrics if no path is provided
+	metricsPath := "/metrics"
+	if target.Path != "" {
+		metricsPath = target.Path
+	}
 	job := ScrapeConfig{
 		JobName: jobName,
 		StaticConfigs: []StaticConfig{
 			{
-				Targets: []string{endpoint},
+				Targets: []string{target.Endpoint()},
 				Labels:  map[string]string{"instanceID": instanceID},
 			},
 		},
+		MetricsPath: metricsPath,
 	}
 	config.ScrapeConfigs = append(config.ScrapeConfigs, job)
 

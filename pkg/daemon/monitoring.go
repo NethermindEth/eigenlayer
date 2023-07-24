@@ -1,6 +1,9 @@
 package daemon
 
-import "github.com/NethermindEth/eigenlayer/internal/common"
+import (
+	"github.com/NethermindEth/eigenlayer/internal/common"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+)
 
 type MonitoringManager interface {
 	// Init initializes the monitoring stack. Assumes that the stack is already installed.
@@ -12,7 +15,7 @@ type MonitoringManager interface {
 	// AddTarget adds a new target to the monitoring stack.
 	// The instanceID is used to identify the node in the monitoring stack.
 	// The dockerNetwork is the name of the network the node is connected to.
-	AddTarget(endpoint, instanceID, dockerNetwork string) error
+	AddTarget(target types.MonitoringTarget, instanceID, dockerNetwork string) error
 
 	// RemoveTarget removes a target from the monitoring stack.
 	// The dockerNetwork is the name of the network the node is connected to.

@@ -55,11 +55,11 @@ func (g *GrafanaService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (g *GrafanaService) AddTarget(endpoint, instanceID, jobName string) error {
+func (g *GrafanaService) AddTarget(target types.MonitoringTarget, instanceID, jobName string) error {
 	return nil
 }
 
-func (g *GrafanaService) RemoveTarget(endpoint string) (string, error) {
+func (g *GrafanaService) RemoveTarget(instanceId string) (string, error) {
 	return "", nil
 }
 

@@ -478,7 +478,8 @@ func TestContainerLogsMerged(t *testing.T) {
 			},
 		},
 		{
-			name: "3 services, 1 error",
+			name:    "3 services, 1 error",
+			wantErr: fmt.Errorf("error getting logs for service-3: %w", assert.AnError),
 			services: map[string]string{
 				"service-1": "id1",
 				"service-2": "id2",

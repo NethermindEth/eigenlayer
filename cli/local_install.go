@@ -81,7 +81,13 @@ profile.`,
 				return fmt.Errorf("%w: accepts 1 arg, received %d", ErrInvalidNumberOfArgs, len(args))
 			}
 			path, err = filepath.Abs(args[0])
-			return err
+			if err != nil {
+				return err
+			}
+			if name == "" {
+				name = filepath.Base(path)
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Run help if help flag is set
@@ -122,8 +128,8 @@ profile.`,
 		},
 	}
 	cmd.Flags().BoolVar(&logDebug, "log-debug", false, "enable debug logs")
-	cmd.Flags().StringVar(&name, "name", "", "name to use for the new instance name.")
-	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance name. If not specified, the installation will fail.")
-	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name.")
+	cmd.Flags().StringVar(&name, "name", "", "name to use for the new instance name. If not specified, the directory name will be used.")
+	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance. If not specified, the installation will fail.")
+	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance.")
 	return &cmd
 }

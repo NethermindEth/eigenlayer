@@ -164,7 +164,15 @@ func (d *DockerManager) ContainerLogsMerged(ctx context.Context, w io.Writer, se
 				wLock.Lock()
 				w.Write([]byte(serviceName + ": "))
 				scannerBytes := scanner.Bytes()
+
+				/* Remove the first 8 bytes, which are the logs HEADER from Docker.
+				Each log line has the format <HEADER><PAYLOAD>. The HEADER is 8 bytes long:
+				- First byte indicates the stream type (stdout or stderr)
+				- Next 3 bytes unused, padding
+				- Next 4 bytes indicate the length of the log payload
+				The PAYLOAD is the actual log line.*/
 				logPayload := scannerBytes[8:]
+
 				w.Write(logPayload)
 				w.Write([]byte("\n"))
 				wLock.Unlock()

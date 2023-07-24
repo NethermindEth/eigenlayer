@@ -626,7 +626,7 @@ func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, instal
 	return installErr
 }
 
-func (d *EgnDaemon) decompressTar(tarFile io.Reader, dest string) error {
+func (d *EgnDaemon) decompressTar(tarFile io.Reader, dest string) (err error) {
 	log.Debugf("Decompressing tar file to %s", dest)
 	gr, err := gzip.NewReader(tarFile)
 	if err != nil {
@@ -671,7 +671,12 @@ func (d *EgnDaemon) decompressTar(tarFile io.Reader, dest string) error {
 			if err != nil {
 				return err
 			}
-			defer targetF.Close()
+			defer func() {
+				closeErr := targetF.Close()
+				if err == nil {
+					err = closeErr
+				}
+			}()
 			_, err = io.Copy(targetF, tr)
 			if err != nil {
 				return err

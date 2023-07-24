@@ -58,7 +58,6 @@ profile.`,
 					i++
 				}
 			}
-			log.Info("Options: ", options)
 			// Parse static flags
 			cmd.DisableFlagParsing = false
 			cmd.FParseErrWhitelist.UnknownFlags = true // Don't show error for unknown flags to allow dynamic flags

@@ -37,8 +37,8 @@ To ensure each instance of the node software is uniquely identified, use the
 used.
 
 Profile options can be specified using the --option.<option-name> flag.
-Flags are the only way to specify options for local installations, and its
-responsibility of the user to know which options are available for each
+Flags are the only way to specify options for local installations, and it is
+the user's responsibility to know which options are available for each
 profile.`,
 		DisableFlagParsing: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

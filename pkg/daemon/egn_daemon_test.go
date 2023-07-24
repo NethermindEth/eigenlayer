@@ -20,6 +20,7 @@ import (
 	mock_locker "github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -515,7 +516,12 @@ func TestInstall(t *testing.T) {
 					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
 					dockerManager.EXPECT().ContainerIP("1").Return("168.128.66.1", nil),
 					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget("http://168.128.66.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
+					monitoringManager.EXPECT().AddTarget(
+						types.MonitoringTarget{
+							Host: "168.128.66.1",
+							Port: 8090,
+							Path: "/metrics",
+						}, "mock-avs-default", "eigenlayer").Return(nil),
 				)
 			},
 		},
@@ -554,7 +560,12 @@ func TestInstall(t *testing.T) {
 					}).Return(`[{"ID": "2", "Service": "main-service"}]`, nil),
 					dockerManager.EXPECT().ContainerIP("2").Return("168.128.66.2", nil),
 					dockerManager.EXPECT().ContainerNetworks("2").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget("http://168.128.66.2:8080", "mock-avs-specific", "eigenlayer").Return(nil),
+					monitoringManager.EXPECT().AddTarget(
+						types.MonitoringTarget{
+							Host: "168.128.66.2",
+							Port: 8080,
+							Path: "/metrics",
+						}, "mock-avs-specific", "eigenlayer").Return(nil),
 				)
 			},
 		},
@@ -732,7 +743,11 @@ func TestRun(t *testing.T) {
 				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
 				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
 				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil).Times(2)
+				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+					Host: "168.66.44.1",
+					Port: 8090,
+					Path: "/metrics",
+				}, "mock-avs-default", "eigenlayer").Return(nil).Times(2)
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -770,7 +785,11 @@ func TestRun(t *testing.T) {
 				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
 				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
 				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil).Times(2)
+				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+					Host: "168.66.44.1",
+					Port: 8090,
+					Path: "/metrics",
+				}, "mock-avs-default", "eigenlayer").Return(nil).Times(2)
 				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
@@ -865,7 +884,11 @@ func TestStop(t *testing.T) {
 					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
 					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
 					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
+					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+						Host: "168.66.44.1",
+						Port: 8090,
+						Path: "/metrics",
+					}, "mock-avs-default", "eigenlayer").Return(nil),
 					// Stop
 					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(nil),
 				)
@@ -905,7 +928,11 @@ func TestStop(t *testing.T) {
 					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
 					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
 					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil),
+					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+						Host: "168.66.44.1",
+						Port: 8090,
+						Path: "/metrics",
+					}, "mock-avs-default", "eigenlayer").Return(nil),
 					// Stop
 					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(errors.New("error")),
 				)
@@ -1003,7 +1030,11 @@ func TestUninstall(t *testing.T) {
 				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
 				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
 				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
+				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+					Host: "168.66.44.1",
+					Port: 8090,
+					Path: "/metrics",
+				}, "mock-avs-default", "eigenlayer").Return(nil)
 				// Uninstall
 				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
 				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil)
@@ -1045,7 +1076,11 @@ func TestUninstall(t *testing.T) {
 				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
 				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
 				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-				monitoringManager.EXPECT().AddTarget("http://168.66.44.1:8090", "mock-avs-default", "eigenlayer").Return(nil)
+				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+					Host: "168.66.44.1",
+					Port: 8090,
+					Path: "/metrics",
+				}, "mock-avs-default", "eigenlayer").Return(nil)
 				// Uninstall
 				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
 				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error"))

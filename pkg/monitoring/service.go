@@ -11,7 +11,7 @@ import (
 type ServiceAPI interface {
 	// AddTarget adds a new target to the service's configuration given the endpoint of the new node.
 	// The instanceID, network, and container name are used to identify the node as jobName in the service's configuration.
-	AddTarget(endpoint, instanceID, jobName string) error
+	AddTarget(target types.MonitoringTarget, instanceID, jobName string) error
 
 	// RemoveTarget removes a target from the service's configuration given the instanceID of the node to be removed.
 	// It returns the network of the removed node.

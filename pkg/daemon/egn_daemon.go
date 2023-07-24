@@ -21,6 +21,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -656,13 +657,12 @@ func (d *EgnDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 	return monitoringTargets, nil
 }
 
-func (d *EgnDaemon) idToEndpoint(id, path, port string) (string, error) {
+func (d *EgnDaemon) idToIP(id string) (string, error) {
 	ip, err := d.docker.ContainerIP(id)
 	if err != nil {
 		return "", err
 	}
-	// TODO: We are not using path here, but we should
-	return fmt.Sprintf("http://%s:%s", ip, port), nil
+	return ip, nil
 }
 
 func (d *EgnDaemon) addTarget(instanceID string) error {
@@ -682,7 +682,7 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 	}
 	// Remove monitoring targets
 	for _, target := range instance.MonitoringTargets.Targets {
-		endpoint, err := d.idToEndpoint(nameToID[target.Service], target.Path, target.Port)
+		endpoint, err := d.idToIP(nameToID[target.Service])
 		if err != nil {
 			return err
 		}
@@ -690,7 +690,16 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 		if err != nil {
 			return err
 		}
-		if err = d.monitoringMgr.AddTarget(endpoint, instanceID, networks[0]); err != nil {
+		port, err := strconv.ParseUint(target.Port, 10, 16)
+		if err != nil {
+			return err
+		}
+
+		if err = d.monitoringMgr.AddTarget(types.MonitoringTarget{
+			Host: endpoint,
+			Port: uint16(port),
+			Path: target.Path,
+		}, instanceID, networks[0]); err != nil {
 			return err
 		}
 	}

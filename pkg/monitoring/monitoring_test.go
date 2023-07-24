@@ -755,8 +755,8 @@ func TestAddAndRemoveTarget(t *testing.T) {
 	tests := []struct {
 		name          string
 		mockerLocker  func(t *testing.T, ctrl *gomock.Controller) *mock_locker.MockLocker
-		mocker        func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager)
-		target        string
+		mocker        func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager)
+		target        types.MonitoringTarget
 		dockerNetwork string
 		add           bool
 		wantErr       bool
@@ -764,7 +764,7 @@ func TestAddAndRemoveTarget(t *testing.T) {
 		{
 			name:         "add, ok, prometheus service",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				prometheusService := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 
@@ -779,13 +779,16 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					prometheusService,
 				}, dockerManager
 			},
-			target: "localhost:9000",
-			add:    true,
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+			},
+			add: true,
 		},
 		{
 			name:         "add, ok, 1 service",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 
@@ -798,13 +801,17 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					service,
 				}, dockerManager
 			},
-			target: "localhost:9000",
-			add:    true,
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+				Path: "/custom/path",
+			},
+			add: true,
 		},
 		{
 			name:         "add, ok, 1 services, prometheus was already added to network",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				prometheusService := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				gomock.InOrder(
@@ -817,13 +824,16 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					prometheusService,
 				}, dockerManager
 			},
-			target: "http://localhost:9000",
-			add:    true,
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+			},
+			add: true,
 		},
 		{
 			name:         "add, ok, 2 services, 1 AddTarget error",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				prometheusService, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 
@@ -841,14 +851,17 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					service2,
 				}, dockerManager
 			},
-			target:  "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+			},
 			wantErr: true,
 			add:     true,
 		},
 		{
 			name:         "add, ok, 2 services, prometheus ContainerNetworks error",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				prometheusService, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				gomock.InOrder(
@@ -863,14 +876,17 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					prometheusService,
 				}, dockerManager
 			},
-			target:  "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+			},
 			wantErr: true,
 			add:     true,
 		},
 		{
 			name:         "add, ok, 2 services, prometheus NetworkConnect error",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service1, prometheusService := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				gomock.InOrder(
@@ -886,19 +902,22 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					prometheusService,
 				}, dockerManager
 			},
-			target:  "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "localhost",
+				Port: 9000,
+			},
 			wantErr: true,
 			add:     true,
 		},
 		{
 			name:         "remove, ok, 1 service",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				servicer := mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				// Expect the service to be triggered
 				gomock.InOrder(
-					servicer.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					servicer.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					servicer.EXPECT().ContainerName().Return("node"),
 					dockerManager.EXPECT().NetworkDisconnect("node", dockerNetwork).Return(nil),
 				)
@@ -907,20 +926,22 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					servicer,
 				}, dockerManager
 			},
-			target: "localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "localhost",
+			},
 		},
 		{
 			name:         "remove, ok, 2 services, one of them was already removed from network",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				// Expect the service to be triggered
 				gomock.InOrder(
-					service1.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					service1.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					service1.EXPECT().ContainerName().Return("node1"),
 					dockerManager.EXPECT().NetworkDisconnect("node1", dockerNetwork).Return(nil),
-					service2.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					service2.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					service2.EXPECT().ContainerName().Return("node2"),
 					dockerManager.EXPECT().NetworkDisconnect("node2", dockerNetwork).Return(assert.AnError),
 				)
@@ -930,20 +951,22 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					service2,
 				}, dockerManager
 			},
-			target: "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "localhost",
+			},
 		},
 		{
 			name:         "remove, ok, 2 services, 1 RemoveTarget error",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				// Expect the service to be triggered
 				gomock.InOrder(
-					service1.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					service1.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					service1.EXPECT().ContainerName().Return("node1"),
 					dockerManager.EXPECT().NetworkDisconnect("node1", dockerNetwork).Return(nil),
-					service2.EXPECT().RemoveTarget(target).Return("", assert.AnError),
+					service2.EXPECT().RemoveTarget(instanceID).Return("", assert.AnError),
 				)
 
 				return []ServiceAPI{
@@ -951,21 +974,23 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					service2,
 				}, dockerManager
 			},
-			target:  "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "remove",
+			},
 			wantErr: true,
 		},
 		{
 			name:         "remove, ok, 2 services, 1 NetworkDisconnect error",
 			mockerLocker: okLocker,
-			mocker: func(t *testing.T, ctrl *gomock.Controller, target, instanceID, dockerNetwork string) ([]ServiceAPI, *mocks.MockDockerManager) {
+			mocker: func(t *testing.T, ctrl *gomock.Controller, instanceID, dockerNetwork string, target types.MonitoringTarget) ([]ServiceAPI, *mocks.MockDockerManager) {
 				service1, service2 := mocks.NewMockServiceAPI(ctrl), mocks.NewMockServiceAPI(ctrl)
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				// Expect the service to be triggered
 				gomock.InOrder(
-					service1.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					service1.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					service1.EXPECT().ContainerName().Return("node1"),
 					dockerManager.EXPECT().NetworkDisconnect("node1", dockerNetwork).Return(nil),
-					service2.EXPECT().RemoveTarget(target).Return(dockerNetwork, nil),
+					service2.EXPECT().RemoveTarget(instanceID).Return(dockerNetwork, nil),
 					service2.EXPECT().ContainerName().Return("node2"),
 					dockerManager.EXPECT().NetworkDisconnect("node2", dockerNetwork).Return(assert.AnError),
 				)
@@ -975,7 +1000,9 @@ func TestAddAndRemoveTarget(t *testing.T) {
 					service2,
 				}, dockerManager
 			},
-			target: "http://localhost:9000",
+			target: types.MonitoringTarget{
+				Host: "remove",
+			},
 		},
 	}
 
@@ -985,7 +1012,7 @@ func TestAddAndRemoveTarget(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			locker := tt.mockerLocker(t, ctrl)
 
-			services, dockerManager := tt.mocker(t, ctrl, tt.target, tt.target, tt.dockerNetwork)
+			services, dockerManager := tt.mocker(t, ctrl, tt.target.Host, tt.dockerNetwork, tt.target)
 
 			// Create a monitoring manager
 			manager := NewMonitoringManager(
@@ -999,10 +1026,10 @@ func TestAddAndRemoveTarget(t *testing.T) {
 			var err error
 			if tt.add {
 				// Add the target
-				err = manager.AddTarget(tt.target, tt.target, tt.dockerNetwork)
+				err = manager.AddTarget(tt.target, tt.target.Host, tt.dockerNetwork)
 			} else {
 				// Remove the target
-				err = manager.RemoveTarget(tt.target)
+				err = manager.RemoveTarget(tt.target.Host)
 			}
 			if tt.wantErr {
 				require.Error(t, err)

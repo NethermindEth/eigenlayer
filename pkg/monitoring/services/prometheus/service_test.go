@@ -311,7 +311,7 @@ func TestAddTarget(t *testing.T) {
 	type target struct {
 		instanceID string
 		network    string
-		endpoint   string
+		target     types.MonitoringTarget
 	}
 
 	tests := []struct {
@@ -324,7 +324,7 @@ func TestAddTarget(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			name:   "ok, 1 target",
+			name:   "ok, 1 target, no path",
 			mocker: okLocker,
 			options: map[string]string{
 				"PROM_PORT":          "9999",
@@ -334,7 +334,10 @@ func TestAddTarget(t *testing.T) {
 				{
 					instanceID: "test-avs",
 					network:    "testnet",
-					endpoint:   "http://localhost:8000",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+					},
 				},
 			},
 			targets: []ScrapeConfig{
@@ -360,6 +363,52 @@ func TestAddTarget(t *testing.T) {
 							},
 						},
 					},
+					MetricsPath: "/metrics",
+				},
+			},
+		},
+		{
+			name:   "ok, 1 target, custom path",
+			mocker: okLocker,
+			options: map[string]string{
+				"PROM_PORT":          "9999",
+				"NODE_EXPORTER_PORT": "9100",
+			},
+			toAdd: []target{
+				{
+					instanceID: "test-avs",
+					network:    "testnet",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+						Path: "/custom-path",
+					},
+				},
+			},
+			targets: []ScrapeConfig{
+				{
+					JobName: fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								fmt.Sprintf("%s:9100", monitoring.NodeExporterContainerName),
+							},
+						},
+					},
+				},
+				{
+					JobName: "test-avs--0++testnet",
+					StaticConfigs: []StaticConfig{
+						{
+							Targets: []string{
+								"localhost:8000",
+							},
+							Labels: map[string]string{
+								"instanceID": "test-avs",
+							},
+						},
+					},
+					MetricsPath: "/custom-path",
 				},
 			},
 		},
@@ -374,12 +423,19 @@ func TestAddTarget(t *testing.T) {
 				{
 					instanceID: "test-avs1",
 					network:    "testnet1",
-					endpoint:   "http://localhost:8000",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+					},
 				},
 				{
 					instanceID: "test-avs2",
 					network:    "testnet2",
-					endpoint:   "http://168.0.0.66:8001",
+					target: types.MonitoringTarget{
+						Host: "168.0.0.66",
+						Port: 8001,
+						Path: "/custom-path2",
+					},
 				},
 			},
 			targets: []ScrapeConfig{
@@ -405,6 +461,7 @@ func TestAddTarget(t *testing.T) {
 							},
 						},
 					},
+					MetricsPath: "/metrics",
 				},
 				{
 					JobName: "test-avs2--1++testnet2",
@@ -418,6 +475,7 @@ func TestAddTarget(t *testing.T) {
 							},
 						},
 					},
+					MetricsPath: "/custom-path2",
 				},
 			},
 		},
@@ -432,7 +490,10 @@ func TestAddTarget(t *testing.T) {
 				{
 					instanceID: "test-avs",
 					network:    "testnet",
-					endpoint:   "http://localhost:8000",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+					},
 				},
 			},
 			targets: []ScrapeConfig{
@@ -458,6 +519,7 @@ func TestAddTarget(t *testing.T) {
 							},
 						},
 					},
+					MetricsPath: "/metrics",
 				},
 			},
 			badEndpoint: true,
@@ -490,7 +552,10 @@ func TestAddTarget(t *testing.T) {
 				{
 					instanceID: "test-avs",
 					network:    "testnet",
-					endpoint:   "http://localhost:8000",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+					},
 				},
 			},
 			wantErr: true,
@@ -526,7 +591,10 @@ func TestAddTarget(t *testing.T) {
 				{
 					instanceID: "test-avs",
 					network:    "testnet",
-					endpoint:   "http://localhost:8000",
+					target: types.MonitoringTarget{
+						Host: "localhost",
+						Port: 8000,
+					},
 				},
 			},
 			wantErr: true,
@@ -582,7 +650,7 @@ func TestAddTarget(t *testing.T) {
 
 			// Add the targets
 			for i, target := range tt.toAdd {
-				err = prometheus.AddTarget(target.endpoint, target.instanceID, fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network))
+				err = prometheus.AddTarget(target.target, target.instanceID, fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network))
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
 					return

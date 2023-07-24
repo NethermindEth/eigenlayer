@@ -8,3 +8,8 @@ options:
     target: GRAFFITI
     type: id
     help: "Graffiti code of Donatello tattoo in DevCon restroom while hanging out with a Bored Ape"
+monitoring:
+  targets:
+    - service: main-service
+      port: 9090
+      path: /metrics

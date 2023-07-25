@@ -16,7 +16,7 @@ type HardwareMetrics struct {
 
 // Meets checks if the current HardwareMetrics instance meets the specified hardware metrics.
 func (h *HardwareMetrics) Meets(hm HardwareMetrics) bool {
-	return h.CPU <= hm.CPU && h.RAM <= hm.RAM && h.DiskSpace <= hm.DiskSpace
+	return h.CPU >= hm.CPU && h.RAM >= hm.RAM && h.DiskSpace >= hm.DiskSpace
 }
 
 func (h *HardwareMetrics) String() string {

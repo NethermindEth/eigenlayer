@@ -20,6 +20,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/docker"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	log "github.com/sirupsen/logrus"
@@ -306,22 +307,173 @@ func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullRes
 // Install implements Daemon.Install.
 func (d *EgnDaemon) Install(options InstallOptions) (string, error) {
 	instanceId, tempDirID, err := d.install(options)
-	if err != nil && instanceId != "" {
-		// Cleanup if Install fails
-		if cerr := d.uninstall(instanceId, false); cerr != nil {
-			err = fmt.Errorf("install failed: %w. Failed to cleanup after installation failure: %w", err, cerr)
+	return instanceId, d.postInstallation(instanceId, tempDirID, err)
+}
+
+func (d *EgnDaemon) LocalInstall(pkgTar io.Reader, options LocalInstallOptions) (string, error) {
+	instanceId, tempDirID, err := d.localInstall(pkgTar, options)
+	return instanceId, d.postInstallation(instanceId, tempDirID, err)
+}
+
+func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) (string, string, error) {
+	instanceID := data.InstanceId(options.Name, options.Tag)
+	// Check if instance already exists
+	if d.dataDir.HasInstance(instanceID) {
+		return instanceID, "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
+	}
+	// Decompress package to temp folder
+	tID := tempID(options.Name)
+	tempPath, err := d.dataDir.InitTemp(tID)
+	if err != nil {
+		return instanceID, tID, err
+	}
+	err = utils.DecompressTarGz(pkgTar, tempPath)
+	if err != nil {
+		return instanceID, tID, err
+	}
+	// Init package handler from temp path
+	pkgHandler := package_handler.NewPackageHandler(tempPath)
+	pkgProfiles, err := pkgHandler.Profiles()
+	if err != nil {
+		return instanceID, tID, err
+	}
+	// Select selectedProfile
+	var selectedProfile *package_handler.Profile
+	for _, pkgProfile := range pkgProfiles {
+		if pkgProfile.Name == options.Profile {
+			selectedProfile = &pkgProfile
+			break
+		}
+	}
+	if selectedProfile == nil {
+		return instanceID, tID, fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
+	}
+	// Validate profile
+	err = selectedProfile.Validate()
+	if err != nil {
+		return instanceID, tID, err
+	}
+	// Build profile options
+	profileOptions := make(map[string]Option, len(selectedProfile.Options))
+	for _, o := range selectedProfile.Options {
+		switch o.Type {
+		case "str":
+			profileOptions[o.Name] = NewOptionString(o)
+		case "int":
+			profileOptions[o.Name], err = NewOptionInt(o)
+		case "float":
+			profileOptions[o.Name], err = NewOptionFloat(o)
+		case "bool":
+			profileOptions[o.Name], err = NewOptionBool(o)
+		case "path_dir":
+			profileOptions[o.Name] = NewOptionPathDir(o)
+		case "path_file":
+			profileOptions[o.Name] = NewOptionPathFile(o)
+		case "uri":
+			profileOptions[o.Name] = NewOptionURI(o)
+		case "select":
+			profileOptions[o.Name] = NewOptionSelect(o)
+		case "port":
+			profileOptions[o.Name], err = NewOptionPort(o)
+		case "id":
+			profileOptions[o.Name] = NewOptionID(o)
+		default:
+			err = errors.New("unknown option type: " + o.Type)
+			return instanceID, tID, err
+		}
+	}
+	if err != nil {
+		return instanceID, tID, err
+	}
+
+	// Build environment variables
+	env := make(map[string]string, len(options.Options))
+	for _, o := range profileOptions {
+		if v, ok := options.Options[o.Name()]; ok {
+			err := o.Set(v)
+			if err != nil {
+				return instanceID, tID, err
+			}
+			env[o.Target()] = o.Value()
+		} else if o.Default() != "" {
+			env[o.Target()] = o.Default()
+		} else {
+			return instanceID, tID, fmt.Errorf("%w: %s", ErrOptionWithoutValue, o.Name())
+		}
+	}
+	// Get Monitoring targets
+	monitoringTargets := make([]data.MonitoringTarget, 0)
+	for _, target := range selectedProfile.Monitoring.Targets {
+		mt := data.MonitoringTarget{
+			Service: target.Service,
+			Port:    strconv.Itoa(target.Port),
+			Path:    target.Path,
+		}
+		monitoringTargets = append(monitoringTargets, mt)
+	}
+	// Build plugin info
+	var plugin *data.Plugin
+	hasPlugin, err := pkgHandler.HasPlugin()
+	if err != nil {
+		return instanceID, tID, err
+	}
+	if hasPlugin {
+		pkgPlugin, err := pkgHandler.Plugin()
+		if err != nil {
+			return instanceID, tID, err
+		}
+		plugin = &data.Plugin{
+			Image:     pkgPlugin.Image,
+			BuildFrom: pkgPlugin.BuildFrom,
 		}
 	}
 
-	// Cleanup temp folder
-	if rerr := d.dataDir.RemoveTemp(tempDirID); rerr != nil {
-		if err != nil {
-			err = fmt.Errorf("install failed: %w. Failed to cleanup temporary folder after installation failure: %w", err, rerr)
-		} else {
-			err = fmt.Errorf("install failed. Failed to cleanup temporary folder after installation failure: %w", rerr)
+	// Build API target info
+	var apiTarget *data.APITarget
+	if selectedProfile.API != nil {
+		apiTarget = &data.APITarget{
+			Service: selectedProfile.API.Service,
+			Port:    strconv.Itoa(selectedProfile.API.Port),
 		}
 	}
-	return instanceId, err
+
+	// Init instance
+	instance := data.Instance{
+		Name:              options.Name,
+		Profile:           selectedProfile.Name,
+		Version:           "v1.0.0",
+		URL:               "http://localhost",
+		Tag:               options.Tag,
+		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},
+		APITarget:         apiTarget,
+		Plugin:            plugin,
+	}
+	if err = d.dataDir.InitInstance(&instance); err != nil {
+		return instanceID, tID, err
+	}
+	if err = instance.Setup(env, pkgHandler.ProfilePath(instance.Profile)); err != nil {
+		return instanceID, tID, err
+	}
+
+	// Create containers
+	if err = d.dockerCompose.Create(compose.DockerComposeCreateOptions{
+		Path:  instance.ComposePath(),
+		Build: true,
+	}); err != nil {
+		return instanceID, tID, err
+	}
+
+	// Start containers
+	if err = d.dockerCompose.Up(compose.DockerComposeUpOptions{
+		Path: instance.ComposePath(),
+	}); err != nil {
+		return instanceID, tID, err
+	}
+
+	if err = d.addTarget(instanceID); err != nil {
+		return instanceID, tID, err
+	}
+	return instanceID, tID, nil
 }
 
 func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
@@ -338,7 +490,6 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	}
 	instanceId := data.InstanceId(instanceName, options.Tag)
 
-	// Check if instance already exists
 	if d.dataDir.HasInstance(instanceId) {
 		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
 	}
@@ -454,6 +605,25 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	}
 
 	return instanceId, tID, nil
+}
+
+func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, installErr error) error {
+	if installErr != nil && instanceId != "" {
+		// Cleanup if Install fails
+		if cerr := d.uninstall(instanceId, false); cerr != nil {
+			return fmt.Errorf("install failed: %w. Failed to cleanup after installation failure: %w", installErr, cerr)
+		}
+	}
+
+	// Cleanup temp folder
+	if rerr := d.dataDir.RemoveTemp(tempDirID); rerr != nil {
+		if installErr != nil {
+			return fmt.Errorf("install failed: %w. Failed to cleanup temporary folder after installation failure: %w", installErr, rerr)
+		} else {
+			return fmt.Errorf("install failed. Failed to cleanup temporary folder after installation failure: %w", rerr)
+		}
+	}
+	return installErr
 }
 
 func (d *EgnDaemon) HasInstance(instanceID string) bool {

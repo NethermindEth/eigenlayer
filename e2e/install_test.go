@@ -1,10 +1,15 @@
 package e2e
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+const mockAVSRepo = "https://github.com/NethermindEth/mock-avs"
 
 func TestInstall_WithoutArguments(t *testing.T) {
 	// Test context
@@ -115,6 +120,50 @@ func TestInstall_MultipleAVS(t *testing.T) {
 
 			waitForMonitoring()
 			checkPrometheusTargets(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestLocalInstall(t *testing.T) {
+	// Test context
+	var (
+		testDir = t.TempDir()
+		pkgDir  = filepath.Join(testDir, "mock-avs")
+		runErr  error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			err := os.MkdirAll(pkgDir, 0o755)
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", "v3.0.3", mockAVSRepo, pkgDir)
+			if err != nil {
+				return err
+			}
+			// remove .git folder
+			return os.RemoveAll(filepath.Join(pkgDir, ".git"))
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--log-debug")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, runErr, "local-install command should succeed")
+
+			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+
+			waitForMonitoring()
+			checkGrafanaHealth(t)
+			checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 		},
 	)
 	// Run test case

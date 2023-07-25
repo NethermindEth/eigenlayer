@@ -47,7 +47,8 @@
 				"mhutchie.git-graph",
 				"golang.go",
 				"redhat.vscode-yaml",
-				"GitHub.copilot"
+				"GitHub.copilot",
+				"GitHub.vscode-pull-request-github"
 			]
 		}
 	},

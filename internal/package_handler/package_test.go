@@ -316,7 +316,13 @@ func TestProfiles(t *testing.T) {
 			name:    "no options",
 			pkgPath: "no-options",
 			want:    []Profile{},
-			err:     InvalidConfError{message: "Invalid profile.yml", missingFields: []string{"options"}},
+			err:     InvalidConfError{message: "Invalid profile", missingFields: []string{"options"}},
+		},
+		{
+			name:    "invalid profile",
+			pkgPath: "invalid-profile",
+			want:    []Profile{},
+			err:     fmt.Errorf("Invalid profile: invalid options: %w: %w: invalid monitoring: %w", InvalidConfError{message: "Option #1 is invalid", invalidFields: []string{"options.default"}}, InvalidConfError{message: "Option #2 is invalid", missingFields: []string{"options.type", "options.help"}}, InvalidConfError{message: "Monitoring target #1 is invalid", missingFields: []string{"monitoring.targets.port", "monitoring.targets.path"}}),
 		},
 	}
 

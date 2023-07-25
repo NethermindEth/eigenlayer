@@ -1,9 +1,11 @@
 package package_handler
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 )
 
 // Manifest represents the manifest file of a package
@@ -35,43 +37,40 @@ func (m *Manifest) validate() error {
 		missingFields = append(missingFields, "profiles")
 	}
 
-	hrErr := m.HardwareRequirements.validate()
-	var pluErr InvalidConfError
+	hardReqErr := m.HardwareRequirements.validate()
+
+	var pluginErr error
 	if m.Plugin != nil {
-		pluErr = m.Plugin.validate()
+		pluginErr = m.Plugin.validate()
 	}
 
-	var proErr InvalidConfError
+	profileErr := errors.New("invalid profiles")
+	invalidProfiles := false
 	for i, profile := range m.Profiles {
-		profileErr := profile.validate()
-		if profileErr.message != "" {
-			proErr = InvalidConfError{
-				message:       fmt.Sprintf("Invalid profile %d", i+1),
-				missingFields: profileErr.missingFields,
-				invalidFields: profileErr.invalidFields,
-			}
-			break
+		if err := profile.validate(i); err != nil {
+			invalidProfiles = true
+			profileErr = fmt.Errorf("%w: %w", profileErr, err)
 		}
 	}
 
-	var mErr InvalidConfError
-	if len(missingFields) > 0 {
-		mErr = InvalidConfError{
+	if hardReqErr != nil || pluginErr != nil || invalidProfiles || len(missingFields) > 0 {
+		var err error = InvalidConfError{
 			message:       "Invalid manifest file",
 			missingFields: missingFields,
 		}
+		if hardReqErr != nil {
+			err = fmt.Errorf("%w: %w", err, hardReqErr)
+		}
+		if pluginErr != nil {
+			err = fmt.Errorf("%w: %w", err, pluginErr)
+		}
+		if invalidProfiles {
+			err = fmt.Errorf("%w: %w", err, profileErr)
+		}
+		return err
 	}
 
-	var wrapped error
-	if hrErr.message != "" || pluErr.message != "" || proErr.message != "" {
-		wrapped = fmt.Errorf("%w %w %w", hrErr, pluErr, proErr)
-		if mErr.message != "" {
-			wrapped = fmt.Errorf("%w %w", mErr, wrapped)
-		}
-	} else if mErr.message != "" {
-		wrapped = mErr
-	}
-	return wrapped
+	return nil
 }
 
 type hardwareRequirements struct {
@@ -81,7 +80,7 @@ type hardwareRequirements struct {
 	StopIfRequirementsAreNotMet bool `yaml:"stop_if_requirements_are_not_met"`
 }
 
-func (h *hardwareRequirements) validate() InvalidConfError {
+func (h *hardwareRequirements) validate() error {
 	var invalidFields []string
 	if h.MinCPUCores < 0 {
 		invalidFields = append(invalidFields, "hardware_requirements.min_cpu_cores -> (negative value)")
@@ -98,7 +97,7 @@ func (h *hardwareRequirements) validate() InvalidConfError {
 			invalidFields: invalidFields,
 		}
 	}
-	return InvalidConfError{}
+	return nil
 }
 
 type Plugin struct {
@@ -106,7 +105,7 @@ type Plugin struct {
 	BuildFrom string `yaml:"build_from"`
 }
 
-func (p *Plugin) validate() InvalidConfError {
+func (p *Plugin) validate() error {
 	var invalidFields []string
 	// Validate plugin git field is a valid git url
 	if p.BuildFrom != "" {
@@ -128,7 +127,7 @@ func (p *Plugin) validate() InvalidConfError {
 			invalidFields: invalidFields,
 		}
 	}
-	return InvalidConfError{}
+	return nil
 }
 
 type profileDefinition struct {
@@ -136,7 +135,7 @@ type profileDefinition struct {
 	FromProfile fromProfile `yaml:"from_profile"`
 }
 
-func (p *profileDefinition) validate() InvalidConfError {
+func (p *profileDefinition) validate(i int) error {
 	var missingFields []string
 	if p.Name == "" {
 		missingFields = append(missingFields, "name")
@@ -144,11 +143,11 @@ func (p *profileDefinition) validate() InvalidConfError {
 
 	if len(missingFields) > 0 {
 		return InvalidConfError{
-			message:       "Invalid profile",
+			message:       "Profile #" + strconv.Itoa(i+1) + " is invalid",
 			missingFields: missingFields,
 		}
 	}
-	return InvalidConfError{}
+	return nil
 }
 
 type fromProfile struct {

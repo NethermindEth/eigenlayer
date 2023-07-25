@@ -1,6 +1,7 @@
 package package_handler
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -31,24 +32,29 @@ func (p *Profile) Validate() error {
 		missingFields = append(missingFields, "options")
 	}
 
-	var invalidOptionsErr error
+	invalidOptionsErr := errors.New("invalid options")
+	invalidOptions := false
 	for i, option := range p.Options {
-		if err := option.validate(); len(err.missingFields) > 0 || len(err.invalidFields) > 0 {
-			err.message = fmt.Sprintf("Invalid option %d", i+1)
-			invalidOptionsErr = fmt.Errorf("%w %w", invalidOptionsErr, err)
+		if err := option.validate(i); err != nil {
+			invalidOptions = true
+			invalidOptionsErr = fmt.Errorf("%w: %w", invalidOptionsErr, err)
 		}
 	}
 
-	var invalidProfileErr InvalidConfError
-	if len(missingFields) > 0 {
-		invalidProfileErr = InvalidConfError{
-			message:       "Invalid profile.yml",
+	invalidMonitoringErr := p.Monitoring.validate()
+
+	if len(missingFields) > 0 || invalidOptions || invalidMonitoringErr != nil {
+		var err error = InvalidConfError{
+			message:       "Invalid profile",
 			missingFields: missingFields,
 		}
-	}
-
-	if invalidProfileErr.message != "" || invalidOptionsErr != nil {
-		return fmt.Errorf("%w %w", invalidProfileErr, invalidOptionsErr)
+		if invalidOptions {
+			err = fmt.Errorf("%w: %w", err, invalidOptionsErr)
+		}
+		if invalidMonitoringErr != nil {
+			err = fmt.Errorf("%w: %w", err, invalidMonitoringErr)
+		}
+		return err
 	}
 
 	return nil
@@ -82,7 +88,7 @@ type Option struct {
 }
 
 // Validate validates the option
-func (o *Option) validate() InvalidConfError {
+func (o *Option) validate(idx int) error {
 	var missingFields, invalidFields []string
 	if o.Name == "" {
 		missingFields = append(missingFields, "options.name")
@@ -164,12 +170,13 @@ func (o *Option) validate() InvalidConfError {
 
 	if len(missingFields) > 0 || len(invalidFields) > 0 {
 		return InvalidConfError{
+			message:       "Option #" + strconv.Itoa(idx+1) + " is invalid",
 			missingFields: missingFields,
 			invalidFields: invalidFields,
 		}
 	}
 
-	return InvalidConfError{}
+	return nil
 }
 
 // Validate represents the validate field of an option
@@ -187,17 +194,70 @@ type Monitoring struct {
 	Targets []MonitoringTarget `yaml:"targets"`
 }
 
-// API represents the api field of a profile
-type APITarget struct {
-	Service string `yaml:"service"`
-	Port    int    `yaml:"port"`
+func (m *Monitoring) validate() error {
+	err := errors.New("invalid monitoring")
+
+	if len(m.Targets) == 0 {
+		return fmt.Errorf("%w: %s", err, "there must be at least one monitoring target in the profile file")
+	}
+
+	ok := true
+	for i, target := range m.Targets {
+		if valErr := target.validate(i); valErr != nil {
+			ok = false
+			err = fmt.Errorf("%w: %w", err, valErr)
+		}
+	}
+	if !ok {
+		return err
+	}
+	return nil
 }
 
 // MonitoringTarget represents a monitoring target within the targets field of a monitoring
 type MonitoringTarget struct {
 	Service string `yaml:"service"`
-	Port    int    `yaml:"port"`
+	Port    *int   `yaml:"port"`
 	Path    string `yaml:"path"`
 }
 
-// TODO: add validation for monitoring
+func (m *MonitoringTarget) validate(idx int) error {
+	var missingFields, invalidFields []string
+
+	if m.Service == "" {
+		missingFields = append(missingFields, "monitoring.targets.service")
+	} else if len(strings.Split(m.Service, " ")) != 1 {
+		invalidFields = append(invalidFields, "monitoring.targets.service")
+	}
+
+	if m.Port == nil {
+		missingFields = append(missingFields, "monitoring.targets.port")
+	} else if *m.Port <= 0 || *m.Port > math.MaxUint16 {
+		invalidFields = append(invalidFields, "monitoring.targets.port")
+	}
+
+	if m.Path == "" {
+		missingFields = append(missingFields, "monitoring.targets.path")
+	} else {
+		tmpUri := "http://localhost:8080" + m.Path
+		if _, err := url.Parse(tmpUri); err != nil {
+			invalidFields = append(invalidFields, "monitoring.targets.path")
+		}
+	}
+
+	if len(missingFields) > 0 || len(invalidFields) > 0 {
+		return InvalidConfError{
+			message:       "Monitoring target #" + strconv.Itoa(idx+1) + " is invalid",
+			missingFields: missingFields,
+			invalidFields: invalidFields,
+		}
+	}
+
+	return nil
+}
+
+// API represents the api field of a profile
+type APITarget struct {
+	Service string `yaml:"service"`
+	Port    int    `yaml:"port"`
+}

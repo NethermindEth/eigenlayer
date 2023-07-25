@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -102,7 +103,7 @@ profile.`,
 			}
 
 			// Build tar file
-			err = buildTar(path, tarFile)
+			err = utils.CompressToTarGz(path, tarFile)
 			if err != nil {
 				return err
 			}

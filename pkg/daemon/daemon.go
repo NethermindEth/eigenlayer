@@ -47,7 +47,7 @@ type Daemon interface {
 	// given ID. If there is no installed and running instance with the given ID
 	// an error will be returned. If noDestroyImage is true, the plugin image will
 	// not be removed after the plugin execution.
-	RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error
+	RunPlugin(instanceId string, pluginArgs []string, options RunPluginOptions) error
 
 	// ListInstances returns a list of all the installed instances and their health.
 	ListInstances() ([]ListInstanceItem, error)
@@ -60,6 +60,11 @@ type Daemon interface {
 	// NodeLogs returns the logs of the node with the given ID. If there is no
 	// installed instance with the given ID an error will be returned.
 	NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error
+}
+
+type RunPluginOptions struct {
+	NoDestroyImage bool
+	HostNetwork    bool
 }
 
 // ListInstanceItem is an item in the list of instances returned by ListInstances.

@@ -708,7 +708,7 @@ type composePsItem struct {
 }
 
 // RunPlugin implements Daemon.RunPlugin.
-func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyImage bool) error {
+func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options RunPluginOptions) error {
 	instance, err := d.dataDir.Instance(instanceId)
 	if err != nil {
 		return err
@@ -735,7 +735,6 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyI
 		return err
 	}
 	if len(networks) == 0 {
-		// TODO: improve error message with more specific error
 		return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
 	}
 	// Create plugin container
@@ -753,8 +752,12 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, noDestroyI
 			return err
 		}
 	}
-	log.Infof("Running plugin with image %s", image)
-	return d.docker.Run(image, networks[0], pluginArgs)
+	network := networks[0]
+	if options.HostNetwork {
+		network = docker.NetworkHost
+	}
+	log.Infof("Running plugin with image %s on network %s", image, network)
+	return d.docker.Run(image, network, pluginArgs)
 }
 
 // NodeLogs implements Daemon.NodeLogs.

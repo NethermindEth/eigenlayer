@@ -18,6 +18,8 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/utils"
 )
 
+const NetworkHost = "host"
+
 // NewDockerManager returns a new instance of DockerManager
 func NewDockerManager(dockerClient client.APIClient) *DockerManager {
 	return &DockerManager{dockerClient}
@@ -378,10 +380,12 @@ func (d *DockerManager) Run(image string, network string, args []string) (err er
 		}
 	}()
 
-	log.Debugf("Connecting container %s to network %s", createResponse.ID, network)
-	err = d.NetworkConnect(createResponse.ID, network)
-	if err != nil {
-		return err
+	if network != NetworkHost {
+		log.Debugf("Connecting container %s to network %s", createResponse.ID, network)
+		err = d.NetworkConnect(createResponse.ID, network)
+		if err != nil {
+			return err
+		}
 	}
 	waitChn, errChn := d.dockerClient.ContainerWait(context.Background(), createResponse.ID, dockerCt.WaitConditionNextExit)
 	log.Debugf("Starting container %s", createResponse.ID)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,7 +37,10 @@ func TestPluginCmd(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon) {
 				gomock.InOrder(
 					d.EXPECT().HasInstance("instance1").Return(true),
-					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, false).Return(errors.New("run plugin error")),
+					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    false,
+					}).Return(errors.New("run plugin error")),
 				)
 			},
 		},
@@ -47,7 +51,38 @@ func TestPluginCmd(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon) {
 				gomock.InOrder(
 					d.EXPECT().HasInstance("instance1").Return(true),
-					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, false).Return(nil),
+					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    false,
+					}).Return(nil),
+				)
+			},
+		},
+		{
+			name: "--host flag",
+			args: []string{"--host", "instance1", "arg1"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon) {
+				gomock.InOrder(
+					d.EXPECT().HasInstance("instance1").Return(true),
+					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    true,
+					}).Return(nil),
+				)
+			},
+		},
+		{
+			name: "--host flag, but as a plugin argument",
+			args: []string{"instance1", "--host", "arg1"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon) {
+				gomock.InOrder(
+					d.EXPECT().HasInstance("instance1").Return(true),
+					d.EXPECT().RunPlugin("instance1", []string{"--host", "arg1"}, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    false,
+					}).Return(nil),
 				)
 			},
 		},
@@ -58,7 +93,10 @@ func TestPluginCmd(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon) {
 				gomock.InOrder(
 					d.EXPECT().HasInstance("instance1").Return(true),
-					d.EXPECT().RunPlugin("instance1", []string{}, false).Return(nil),
+					d.EXPECT().RunPlugin("instance1", nil, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    false,
+					}).Return(nil),
 				)
 			},
 		},

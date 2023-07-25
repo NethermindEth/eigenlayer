@@ -48,7 +48,7 @@ func TestHardwareMetrics_Meets(t *testing.T) {
 					DiskSpace: 50,
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "metrics do not meet the requirements",
@@ -64,7 +64,7 @@ func TestHardwareMetrics_Meets(t *testing.T) {
 					DiskSpace: 200,
 				},
 			},
-			want: true,
+			want: false,
 		},
 		{
 			name: "metrics wtih same requirements",

@@ -1,8 +1,6 @@
 package daemon
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,9 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -24,6 +20,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/docker"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	log "github.com/sirupsen/logrus"
@@ -330,7 +327,7 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	if err != nil {
 		return instanceID, tID, err
 	}
-	err = d.decompressTar(pkgTar, tempPath)
+	err = utils.DecompressTarGz(pkgTar, tempPath)
 	if err != nil {
 		return instanceID, tID, err
 	}
@@ -624,65 +621,6 @@ func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, instal
 		}
 	}
 	return installErr
-}
-
-func (d *EgnDaemon) decompressTar(tarFile io.Reader, dest string) (err error) {
-	log.Debugf("Decompressing tar file to %s", dest)
-	gr, err := gzip.NewReader(tarFile)
-	if err != nil {
-		return err
-	}
-	defer gr.Close()
-	tr := tar.NewReader(gr)
-
-	for {
-		header, err := tr.Next()
-		switch {
-		case err == io.EOF:
-			return nil
-		case err != nil:
-			return err
-		case header == nil:
-			continue
-		}
-		target := filepath.Join(dest, header.Name)
-		switch header.Typeflag {
-		case tar.TypeDir:
-			targetInfo, err := os.Stat(target)
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					err = os.MkdirAll(target, 0o755)
-					if err != nil {
-						return err
-					}
-				} else {
-					return err
-				}
-			} else if !targetInfo.IsDir() {
-				return fmt.Errorf("cannot decompress tar file: %s is not a directory", target)
-			}
-		case tar.TypeReg:
-			targetDir := filepath.Dir(target)
-			err = os.MkdirAll(targetDir, 0o755)
-			if err != nil {
-				return err
-			}
-			targetF, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-			defer func() {
-				closeErr := targetF.Close()
-				if err == nil {
-					err = closeErr
-				}
-			}()
-			_, err = io.Copy(targetF, tr)
-			if err != nil {
-				return err
-			}
-		}
-	}
 }
 
 func (d *EgnDaemon) HasInstance(instanceID string) bool {

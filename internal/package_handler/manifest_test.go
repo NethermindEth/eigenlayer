@@ -30,7 +30,7 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Invalid Fields Manifest",
 			filePath:  "invalid-fields/pkg/manifest.yml",
-			wantError: "Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value).  Invalid plugin -> invalid fields: plugin.build_from -> (invalid build from), plugin.image -> (invalid docker image).  ",
+			wantError: "Invalid manifest file: Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value): Invalid plugin -> invalid fields: plugin.build_from -> (invalid build from), plugin.image -> (invalid docker image)",
 		},
 		{
 			name:      "Minimal Manifest",
@@ -40,12 +40,12 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Missing Fields Manifest",
 			filePath:  "missing-fields/pkg/manifest.yml",
-			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade, profiles. ",
+			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade, profiles",
 		},
 		{
 			name:      "Missing Fields Manifest in profile",
 			filePath:  "missing-fields-profile/pkg/manifest.yml",
-			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade.    Invalid profile 1 -> missing fields: name. ",
+			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade: invalid profiles: Profile #1 is invalid -> missing fields: name",
 		},
 	}
 	for _, tt := range tests {

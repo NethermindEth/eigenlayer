@@ -7,6 +7,8 @@ import (
 
 	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
 	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
+	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -52,8 +54,21 @@ func TestInstall(t *testing.T) {
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
+						CPU:       2,
+						RAM:       2048,
+						DiskSpace: 5120,
+					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
@@ -257,8 +272,21 @@ func TestInstall(t *testing.T) {
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
+						CPU:       2,
+						RAM:       2048,
+						DiskSpace: 5120,
+					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", errors.New("input string error")),
 				)
 			},
@@ -304,8 +332,17 @@ func TestInstall(t *testing.T) {
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
+							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("invalid-profile", nil),
+					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{}).Return(true, nil),
 				)
 			},
 		},
@@ -327,8 +364,21 @@ func TestInstall(t *testing.T) {
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
+						CPU:       2,
+						RAM:       2048,
+						DiskSpace: 5120,
+					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{

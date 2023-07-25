@@ -379,7 +379,7 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	for _, target := range selectedProfile.Monitoring.Targets {
 		mt := data.MonitoringTarget{
 			Service: target.Service,
-			Port:    strconv.Itoa(target.Port),
+			Port:    strconv.Itoa(*target.Port),
 			Path:    target.Path,
 		}
 		monitoringTargets = append(monitoringTargets, mt)

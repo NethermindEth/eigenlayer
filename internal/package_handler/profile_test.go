@@ -308,3 +308,110 @@ func TestOptionValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestMonitoringTargetValidate(t *testing.T) {
+	afs := afero.NewMemMapFs()
+	testDir, err := afero.TempDir(afs, "", "test")
+	require.NoError(t, err)
+	testdata.SetupDir(t, "monitoring-targets", testDir, afs)
+	message := "Monitoring target #1 is invalid"
+
+	tests := []struct {
+		name     string
+		filePath string
+		want     error
+	}{
+		{
+			name:     "Full OK Monitoring Target",
+			filePath: "ok/pkg/target.yml",
+		},
+		{
+			name:     "Invalid Path Monitoring Target",
+			filePath: "invalid-path/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				invalidFields: []string{"monitoring.targets.path"},
+			},
+		},
+		{
+			name:     "Invalid Port Monitoring Target",
+			filePath: "invalid-port/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				invalidFields: []string{"monitoring.targets.port"},
+			},
+		},
+		{
+			name:     "Invalid Service Monitoring Target",
+			filePath: "invalid-service/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				invalidFields: []string{"monitoring.targets.service"},
+			},
+		},
+		{
+			name:     "Invalid Targets Monitoring Target",
+			filePath: "invalid-targets/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				missingFields: []string{"monitoring.targets.service", "monitoring.targets.port", "monitoring.targets.path"},
+			},
+		},
+		{
+			name:     "Missing Path Monitoring Target",
+			filePath: "missing-path/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				missingFields: []string{"monitoring.targets.path"},
+			},
+		},
+		{
+			name:     "Missing Port Monitoring Target",
+			filePath: "missing-port/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				missingFields: []string{"monitoring.targets.port"},
+			},
+		},
+		{
+			name:     "Missing Service Monitoring Target",
+			filePath: "missing-service/pkg/target.yml",
+			want: InvalidConfError{
+				message:       message,
+				missingFields: []string{"monitoring.targets.service"},
+			},
+		},
+		{
+			name:     "Missing Targets Monitoring Target",
+			filePath: "missing-targets/pkg/target.yml",
+			want:     errors.New("invalid monitoring: there must be at least one monitoring target in the profile file"),
+		},
+		{
+			name:     "Multiple Targets Monitoring Target",
+			filePath: "multiple-targets/pkg/target.yml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+			data, err := afero.ReadFile(afs, filepath.Join(testDir, "monitoring-targets", tt.filePath))
+			if err != nil {
+				t.Fatalf("failed reading data from yaml file: %s", err)
+			}
+
+			monitoring := Monitoring{}
+			if err := yaml.Unmarshal(data, &monitoring); err != nil {
+				t.Fatalf("failed unmarshalling yaml: %s", err)
+			}
+
+			got := monitoring.validate()
+			if tt.want == nil {
+				assert.NoError(t, got)
+			} else {
+				assert.Error(t, got)
+				assert.ErrorContains(t, got, tt.want.Error())
+			}
+		})
+	}
+}

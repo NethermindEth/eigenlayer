@@ -65,6 +65,8 @@ type Daemon interface {
 type RunPluginOptions struct {
 	NoDestroyImage bool
 	HostNetwork    bool
+	Binds          map[string]string
+	Volumes        map[string]string
 }
 
 // ListInstanceItem is an item in the list of instances returned by ListInstances.

@@ -377,6 +377,9 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	// Get monitoring targets
 	monitoringTargets := make([]data.MonitoringTarget, 0)
 	for _, target := range selectedProfile.Monitoring.Targets {
+		if target.Port == nil {
+			return "", tID, ErrMonitoringTargetPortNotSet
+		}
 		mt := data.MonitoringTarget{
 			Service: target.Service,
 			Port:    strconv.Itoa(*target.Port),

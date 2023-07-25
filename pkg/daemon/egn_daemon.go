@@ -757,7 +757,22 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		network = docker.NetworkHost
 	}
 	log.Infof("Running plugin with image %s on network %s", image, network)
-	return d.docker.Run(image, network, pluginArgs)
+	mounts := make([]docker.Mount, 0, len(options.Binds)+len(options.Volumes))
+	for src, dst := range options.Binds {
+		mounts = append(mounts, docker.Mount{
+			Type:   docker.VolumeTypeBind,
+			Source: src,
+			Target: dst,
+		})
+	}
+	for src, dst := range options.Volumes {
+		mounts = append(mounts, docker.Mount{
+			Type:   docker.VolumeTypeVolume,
+			Source: src,
+			Target: dst,
+		})
+	}
+	return d.docker.Run(image, network, pluginArgs, mounts)
 }
 
 // NodeLogs implements Daemon.NodeLogs.

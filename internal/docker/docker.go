@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types"
 	dockerCt "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
 
@@ -351,6 +352,27 @@ func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
 	return nil
 }
 
+type VolumeType string
+
+const (
+	VolumeTypeBind   VolumeType = "bind"
+	VolumeTypeVolume VolumeType = "volume"
+)
+
+type Mount struct {
+	Type   VolumeType
+	Source string
+	Target string
+}
+
+func (m Mount) mount() mount.Mount {
+	return mount.Mount{
+		Type:   mount.Type(m.Type),
+		Source: m.Source,
+		Target: m.Target,
+	}
+}
+
 // Run is a method of DockerManager that handles running a Docker container from an image.
 // It creates the container from the specified image with the provided command arguments,
 // connects the created container to the specified network, then starts the container.
@@ -358,9 +380,24 @@ func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
 // After the container starts, the function waits for the container to exit.
 // During the waiting process, it also listens for errors from the container.
 // If an error is received, it prints the container logs and returns the error.
-func (d *DockerManager) Run(image string, network string, args []string) (err error) {
+func (d *DockerManager) Run(image string, network string, args []string, mounts []Mount) (err error) {
 	log.Debugf("Creating container from image %s", image)
-	createResponse, err := d.dockerClient.ContainerCreate(context.Background(), &dockerCt.Config{Image: image, Cmd: args}, nil, nil, nil, "")
+	// Build mounts
+	hostConfig := &dockerCt.HostConfig{}
+	for _, mount := range mounts {
+		switch mount.Type {
+		case VolumeTypeBind:
+			hostConfig.Mounts = append(hostConfig.Mounts, mount.mount())
+		case VolumeTypeVolume:
+			hostConfig.Mounts = append(hostConfig.Mounts, mount.mount())
+		default:
+			return fmt.Errorf("unknown mount type: %s", mount.Type)
+		}
+	}
+	// Create container
+	createResponse, err := d.dockerClient.ContainerCreate(context.Background(),
+		&dockerCt.Config{Image: image, Cmd: args},
+		hostConfig, nil, nil, "")
 	if err != nil {
 		return err
 	}

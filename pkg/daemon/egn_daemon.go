@@ -404,9 +404,12 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	// Get Monitoring targets
 	monitoringTargets := make([]data.MonitoringTarget, 0)
 	for _, target := range selectedProfile.Monitoring.Targets {
+		if target.Port == nil {
+			return instanceID, tID, ErrMonitoringTargetPortNotSet
+		}
 		mt := data.MonitoringTarget{
 			Service: target.Service,
-			Port:    strconv.Itoa(target.Port),
+			Port:    strconv.Itoa(*target.Port),
 			Path:    target.Path,
 		}
 		monitoringTargets = append(monitoringTargets, mt)

@@ -6,7 +6,7 @@ var (
 	ErrInstanceAlreadyExists      = errors.New("instance already exists")
 	ErrProfileDoesNotExist        = errors.New("profile does not exist")
 	ErrInstanceNotRunning         = errors.New("instance is not running")
-  ErrOptionWithoutValue    = errors.New("option without value")
+	ErrOptionWithoutValue         = errors.New("option without value")
 	ErrMonitoringTargetPortNotSet = errors.New("monitoring target port is not set")
 )
 

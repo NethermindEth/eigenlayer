@@ -31,10 +31,6 @@ func (p *Profile) Validate() error {
 	if len(p.Options) == 0 {
 		missingFields = append(missingFields, "options")
 	}
-	invalidProfileErr := InvalidConfError{
-		message:       "Invalid profile",
-		missingFields: missingFields,
-	}
 
 	invalidOptionsErr := errors.New("invalid options")
 	invalidOptions := false
@@ -48,7 +44,10 @@ func (p *Profile) Validate() error {
 	invalidMonitoringErr := p.Monitoring.validate()
 
 	if len(missingFields) > 0 || invalidOptions || invalidMonitoringErr != nil {
-		var err error = invalidProfileErr
+		var err error = InvalidConfError{
+			message:       "Invalid profile",
+			missingFields: missingFields,
+		}
 		if invalidOptions {
 			err = fmt.Errorf("%w: %w", err, invalidOptionsErr)
 		}

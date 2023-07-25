@@ -36,10 +36,6 @@ func (m *Manifest) validate() error {
 	if len(m.Profiles) == 0 {
 		missingFields = append(missingFields, "profiles")
 	}
-	manifestErr := InvalidConfError{
-		message:       "Invalid manifest file",
-		missingFields: missingFields,
-	}
 
 	hardReqErr := m.HardwareRequirements.validate()
 
@@ -58,7 +54,10 @@ func (m *Manifest) validate() error {
 	}
 
 	if hardReqErr != nil || pluginErr != nil || invalidProfiles || len(missingFields) > 0 {
-		var err error = manifestErr
+		var err error = InvalidConfError{
+			message:       "Invalid manifest file",
+			missingFields: missingFields,
+		}
 		if hardReqErr != nil {
 			err = fmt.Errorf("%w: %w", err, hardReqErr)
 		}

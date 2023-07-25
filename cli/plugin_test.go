@@ -40,6 +40,8 @@ func TestPluginCmd(t *testing.T) {
 					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
 					}).Return(errors.New("run plugin error")),
 				)
 			},
@@ -54,6 +56,8 @@ func TestPluginCmd(t *testing.T) {
 					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
 					}).Return(nil),
 				)
 			},
@@ -68,6 +72,8 @@ func TestPluginCmd(t *testing.T) {
 					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    true,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
 					}).Return(nil),
 				)
 			},
@@ -82,6 +88,8 @@ func TestPluginCmd(t *testing.T) {
 					d.EXPECT().RunPlugin("instance1", []string{"--host", "arg1"}, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
 					}).Return(nil),
 				)
 			},
@@ -96,6 +104,8 @@ func TestPluginCmd(t *testing.T) {
 					d.EXPECT().RunPlugin("instance1", nil, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
 					}).Return(nil),
 				)
 			},

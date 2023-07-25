@@ -1424,7 +1424,7 @@ func TestDockerManager_Run(t *testing.T) {
 
 			dockerManager := NewDockerManager(dockerClient)
 
-			err := dockerManager.Run(tt.image, tt.network, tt.args)
+			err := dockerManager.Run(tt.image, tt.network, tt.args, []Mount{})
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

@@ -6,6 +6,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestMonitoringStack_Init tests that the monitoring stack is not initialized if the user does not run the init-monitoring command
+func TestMonitoringStack_NotInitialized(t *testing.T) {
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "--help")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, runErr)
+
+			waitForMonitoring()
+
+			checkMonitoringStackNotInstalled(t)
+			checkMonitoringStackContainersNotRunning(t)
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
 // TestMonitoringStack_Init tests the monitoring stack initialization
 func TestMonitoringStack_Init(t *testing.T) {
 	// Test context
@@ -19,7 +48,7 @@ func TestMonitoringStack_Init(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "--help")
+			runErr = runCommand(t, egnPath, "init-monitoring")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -49,7 +78,7 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "--help")
+			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
 			}
@@ -66,7 +95,7 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "--help")
+			runErr = runCommand(t, egnPath, "init-monitoring")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -105,7 +134,11 @@ func TestMonitoring_Restart(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "tag-1", "--option.main-container-name", "main-service-1", "https://github.com/NethermindEth/mock-avs")
+			err := runCommand(t, egnPath, "init-monitoring")
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-1", "--option.main-container-name", "main-service-1", "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}
@@ -117,7 +150,7 @@ func TestMonitoring_Restart(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "tag-2", "--option.main-container-name", "main-service-2", "--option.network-name", "eigenlayer-2", "--option.main-port", "8081", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-2", "--option.main-container-name", "main-service-2", "--option.network-name", "eigenlayer-2", "--option.main-port", "8081", "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {

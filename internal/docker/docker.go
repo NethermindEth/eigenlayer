@@ -386,9 +386,7 @@ func (d *DockerManager) Run(image string, network string, args []string, mounts 
 	hostConfig := &dockerCt.HostConfig{}
 	for _, mount := range mounts {
 		switch mount.Type {
-		case VolumeTypeBind:
-			hostConfig.Mounts = append(hostConfig.Mounts, mount.mount())
-		case VolumeTypeVolume:
+		case VolumeTypeBind, VolumeTypeVolume:
 			hostConfig.Mounts = append(hostConfig.Mounts, mount.mount())
 		default:
 			return fmt.Errorf("unknown mount type: %s", mount.Type)

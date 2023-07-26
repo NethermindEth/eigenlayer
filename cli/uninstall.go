@@ -16,6 +16,10 @@ func UninstallCmd(d daemon.Daemon) *cobra.Command {
 			instanceId = args[0]
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Init monitoring stack. If won't do anything if it is not installed or running
+			if err := d.InitMonitoring(false, false); err != nil {
+				return err
+			}
 			return d.Uninstall(instanceId)
 		},
 	}

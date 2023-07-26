@@ -40,6 +40,9 @@ type Daemon interface {
 	// is true, the MonitoringStack will be run if it is not already running.
 	InitMonitoring(install, run bool) error
 
+	// CleanMonitoring stops and uninstalls the MonitoringStack
+	CleanMonitoring() error
+
 	// RunPlugin runs a plugin with the given arguments on the instance with the
 	// given ID. If there is no installed and running instance with the given ID
 	// an error will be returned. If noDestroyImage is true, the plugin image will

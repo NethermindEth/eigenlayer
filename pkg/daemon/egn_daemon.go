@@ -713,29 +713,37 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 	if err != nil {
 		return err
 	}
-	composePath := instance.ComposePath()
-	psOutputJSON, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
-		Path:   composePath,
-		Format: "json",
-	})
-	if err != nil {
-		return err
+	if instance.Plugin == nil {
+		return fmt.Errorf("%w: %s", ErrInstanceHasNoPlugin, instanceId)
 	}
-	var psOutput []composePsItem
-	err = json.Unmarshal([]byte(psOutputJSON), &psOutput)
-	if err != nil {
-		return err
-	}
-	if len(psOutput) == 0 {
-		return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
-	}
-	ct := psOutput[0]
-	networks, err := d.docker.ContainerNetworks(ct.Id)
-	if err != nil {
-		return err
-	}
-	if len(networks) == 0 {
-		return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
+	network := docker.NetworkHost
+	if !options.HostNetwork {
+		composePath := instance.ComposePath()
+		psOutputJSON, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+			FilterRunning: true,
+			Path:          composePath,
+			Format:        "json",
+		})
+		if err != nil {
+			return err
+		}
+		var psOutput []composePsItem
+		err = json.Unmarshal([]byte(psOutputJSON), &psOutput)
+		if err != nil {
+			return err
+		}
+		if len(psOutput) == 0 {
+			return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
+		}
+		ct := psOutput[0]
+		networks, err := d.docker.ContainerNetworks(ct.Id)
+		if err != nil {
+			return err
+		}
+		if len(networks) == 0 {
+			return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
+		}
+		network = networks[0]
 	}
 	// Create plugin container
 	var image string
@@ -751,10 +759,6 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		if err = d.docker.BuildFromURI(instance.Plugin.BuildFrom, image); err != nil {
 			return err
 		}
-	}
-	network := networks[0]
-	if options.HostNetwork {
-		network = docker.NetworkHost
 	}
 	log.Infof("Running plugin with image %s on network %s", image, network)
 	mounts := make([]docker.Mount, 0, len(options.Binds)+len(options.Volumes))

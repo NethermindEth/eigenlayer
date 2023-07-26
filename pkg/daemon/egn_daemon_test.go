@@ -2393,6 +2393,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin").Return(nil),
 				)
 			},
 		},
@@ -2439,6 +2440,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
+					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
 				)
 			},
 		},
@@ -2480,6 +2482,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin").Return(nil),
 				)
 			},
 		},

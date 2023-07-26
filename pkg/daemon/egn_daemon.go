@@ -760,6 +760,13 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 			return err
 		}
 	}
+	if !options.NoDestroyImage {
+		defer func() {
+			if err := d.docker.ImageRemove(image); err != nil {
+				log.Errorf("Failed to destroy plugin image %s: %v", image, err)
+			}
+		}()
+	}
 	log.Infof("Running plugin with image %s on network %s", image, network)
 	mounts := make([]docker.Mount, 0, len(options.Binds)+len(options.Volumes))
 	for src, dst := range options.Binds {

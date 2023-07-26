@@ -373,6 +373,15 @@ func (m Mount) mount() mount.Mount {
 	}
 }
 
+// ImageRemove removes a specified Docker image.
+func (d *DockerManager) ImageRemove(image string) error {
+	log.Debugf("Removing image %s", image)
+	_, err := d.dockerClient.ImageRemove(context.Background(), image, types.ImageRemoveOptions{
+		PruneChildren: true,
+	})
+	return err
+}
+
 // Run is a method of DockerManager that handles running a Docker container from an image.
 // It creates the container from the specified image with the provided command arguments,
 // connects the created container to the specified network, then starts the container.

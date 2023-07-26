@@ -2331,3 +2331,357 @@ func TestNodeLogs(t *testing.T) {
 		})
 	}
 }
+
+func TestRunPlugin(t *testing.T) {
+	afs := afero.NewOsFs()
+	type mockerData struct {
+		dataDirPath       string
+		fs                afero.Fs
+		composeManager    *mocks.MockComposeManager
+		dockerManager     *mocks.MockDockerManager
+		locker            *mock_locker.MockLocker
+		monitoringManager *mocks.MockMonitoringManager
+	}
+	tc := []struct {
+		name       string
+		instanceId string
+		args       []string
+		options    RunPluginOptions
+		wantErr    bool
+		mocker     func(t *testing.T, d *mockerData)
+	}{
+		{
+			name:       `run plugin from image`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return(`[{"ID":"abc123"}]`, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(nil),
+					d.dockerManager.EXPECT().Run("mock-avs-plugin", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+						{
+							Type:   docker.VolumeTypeBind,
+							Source: "/tmp",
+							Target: "/tmp",
+						},
+						{
+							Type:   docker.VolumeTypeVolume,
+							Source: "volume1",
+							Target: "/tmp/volume1",
+						},
+					}),
+				)
+			},
+		},
+		{
+			name:       `run plugin building the image`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"build_from": "./plugin"
+					}
+				}`)
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return(`[{"ID":"abc123"}]`, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().BuildFromURI("./plugin", "eigen-plugin-mock-avs-default").Return(nil),
+					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+						{
+							Type:   docker.VolumeTypeBind,
+							Source: "/tmp",
+							Target: "/tmp",
+						},
+						{
+							Type:   docker.VolumeTypeVolume,
+							Source: "volume1",
+							Target: "/tmp/volume1",
+						},
+					}),
+				)
+			},
+		},
+		{
+			name:       `run plugin from image and host network`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				HostNetwork: true,
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				gomock.InOrder(
+					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(nil),
+					d.dockerManager.EXPECT().Run("mock-avs-plugin", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
+						{
+							Type:   docker.VolumeTypeBind,
+							Source: "/tmp",
+							Target: "/tmp",
+						},
+						{
+							Type:   docker.VolumeTypeVolume,
+							Source: "volume1",
+							Target: "/tmp/volume1",
+						},
+					}),
+				)
+			},
+		},
+		{
+			name:       "instance does not exist",
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+		},
+		{
+			name:       `instance without plugin`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs"
+				}`)
+			},
+		},
+		{
+			name:       `error getting instance containers (docker compose ps -> error)`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					FilterRunning: true,
+					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format:        "json",
+				}).Return("", assert.AnError)
+			},
+		},
+		{
+			name:       `no AVS container running`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					FilterRunning: true,
+					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format:        "json",
+				}).Return("[]", nil)
+			},
+		},
+		{
+			name:       `error getting the AVS container network`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					FilterRunning: true,
+					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format:        "json",
+				}).Return(`[{"ID":"abc123"}]`, nil)
+				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return(nil, assert.AnError)
+			},
+		},
+		{
+			name:       `AVS container without network`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+					FilterRunning: true,
+					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Format:        "json",
+				}).Return(`[{"ID":"abc123"}]`, nil)
+				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{}, nil)
+			},
+		},
+		{
+			name:       `error pulling plugin image`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"image": "mock-avs-plugin"
+					}
+				}`)
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return(`[{"ID":"abc123"}]`, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(assert.AnError),
+				)
+			},
+		},
+		{
+			name:       `error building plugin image`,
+			instanceId: "mock-avs-default",
+			wantErr:    true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"build_from": "./plugin"
+					}
+				}`)
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return(`[{"ID":"abc123"}]`, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().BuildFromURI("./plugin", "eigen-plugin-mock-avs-default").Return(assert.AnError),
+				)
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mocks
+			ctrl := gomock.NewController(t)
+			composeManager := mocks.NewMockComposeManager(ctrl)
+			dockerManager := mocks.NewMockDockerManager(ctrl)
+			locker := mock_locker.NewMockLocker(ctrl)
+			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+
+			tmp, err := afero.TempDir(afs, "", "egn-test-install")
+			require.NoError(t, err)
+			// Create a Data dir
+			dataDir, err := data.NewDataDir(tmp, afs, locker)
+			require.NoError(t, err)
+
+			// Set up mocks
+			if tt.mocker != nil {
+				tt.mocker(t, &mockerData{
+					dataDirPath:       tmp,
+					fs:                afs,
+					composeManager:    composeManager,
+					dockerManager:     dockerManager,
+					locker:            locker,
+					monitoringManager: monitoringManager,
+				})
+			}
+
+			// Create a daemon
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			require.NoError(t, err)
+
+			err = daemon.RunPlugin(tt.instanceId, tt.args, tt.options)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

@@ -11,12 +11,13 @@ import (
 )
 
 func TestPluginCmd(t *testing.T) {
-	ts := []struct {
+	type testCase struct {
 		name       string
 		args       []string
 		err        error
 		daemonMock func(d *daemonMock.MockDaemon)
-	}{
+	}
+	ts := []testCase{
 		{
 			name: "no arguments",
 			args: []string{},
@@ -102,6 +103,45 @@ func TestPluginCmd(t *testing.T) {
 				gomock.InOrder(
 					d.EXPECT().HasInstance("instance1").Return(true),
 					d.EXPECT().RunPlugin("instance1", nil, daemon.RunPluginOptions{
+						NoDestroyImage: false,
+						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
+					}).Return(nil),
+				)
+			},
+		},
+		func(t *testing.T) testCase {
+			hostDir := t.TempDir()
+			return testCase{
+				name: "--volume flag",
+				args: []string{
+					"--volume", hostDir + ":/container",
+					"-v", "docker-volume:/container/path",
+					"instance1", "arg1",
+				},
+				err: nil,
+				daemonMock: func(d *daemonMock.MockDaemon) {
+					gomock.InOrder(
+						d.EXPECT().HasInstance("instance1").Return(true),
+						d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
+							NoDestroyImage: false,
+							HostNetwork:    false,
+							Binds:          map[string]string{hostDir: "/container"},
+							Volumes:        map[string]string{"docker-volume": "/container/path"},
+						}).Return(nil),
+					)
+				},
+			}
+		}(t),
+		{
+			name: "--volume flag, but as a plugin argument",
+			args: []string{"instance1", "--volume", "arg1"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon) {
+				gomock.InOrder(
+					d.EXPECT().HasInstance("instance1").Return(true),
+					d.EXPECT().RunPlugin("instance1", []string{"--volume", "arg1"}, daemon.RunPluginOptions{
 						NoDestroyImage: false,
 						HostNetwork:    false,
 						Binds:          map[string]string{},

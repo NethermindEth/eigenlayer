@@ -266,7 +266,7 @@ func TestCleanMonitoring(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Cleanup(true).Return(nil),
+					monitoringMgr.EXPECT().Cleanup(false).Return(nil),
 				)
 				return monitoringMgr
 			},
@@ -277,7 +277,7 @@ func TestCleanMonitoring(t *testing.T) {
 				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringMgr.EXPECT().Cleanup(true).Return(assert.AnError),
+					monitoringMgr.EXPECT().Cleanup(false).Return(assert.AnError),
 				)
 				return monitoringMgr
 			},

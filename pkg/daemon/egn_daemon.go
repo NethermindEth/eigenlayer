@@ -123,7 +123,7 @@ func (d *EgnDaemon) CleanMonitoring() error {
 	log.Debugf("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is installed, uninstall it.
 	if installStatus == common.Installed {
-		if err := d.monitoringMgr.Cleanup(true); err != nil {
+		if err := d.monitoringMgr.Cleanup(false); err != nil {
 			return err
 		}
 	}

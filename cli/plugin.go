@@ -23,10 +23,33 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		volumes        []string
 	)
 	cmd := cobra.Command{
-		Use:   "plugin [flags] [instance_id] [plugin_args]",
-		Short: "Run an AVS node plugin",
-		Long:  `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "plugin [flags] [instance_id] [plugin_args]",
+		Short:   "Run an AVS node plugin",
+		Long:    `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
+		Args:    cobra.MinimumNArgs(1),
+		Example: `
+- Basic usage:
+
+	$ eigenlayer plugin mock-avs-default
+
+  In this case the plugin will run on the AVS network and will receive no
+  no arguments and no volumes.
+
+- Using the host network:
+
+	$ eigenlayer plugin --host mock-avs-default --host localhost --port 8081
+
+  In this case the plugin will run on the host network and will receive the
+  following arguments: '--hot localhost --port 8081'.
+
+- Using volumes:
+	
+	$ eigenlayer plugin --volume /tmp:/tmp --volume plugin-v:/data mock-avs-default
+
+  This will mount the /tmp directory of the host inside the plugin container at 
+  /tmp, and the plugin-v volume at /data.
+`,
+
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			instanceId = args[0]
 			if !d.HasInstance(instanceId) {

@@ -27,6 +27,21 @@ func checkMonitoringStackDir(t *testing.T) {
 	assert.FileExists(t, filepath.Join(monitoringDir, "docker-compose.yml"))
 }
 
+// checkMonitoringStackNotInstalled checks that the monitoring stack directory exists but is not installed
+func checkMonitoringStackNotInstalled(t *testing.T) {
+	t.Logf("Checking monitoring stack directory")
+	// Check monitoring folder exists
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	monitoringDir := filepath.Join(dataDir, "monitoring")
+	assert.DirExists(t, monitoringDir)
+
+	// Check monitoring docker-compose file does not exists
+	assert.NoFileExists(t, filepath.Join(monitoringDir, "docker-compose.yml"))
+}
+
 // checkMonitoringStackContainers checks that the monitoring stack containers are running
 func checkMonitoringStackContainers(t *testing.T) {
 	t.Logf("Checking monitoring stack containers")
@@ -99,4 +114,41 @@ func checkGrafanaHealth(t *testing.T) {
 	healthResponse, err := gClient.Health()
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", healthResponse.Database)
+}
+
+// checkMonitoringStackContainersNotRunning checks that the monitoring stack containers are not running
+func checkMonitoringStackContainersNotRunning(t *testing.T) {
+	t.Logf("Checking monitoring stack containers are not running")
+	checkContainerNotExisting(t, "egn_grafana", "egn_prometheus", "egn_node_exporter")
+}
+
+// checkContainerNotRunning checks that the given containers are not running
+func checkContainerNotRunning(t *testing.T, containerNames ...string) {
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dockerClient.Close()
+
+	for _, containerName := range containerNames {
+		t.Logf("Checking %s container is not running", containerName)
+		container, err := dockerClient.ContainerInspect(context.Background(), containerName)
+		assert.NoError(t, err)
+		assert.False(t, container.State.Running, "%s container should not be running", containerName)
+	}
+}
+
+// checkContainerNotExisting checks that the given containers are not existing
+func checkContainerNotExisting(t *testing.T, containerNames ...string) {
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dockerClient.Close()
+
+	for _, containerName := range containerNames {
+		t.Logf("Checking %s container is not running", containerName)
+		_, err := dockerClient.ContainerInspect(context.Background(), containerName)
+		assert.Error(t, err)
+	}
 }

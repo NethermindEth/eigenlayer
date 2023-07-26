@@ -150,6 +150,22 @@ func TestPluginCmd(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "--no-rm-image flag",
+			args: []string{"--no-rm-image", "instance1", "arg1"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon) {
+				gomock.InOrder(
+					d.EXPECT().HasInstance("instance1").Return(true),
+					d.EXPECT().RunPlugin("instance1", []string{"arg1"}, daemon.RunPluginOptions{
+						NoDestroyImage: true,
+						HostNetwork:    false,
+						Binds:          map[string]string{},
+						Volumes:        map[string]string{},
+					}).Return(nil),
+				)
+			},
+		},
 	}
 
 	for _, tc := range ts {

@@ -131,7 +131,7 @@ type PullResult struct {
 
 	// HardwareRequirements is the hardware requirements specified in the package manifest.
 	HardwareRequirements map[string]package_handler.HardwareRequirements
-	//map[Profile]package_handler.HardwareRequirements
+	// map[Profile]package_handler.HardwareRequirements
 }
 
 // InstallOptions is a set of options for installing a node software package.

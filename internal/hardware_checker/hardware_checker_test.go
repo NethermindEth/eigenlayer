@@ -93,7 +93,6 @@ func TestHardwareMetrics_Meets(t *testing.T) {
 			got := h.Meets(tt.args.hm)
 			// t.Errorf("HardwareMetrics.Meets() = %v, want %v", got, tt.want)
 			assert.Equal(t, tt.want, got)
-
 		})
 	}
 }

@@ -40,6 +40,7 @@ func newE2ETestCase(t *testing.T, arranger e2eArranger, act e2eAct, assert e2eAs
 }
 
 func (e *e2eTestCase) run() {
+	defer e.Cleanup()
 	if e.arranger != nil {
 		err := e.arranger(e.t, e.EgnPath())
 		if err != nil {
@@ -52,7 +53,6 @@ func (e *e2eTestCase) run() {
 	if e.assert != nil {
 		e.assert(e.t)
 	}
-	e.Cleanup()
 }
 
 func (e *e2eTestCase) EgnPath() string {
@@ -60,39 +60,40 @@ func (e *e2eTestCase) EgnPath() string {
 }
 
 func (e *e2eTestCase) Cleanup() {
-	// Stop and remove monitoring stack
+	// Stop and remove monitoring stack if installed
 	dataDir, err := dataDirPath()
 	if err != nil {
-		e.t.Fatal(err)
+		e.t.Log(err)
 	}
 	err = exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down").Run()
 	if err != nil {
-		e.t.Fatalf("error removing monitoring stack: %v", err)
+		e.t.Logf("error removing monitoring stack. It is possible that the monitoring stack wasn't installed and this is intentional: %v", err)
 	}
+
 	// Remove all installed nodes
 	nodesDir, err := os.Open(filepath.Join(dataDir, "nodes"))
 	if err != nil {
 		if !os.IsNotExist(err) {
-			e.t.Fatal(err)
+			e.t.Log(err)
 		}
 	} else {
 		dirEntries, err := nodesDir.ReadDir(-1)
 		if err != nil {
-			e.t.Fatal(err)
+			e.t.Log(err)
 		}
 		for _, entry := range dirEntries {
 			if entry.IsDir() {
 				e.t.Logf("Removing node %s", entry.Name())
 				err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "nodes", entry.Name(), "docker-compose.yml"), "down").Run()
 				if err != nil {
-					e.t.Fatalf("error removing node %s: %v", entry.Name(), err)
+					e.t.Logf("error removing node %s: %v", entry.Name(), err)
 				}
 			}
 		}
 	}
 	err = os.RemoveAll(dataDir)
 	if err != nil {
-		e.t.Fatalf("error removing data dir: %v", err)
+		e.t.Logf("error removing data dir: %v", err)
 	}
 }
 

@@ -35,7 +35,7 @@ func TestInstall(t *testing.T) {
 			err:  fmt.Errorf("%w: parse \"invalid-url\": invalid URI for request", ErrInvalidURL),
 		},
 		{
-			name: "valid arguments",
+			name: "valid arguments, run confirmed",
 			args: []string{"https://github.com/NethermindEth/mock-avs"},
 			err:  nil,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
@@ -63,6 +63,179 @@ func TestInstall(t *testing.T) {
 							Options: []daemon.Option{option},
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(nil),
+				)
+			},
+		},
+		{
+			name: "valid arguments, run confirmed, init monitoring error",
+			args: []string{"https://github.com/NethermindEth/mock-avs"},
+			err:  assert.AnError,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v2.0.2",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v2.0.2",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
+					d.EXPECT().InitMonitoring(false, false).Return(assert.AnError),
+				)
+			},
+		},
+		{
+			name: "valid arguments, run confirmed and failed",
+			args: []string{"https://github.com/NethermindEth/mock-avs"},
+			err:  assert.AnError,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v2.0.2",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v2.0.2",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(assert.AnError),
+				)
+			},
+		},
+		{
+			name: "valid arguments, run confirm error",
+			args: []string{"https://github.com/NethermindEth/mock-avs"},
+			err:  assert.AnError,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v2.0.2",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v2.0.2",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, assert.AnError),
+				)
+			},
+		},
+		{
+			name: "valid arguments, with --yes",
+			args: []string{"https://github.com/NethermindEth/mock-avs", "--yes"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v2.0.2",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v2.0.2",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(nil),
+				)
+			},
+		},
+		{
+			name: "valid arguments, with --yes, run error",
+			args: []string{"https://github.com/NethermindEth/mock-avs", "--yes"},
+			err:  assert.AnError,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v2.0.2",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v2.0.2",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(assert.AnError),
 				)
 			},
 		},

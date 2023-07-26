@@ -23,10 +23,10 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		volumes        []string
 	)
 	cmd := cobra.Command{
-		Use:     "plugin [flags] [instance_id] [plugin_args]",
-		Short:   "Run an AVS node plugin",
-		Long:    `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
-		Args:    cobra.MinimumNArgs(1),
+		Use:   "plugin [flags] [instance_id] [plugin_args]",
+		Short: "Run an AVS node plugin",
+		Long:  `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
+		Args:  cobra.MinimumNArgs(1),
 		Example: `
 - Basic usage:
 
@@ -70,7 +70,7 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 			for _, v := range volumes {
 				vSplit := strings.Split(v, ":")
 				if len(vSplit) != 2 {
-					return fmt.Errorf("invalid volume format: %s", v)
+					return fmt.Errorf("invalid volume format: %s, should be <volume_name>:<path> or <path>:<path>", v)
 				}
 				if volumeNameRegex.MatchString(vSplit[0]) {
 					// Add mount of type volume

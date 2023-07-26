@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
@@ -1251,6 +1252,7 @@ func TestDockerManager_Run(t *testing.T) {
 		image         string
 		network       string
 		args          []string
+		mounts        []Mount
 		expectedError error
 	}{
 		{
@@ -1413,6 +1415,90 @@ func TestDockerManager_Run(t *testing.T) {
 			args:          []string{"arg1", "arg2"},
 			expectedError: fmt.Errorf("unexpected exit code 1 for container containerID. container logs: container logs"),
 		},
+		{
+			name:    "Running on host network",
+			image:   "my-image",
+			network: "host",
+			args:    []string{},
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				waitCh <- container.WaitResponse{StatusCode: 0}
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(context.Background(),
+						&container.Config{Image: "my-image", Cmd: []string{}},
+						&container.HostConfig{},
+						gomock.Nil(),
+						gomock.Nil(),
+						"").
+						Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().ContainerWait(context.Background(), "containerID", container.WaitConditionNextExit).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(context.Background(), "containerID", types.ContainerStartOptions{}).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(context.Background(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(context.Background(), "containerID", types.ContainerRemoveOptions{}).Return(nil),
+				)
+				return dockerClient
+			},
+		},
+		{
+			name:    "with mounts",
+			image:   "my-image",
+			network: "my-network",
+			args:    []string{},
+			mounts: []Mount{
+				{
+					Type:   VolumeTypeBind,
+					Source: "/home/user/dir",
+					Target: "/container/dir1",
+				},
+				{
+					Type:   VolumeTypeVolume,
+					Source: "volume-name",
+					Target: "/container/dir2",
+				},
+			},
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
+				dockerClient := mocks.NewMockAPIClient(ctrl)
+
+				waitCh := make(chan container.WaitResponse, 1)
+				errCh := make(chan error, 1)
+
+				waitCh <- container.WaitResponse{StatusCode: 0}
+
+				gomock.InOrder(
+					dockerClient.EXPECT().ContainerCreate(context.Background(),
+						&container.Config{Image: "my-image", Cmd: []string{}},
+						&container.HostConfig{
+							Mounts: []mount.Mount{
+								{
+									Type:   mount.TypeBind,
+									Source: "/home/user/dir",
+									Target: "/container/dir1",
+								},
+								{
+									Type:   mount.TypeVolume,
+									Source: "volume-name",
+									Target: "/container/dir2",
+								},
+							},
+						},
+						gomock.Nil(),
+						gomock.Nil(),
+						"").
+						Return(container.CreateResponse{ID: "containerID"}, nil),
+					dockerClient.EXPECT().NetworkConnect(context.Background(), "my-network", "containerID", gomock.Nil()).Return(nil),
+					dockerClient.EXPECT().ContainerWait(context.Background(), "containerID", container.WaitConditionNextExit).Return(waitCh, errCh),
+					dockerClient.EXPECT().ContainerStart(context.Background(), "containerID", types.ContainerStartOptions{}).Return(nil),
+					dockerClient.EXPECT().ContainerLogs(context.Background(), "containerID", types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}).Return(io.NopCloser(bytes.NewBuffer([]byte{})), nil),
+					dockerClient.EXPECT().ContainerRemove(context.Background(), "containerID", types.ContainerRemoveOptions{}).Return(nil),
+				)
+				return dockerClient
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1424,7 +1510,7 @@ func TestDockerManager_Run(t *testing.T) {
 
 			dockerManager := NewDockerManager(dockerClient)
 
-			err := dockerManager.Run(tt.image, tt.network, tt.args, []Mount{})
+			err := dockerManager.Run(tt.image, tt.network, tt.args, tt.mounts)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -710,7 +709,7 @@ func (d *EgnDaemon) CheckHardwareRequirements(requirements hardwarechecker.Hardw
 	// log.Println(">>> ADDRESS FROM PROMETHEUS >>>", address)
 	// metrics, err := hardwarechecker.GetHardwareMetrics(address)
 
-	//log.Infof("Requirements from node: %s", &requirements)
+	// log.Infof("Requirements from node: %s", &requirements)
 	metrics, err := hardwarechecker.GetMetrics()
 	if err != nil {
 		return false, err

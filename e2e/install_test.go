@@ -169,3 +169,26 @@ func TestLocalInstall(t *testing.T) {
 	// Run test case
 	e2eTest.run()
 }
+
+func TestInstall_HighRequirements(t *testing.T) {
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install", "--profile", "high-requirements", "--no-prompt", "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "install command should fail")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}

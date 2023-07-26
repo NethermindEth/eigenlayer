@@ -720,10 +720,13 @@ func (d *EgnDaemon) CheckHardwareRequirements(requirements hardwarechecker.Hardw
 	// address := "http://demo.robustperception.io:9090"
 	// log.Println(">>> ADDRESS FROM PROMETHEUS >>>", address)
 	// metrics, err := hardwarechecker.GetHardwareMetrics(address)
+
+	//log.Infof("Requirements from node: %s", &requirements)
 	metrics, err := hardwarechecker.GetMetrics()
 	if err != nil {
 		return false, err
 	}
+	// log.Infof("Metrics from server: %s", &metrics)
 	return metrics.Meets(requirements), nil
 }
 

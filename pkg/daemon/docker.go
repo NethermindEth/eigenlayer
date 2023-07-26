@@ -25,4 +25,7 @@ type DockerManager interface {
 
 	// ContainerLogsMerged returns the merge of the logs of the given services.
 	ContainerLogsMerged(ctx context.Context, w io.Writer, services map[string]string, opts docker.ContainerLogsMergedOptions) error
+
+	// ImageRemove removes the given image.
+	ImageRemove(image string) error
 }

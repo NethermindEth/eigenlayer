@@ -680,7 +680,7 @@ func (d *EgnDaemon) Uninstall(instanceID string) error {
 }
 
 func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
-	if err := d.monitoringMgr.RemoveTarget(instanceID); err != nil {
+	if err := d.removeTarget(instanceID); err != nil {
 		return err
 	}
 
@@ -915,4 +915,27 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 	}
 
 	return nil
+}
+
+func (d *EgnDaemon) removeTarget(instanceID string) error {
+	// Check if the monitoring stack is installed.
+	installStatus, err := d.monitoringMgr.InstallationStatus()
+	if err != nil {
+		return err
+	}
+	if installStatus != common.Installed {
+		return nil
+	}
+	// Check if the monitoring stack is running.
+	status, err := d.monitoringMgr.Status()
+	if err != nil {
+		return fmt.Errorf("monitoring stack status: unknown. Got error: %v", err)
+	}
+	// If the monitoring stack is not running, skip.
+	if status != common.Running && status != common.Restarting {
+		return nil
+	}
+
+	// Remove target from monitoring stack
+	return d.monitoringMgr.RemoveTarget(instanceID)
 }

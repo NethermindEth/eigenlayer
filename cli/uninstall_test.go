@@ -31,7 +31,18 @@ func TestUninstall(t *testing.T) {
 			args: []string{"instance1"},
 			err:  nil,
 			mocker: func(d *daemonMock.MockDaemon) {
-				d.EXPECT().Uninstall("instance1").Return(nil)
+				gomock.InOrder(
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Uninstall("instance1").Return(nil),
+				)
+			},
+		},
+		{
+			name: "init monitoring error",
+			args: []string{"instance1"},
+			err:  assert.AnError,
+			mocker: func(d *daemonMock.MockDaemon) {
+				d.EXPECT().InitMonitoring(false, false).Return(assert.AnError)
 			},
 		},
 		{
@@ -39,7 +50,10 @@ func TestUninstall(t *testing.T) {
 			args: []string{"instance1"},
 			err:  errors.New("uninstall error"),
 			mocker: func(d *daemonMock.MockDaemon) {
-				d.EXPECT().Uninstall("instance1").Return(errors.New("uninstall error"))
+				gomock.InOrder(
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Uninstall("instance1").Return(errors.New("uninstall error")),
+				)
 			},
 		},
 	}

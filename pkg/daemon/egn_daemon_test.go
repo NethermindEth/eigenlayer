@@ -242,6 +242,87 @@ func TestInitMonitoring(t *testing.T) {
 		})
 	}
 }
+
+func TestCleanMonitoring(t *testing.T) {
+	// Silence logger
+	log.SetOutput(io.Discard)
+
+	tests := []struct {
+		name    string
+		mocker  func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager
+		wantErr bool
+	}{
+		{
+			name: "monitoring -> prev: not installed, after: nothing to do",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil)
+				return monitoringMgr
+			},
+		},
+		{
+			name: "monitoring -> prev: installed, after: uninstalled",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringMgr.EXPECT().Cleanup(true).Return(nil),
+				)
+				return monitoringMgr
+			},
+		},
+		{
+			name: "monitoring -> prev: installed, after: uninstalled failed",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				gomock.InOrder(
+					monitoringMgr.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringMgr.EXPECT().Cleanup(true).Return(assert.AnError),
+				)
+				return monitoringMgr
+			},
+			wantErr: true,
+		},
+		{
+			name: "monitoring -> installation status error",
+			mocker: func(t *testing.T, ctrl *gomock.Controller) *mocks.MockMonitoringManager {
+				monitoringMgr := mocks.NewMockMonitoringManager(ctrl)
+				monitoringMgr.EXPECT().InstallationStatus().Return(common.Unknown, assert.AnError)
+				return monitoringMgr
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock monitoring manager.
+			ctrl := gomock.NewController(t)
+
+			// Create mock compose manager
+			composeMgr := mocks.NewMockComposeManager(ctrl)
+
+			// Create mock docker manager
+			dockerMgr := mocks.NewMockDockerManager(ctrl)
+
+			// Create a mock locker
+			locker := mock_locker.NewMockLocker(ctrl)
+
+			// Create in-memory filesystem
+			afs := afero.NewMemMapFs()
+
+			// Create DataDir
+			dataDir, err := data.NewDataDir("/tmp", afs, locker)
+			require.NoError(t, err)
+
+			// Get monitoring manager mock
+			monitoringMgr := tt.mocker(t, ctrl)
+
+			// Create a daemon
+			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
+			require.NoError(t, err)
+
+			err = daemon.CleanMonitoring()
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -572,7 +653,7 @@ func TestInstall(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "install -> failure, compose create error -> install cleanup",
+			name: "install -> failure, compose create error -> install cleanup with monitoring target removal",
 			options: InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
 				Version: MockAVSLatestVersion,
@@ -598,7 +679,110 @@ func TestInstall(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
 					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
+				)
+			},
+			wantErr:      true,
+			checkCleanup: true,
+		},
+		{
+			name: "install -> failure, compose create error -> install cleanup with monitoring target removal failed",
+			options: InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+			monitoringTargets: data.MonitoringTargets{
+				Targets: []data.MonitoringTarget{
+					{
+						Service: "main-service",
+						Port:    "8090",
+						Path:    "/metrics",
+					},
+				},
+			},
+			want: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(assert.AnError),
+				)
+			},
+			wantErr: true,
+		},
+		{
+			name: "install -> failure, compose create error -> install cleanup with monitoring not installed",
+			options: InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+			monitoringTargets: data.MonitoringTargets{
+				Targets: []data.MonitoringTarget{
+					{
+						Service: "main-service",
+						Port:    "8090",
+						Path:    "/metrics",
+					},
+				},
+			},
+			want: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
+				)
+			},
+			wantErr:      true,
+			checkCleanup: true,
+		},
+		{
+			name: "install -> failure, compose create error -> install cleanup with monitoring installed but not running",
+			options: InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+			monitoringTargets: data.MonitoringTargets{
+				Targets: []data.MonitoringTarget{
+					{
+						Service: "main-service",
+						Port:    "8090",
+						Path:    "/metrics",
+					},
+				},
+			},
+			want: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(errors.New("compose create error")),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Unknown, nil),
 				)
 			},
 			wantErr:      true,
@@ -645,14 +829,15 @@ func TestInstall(t *testing.T) {
 			result, err := daemon.Install(tt.options)
 			if tt.wantErr {
 				require.Error(t, err)
-				// Check if temp dir was removed
-				tID := tempID(tt.options.URL)
-				exists, err := afero.DirExists(afs, filepath.Join(tmp, "temp", tID))
-				require.NoError(t, err)
-				assert.False(t, exists)
 
 				// Check if instance dir was removed
 				if tt.checkCleanup {
+					// Check if temp dir was removed
+					tID := tempID(tt.options.URL)
+					exists, err := afero.DirExists(afs, filepath.Join(tmp, "temp", tID))
+					require.NoError(t, err)
+					assert.False(t, exists)
+
 					exists, err = afero.DirExists(afs, filepath.Join(tmp, "nodes", tt.want))
 					require.NoError(t, err)
 					assert.False(t, exists)
@@ -1050,24 +1235,64 @@ func TestUninstall(t *testing.T) {
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					// Uninstall
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
 				)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-					Host: "168.66.44.1",
-					Port: 8090,
-					Path: "/metrics",
-				}, "mock-avs-default", "eigenlayer").Return(nil)
-				// Uninstall
-				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil)
+			},
+			options: &InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+		},
+		{
+			name:       "success, monitoring stack not installed",
+			instanceID: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init and install
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					// Uninstall
+					monitoringManager.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
+				)
+			},
+			options: &InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+		},
+		{
+			name:       "success, monitoring stack installed but not running",
+			instanceID: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init and install
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					// Uninstall
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Unknown, nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
+				)
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -1080,7 +1305,11 @@ func TestUninstall(t *testing.T) {
 			name:       "failure, not installed instance",
 			instanceID: "mock-avs-default",
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
+				gomock.InOrder(
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
+				)
 			},
 			wantErr: true,
 		},
@@ -1096,24 +1325,13 @@ func TestUninstall(t *testing.T) {
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					// Uninstall
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error")),
 				)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil)
-				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-					Host: "168.66.44.1",
-					Port: 8090,
-					Path: "/metrics",
-				}, "mock-avs-default", "eigenlayer").Return(nil)
-				// Uninstall
-				monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",

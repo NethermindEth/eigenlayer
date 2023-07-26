@@ -68,9 +68,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := daemon.Init(); err != nil {
-		log.Fatal(err)
-	}
 
 	// Initialize prompter
 	p := prompter.NewPrompter()

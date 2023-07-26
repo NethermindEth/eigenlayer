@@ -164,6 +164,10 @@ the user to know which options are available for each profile.
 				}
 			}
 			if ok {
+				// Init monitoring stack. If won't do anything if it is not installed or running
+				if err = d.InitMonitoring(false, false); err != nil {
+					return err
+				}
 				return d.Run(instanceId)
 			}
 			return nil

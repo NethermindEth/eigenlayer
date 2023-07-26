@@ -55,9 +55,9 @@ func NewEgnDaemon(
 	}, nil
 }
 
-// Init initializes the daemon.
-func (d *EgnDaemon) Init() error {
-	// *** Monitoring stack initialization. ***
+// Init initializes the Monitoring Stack. If install is true, it will install the Monitoring Stack if it is not installed.
+// If run is true, it will run the Monitoring Stack if it is not running.
+func (d *EgnDaemon) InitMonitoring(install, run bool) error {
 	// Check if the monitoring stack is installed.
 	installStatus, err := d.monitoringMgr.InstallationStatus()
 	if err != nil {
@@ -65,7 +65,7 @@ func (d *EgnDaemon) Init() error {
 	}
 	log.Debugf("Monitoring stack installation status: %v", installStatus == common.Installed)
 	// If the monitoring stack is not installed, install it.
-	if installStatus == common.NotInstalled {
+	if installStatus == common.NotInstalled && install {
 		err = d.monitoringMgr.InstallStack()
 		if errors.Is(err, monitoring.ErrInstallingMonitoringMngr) {
 			// If the monitoring stack installation fails, remove the monitoring stack directory.
@@ -84,15 +84,49 @@ func (d *EgnDaemon) Init() error {
 		log.Errorf("Monitoring stack status: unknown. Got error: %v", err)
 	}
 	// If the monitoring stack is not running, start it.
-	if status != common.Running && status != common.Restarting {
+	if status != common.Running && status != common.Restarting && run {
 		if err := d.monitoringMgr.Run(); err != nil {
 			return err
 		}
+	} else if status != common.Running && status != common.Restarting && !run {
+		// If the monitoring stack is not supposed to be running then exit.
+		// This should change when the daemon runs as a real daemon.
+		return nil
 	}
+
+	// Initialize monitoring stack if it is running.
 	if err := d.monitoringMgr.Init(); err != nil {
 		return err
 	}
-	// *** Monitoring stack initialization. ***
+
+	// Add monitoring targets
+	instanceIds, err := d.dataDir.ListInstances()
+	if err != nil {
+		return err
+	}
+	for _, instanceId := range instanceIds {
+		if err := d.addTarget(instanceId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// CleanMonitoring stops and uninstalls the Monitoring Stack
+func (d *EgnDaemon) CleanMonitoring() error {
+	// Check if the monitoring stack is installed.
+	installStatus, err := d.monitoringMgr.InstallationStatus()
+	if err != nil {
+		return err
+	}
+	log.Debugf("Monitoring stack installation status: %v", installStatus == common.Installed)
+	// If the monitoring stack is installed, uninstall it.
+	if installStatus == common.Installed {
+		if err := d.monitoringMgr.Cleanup(true); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -614,19 +648,18 @@ func (d *EgnDaemon) HasInstance(instanceID string) bool {
 
 // Run implements Daemon.Run.
 func (d *EgnDaemon) Run(instanceID string) error {
-	// Add target just in case
-	if err := d.addTarget(instanceID); err != nil {
-		return err
-	}
-
 	instancePath, err := d.dataDir.InstancePath(instanceID)
 	if err != nil {
 		return err
 	}
 	composePath := path.Join(instancePath, "docker-compose.yml")
-	return d.dockerCompose.Up(compose.DockerComposeUpOptions{
+	if err := d.dockerCompose.Up(compose.DockerComposeUpOptions{
 		Path: composePath,
-	})
+	}); err != nil {
+		return err
+	}
+
+	return d.addTarget(instanceID)
 }
 
 // Stop implements Daemon.Stop.
@@ -821,6 +854,24 @@ func (d *EgnDaemon) idToIP(id string) (string, error) {
 }
 
 func (d *EgnDaemon) addTarget(instanceID string) error {
+	// Check if the monitoring stack is installed.
+	installStatus, err := d.monitoringMgr.InstallationStatus()
+	if err != nil {
+		return err
+	}
+	if installStatus != common.Installed {
+		return nil
+	}
+	// Check if the monitoring stack is running.
+	status, err := d.monitoringMgr.Status()
+	if err != nil {
+		return fmt.Errorf("monitoring stack status: unknown. Got error: %v", err)
+	}
+	// If the monitoring stack is not running, skip.
+	if status != common.Running && status != common.Restarting {
+		return nil
+	}
+
 	// Get monitoring targets
 	instance, err := d.dataDir.Instance(instanceID)
 	if err != nil {
@@ -840,6 +891,10 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 		endpoint, err := d.idToIP(nameToID[target.Service])
 		if err != nil {
 			return err
+		}
+		if endpoint == "" {
+			// This means the container is not running. Skip.
+			continue
 		}
 		networks, err := d.docker.ContainerNetworks(nameToID[target.Service])
 		if err != nil {

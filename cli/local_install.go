@@ -19,6 +19,7 @@ func LocalInstallCmd(d daemon.Daemon) *cobra.Command {
 		name     string
 		tag      string
 		help     bool
+		run      bool
 		options  = make(map[string]string)
 		logDebug bool
 	)
@@ -125,10 +126,19 @@ profile.`,
 				return err
 			}
 			log.Info("Installed successfully with instance id: ", instanceId)
+
+			if run {
+				// Init monitoring stack. If won't do anything if it is not installed or running
+				if err = d.InitMonitoring(false, false); err != nil {
+					return err
+				}
+				return d.Run(instanceId)
+			}
 			return nil
 		},
 	}
 	cmd.Flags().BoolVar(&logDebug, "log-debug", false, "enable debug logs")
+	cmd.Flags().BoolVarP(&run, "run", "r", false, "run the new instance after installation")
 	cmd.Flags().StringVar(&name, "name", "", "name to use for the new instance name. If not specified, the directory name will be used.")
 	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance. If not specified, the installation will fail.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance.")

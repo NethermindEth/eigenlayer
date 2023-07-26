@@ -111,8 +111,13 @@ the user to know which options are available for each profile.
 			if err != nil {
 				return err
 			}
-			if !ok && requirements.StopIfRequirementsAreNotMet {
-				log.Println("Hardware requirements not met")
+			if !ok {
+				if requirements.StopIfRequirementsAreNotMet {
+					return fmt.Errorf("profile %s does not meet the hardware requirements", profile)
+				}
+				log.Warningf("Profile %s does not meet the hardware requirements", profile)
+			} else {
+				log.Infof("Profile %s meets the hardware requirements", profile)
 			}
 
 			profileOptions, ok := pullResult.Options[profile]

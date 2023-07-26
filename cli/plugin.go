@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -72,22 +71,12 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 				if len(vSplit) != 2 {
 					return fmt.Errorf("invalid volume format: %s, should be <volume_name>:<path> or <path>:<path>", v)
 				}
-				if volumeNameRegex.MatchString(vSplit[0]) {
-					// Add mount of type volume
+				if filepath.IsAbs(filepath.Clean(vSplit[0])) {
+					runPluginOptions.Binds[vSplit[0]] = vSplit[1]
+				} else if volumeNameRegex.MatchString(vSplit[0]) {
 					runPluginOptions.Volumes[vSplit[0]] = vSplit[1]
 				} else {
-					fStat, err := os.Stat(filepath.Clean(vSplit[0]))
-					if err != nil {
-						if errors.Is(err, os.ErrNotExist) {
-							return fmt.Errorf("dir does not exist: %s", vSplit[0])
-						}
-						return fmt.Errorf("failed to stat volume %s: %s", args[0], err)
-					}
-					if !fStat.IsDir() {
-						return fmt.Errorf("volume is not a directory: %s", vSplit[0])
-					}
-					// Add mount of type bind
-					runPluginOptions.Binds[vSplit[0]] = vSplit[1]
+					return fmt.Errorf("invalid volume format: %s, should be <volume_name>:<path> or <path>:<path>", v)
 				}
 			}
 			return d.RunPlugin(instanceId, pluginArgs, runPluginOptions)

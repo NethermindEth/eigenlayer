@@ -18,6 +18,7 @@ func InstallCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		tag      string
 		noPrompt bool
 		help     bool
+		yes      bool
 	)
 	cmd := cobra.Command{
 		Use:   "install [URL] [flags]",
@@ -154,6 +155,17 @@ the user to know which options are available for each profile.
 				// TODO: improve this message with the command to run the plugin
 				log.Info("The installed node software has a plugin.")
 			}
+
+			ok = yes
+			if !yes && !noPrompt {
+				ok, err = p.Confirm("Run the new instance now?")
+				if err != nil {
+					return err
+				}
+			}
+			if ok {
+				return d.Run(instanceId)
+			}
 			return nil
 		},
 	}
@@ -162,5 +174,6 @@ the user to know which options are available for each profile.
 	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance name. If not specified a list of available profiles will be shown to select from.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name.")
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
+	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
 	return &cmd
 }

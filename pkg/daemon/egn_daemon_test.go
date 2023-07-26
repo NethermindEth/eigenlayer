@@ -508,20 +508,6 @@ func TestInstall(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
-					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   path,
-						Format: "json",
-						All:    true,
-					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
-					dockerManager.EXPECT().ContainerIP("1").Return("168.128.66.1", nil),
-					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget(
-						types.MonitoringTarget{
-							Host: "168.128.66.1",
-							Port: 8090,
-							Path: "/metrics",
-						}, "mock-avs-default", "eigenlayer").Return(nil),
 				)
 			},
 		},
@@ -552,20 +538,6 @@ func TestInstall(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
-					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   path,
-						Format: "json",
-						All:    true,
-					}).Return(`[{"ID": "2", "Service": "main-service"}]`, nil),
-					dockerManager.EXPECT().ContainerIP("2").Return("168.128.66.2", nil),
-					dockerManager.EXPECT().ContainerNetworks("2").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget(
-						types.MonitoringTarget{
-							Host: "168.128.66.2",
-							Port: 8080,
-							Path: "/metrics",
-						}, "mock-avs-specific", "eigenlayer").Return(nil),
 				)
 			},
 		},

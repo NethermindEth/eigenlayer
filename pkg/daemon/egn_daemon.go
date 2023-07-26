@@ -466,16 +466,6 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 		return instanceID, tID, err
 	}
 
-	// Start containers
-	if err = d.dockerCompose.Up(compose.DockerComposeUpOptions{
-		Path: instance.ComposePath(),
-	}); err != nil {
-		return instanceID, tID, err
-	}
-
-	if err = d.addTarget(instanceID); err != nil {
-		return instanceID, tID, err
-	}
 	return instanceID, tID, nil
 }
 
@@ -593,17 +583,6 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		Path:  instance.ComposePath(),
 		Build: true,
 	}); err != nil {
-		return instanceId, tID, err
-	}
-
-	// Start containers
-	if err = d.dockerCompose.Up(compose.DockerComposeUpOptions{
-		Path: instance.ComposePath(),
-	}); err != nil {
-		return instanceId, tID, err
-	}
-
-	if err = d.addTarget(instanceId); err != nil {
 		return instanceId, tID, err
 	}
 

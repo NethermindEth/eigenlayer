@@ -35,9 +35,10 @@ type Daemon interface {
 	// installed instance with the given ID an error will be returned.
 	Uninstall(instanceId string) error
 
-	// Init initializes the daemon, making sure that all the necessary components
-	// are installed and running.
-	Init() error
+	// InitMonitoring initializes the MonitoringStack. If install is true, the
+	// MonitoringStack will be installed if it is not already installed. If run
+	// is true, the MonitoringStack will be run if it is not already running.
+	InitMonitoring(install, run bool) error
 
 	// RunPlugin runs a plugin with the given arguments on the instance with the
 	// given ID. If there is no installed and running instance with the given ID

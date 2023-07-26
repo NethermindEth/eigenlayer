@@ -30,7 +30,7 @@ import (
 
 const MockAVSLatestVersion = "v3.0.3"
 
-func TestInit(t *testing.T) {
+func TestInitMonitoring(t *testing.T) {
 	// Silence logger
 	log.SetOutput(io.Discard)
 
@@ -233,7 +233,15 @@ func TestInit(t *testing.T) {
 			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
 			require.NoError(t, err)
 
-			err = daemon.Init()
+			err = daemon.InitMonitoring(true, true)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -694,7 +702,7 @@ func TestRun(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:       "success",
+			name:       "success, monitoring stack installed and running",
 			instanceID: "mock-avs-default",
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
@@ -705,21 +713,110 @@ func TestRun(t *testing.T) {
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
+					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+						Host: "168.66.44.1",
+						Port: 8090,
+						Path: "/metrics",
+					}, "mock-avs-default", "eigenlayer").Return(nil),
 				)
-				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil).Times(2)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-					Host: "168.66.44.1",
-					Port: 8090,
-					Path: "/metrics",
-				}, "mock-avs-default", "eigenlayer").Return(nil).Times(2)
+			},
+			options: &InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+		},
+		{
+			name:       "success, monitoring stack installed and running, add target error",
+			instanceID: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init, install and run
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Running, nil),
+					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   path,
+						Format: "json",
+						All:    true,
+					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
+					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
+					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
+					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
+						Host: "168.66.44.1",
+						Port: 8090,
+						Path: "/metrics",
+					}, "mock-avs-default", "eigenlayer").Return(assert.AnError),
+				)
+			},
+			options: &InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+			wantErr: true,
+		},
+		{
+			name:       "success, monitoring stack installed but not running",
+			instanceID: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init, install and run
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
+					monitoringManager.EXPECT().Status().Return(common.Unknown, nil),
+				)
+			},
+			options: &InstallOptions{
+				URL:     "https://github.com/NethermindEth/mock-avs",
+				Version: MockAVSLatestVersion,
+				Profile: "health-checker",
+				Tag:     "default",
+			},
+		},
+		{
+			name:       "success, monitoring stack not installed",
+			instanceID: "mock-avs-default",
+			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
+				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+
+				// Init, install and run
+				gomock.InOrder(
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().Lock().Return(nil),
+					locker.EXPECT().Locked().Return(true),
+					locker.EXPECT().Unlock().Return(nil),
+					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
+					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
+					monitoringManager.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
+				)
 			},
 			options: &InstallOptions{
 				URL:     "https://github.com/NethermindEth/mock-avs",
@@ -748,20 +845,7 @@ func TestRun(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 				)
-				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil)
 				composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil)
-				composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   path,
-					Format: "json",
-					All:    true,
-				}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil).Times(2)
-				dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil).Times(2)
-				dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil).Times(2)
-				monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-					Host: "168.66.44.1",
-					Port: 8090,
-					Path: "/metrics",
-				}, "mock-avs-default", "eigenlayer").Return(nil).Times(2)
 				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
@@ -848,19 +932,6 @@ func TestStop(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
-					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   path,
-						Format: "json",
-						All:    true,
-					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
-					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
-					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-						Host: "168.66.44.1",
-						Port: 8090,
-						Path: "/metrics",
-					}, "mock-avs-default", "eigenlayer").Return(nil),
 					// Stop
 					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(nil),
 				)
@@ -892,19 +963,6 @@ func TestStop(t *testing.T) {
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
-					composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						Path:   path,
-						Format: "json",
-						All:    true,
-					}).Return(`[{"ID": "1", "Service": "main-service"}]`, nil),
-					dockerManager.EXPECT().ContainerIP("1").Return("168.66.44.1", nil),
-					dockerManager.EXPECT().ContainerNetworks("1").Return([]string{"eigenlayer"}, nil),
-					monitoringManager.EXPECT().AddTarget(types.MonitoringTarget{
-						Host: "168.66.44.1",
-						Port: 8090,
-						Path: "/metrics",
-					}, "mock-avs-default", "eigenlayer").Return(nil),
 					// Stop
 					composeManager.EXPECT().Stop(compose.DockerComposeStopOptions{Path: path}).Return(errors.New("error")),
 				)

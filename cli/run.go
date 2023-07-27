@@ -16,6 +16,9 @@ func RunCmd(d daemon.Daemon) *cobra.Command {
 			instanceId = args[0]
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := d.InitMonitoring(false, false); err != nil {
+				return err
+			}
 			return d.Run(instanceId)
 		},
 	}

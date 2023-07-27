@@ -76,7 +76,6 @@ func (d *EgnDaemon) InitMonitoring(install, run bool) error {
 		} else if err != nil {
 			return err
 		}
-		return nil
 	}
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()

@@ -57,6 +57,8 @@ func TestInitMonitoring(t *testing.T) {
 				gomock.InOrder(
 					monitoringMgr.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
 					monitoringMgr.EXPECT().InstallStack().Return(nil),
+					monitoringMgr.EXPECT().Status().Return(common.Running, nil),
+					monitoringMgr.EXPECT().Init().Return(nil),
 				)
 				return monitoringMgr
 			},

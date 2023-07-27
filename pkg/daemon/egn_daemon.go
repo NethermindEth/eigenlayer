@@ -336,13 +336,18 @@ func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullRes
 	result.Options = profileOptions
 	result.HasPlugin, err = pkgHandler.HasPlugin()
 
-	requirements := make(map[string]package_handler.HardwareRequirements, len(profiles))
+	requirements := make(map[string]HardwareRequirements, len(profiles))
 	for _, profile := range profiles {
 		req, err := pkgHandler.HardwareRequirements(profile.Name)
 		if err != nil {
 			continue
 		}
-		requirements[profile.Name] = req
+		requirements[profile.Name] = HardwareRequirements{
+			minCPUCores:                 req.MinCPUCores,
+			minRAM:                      req.MinRAM,
+			minFreeSpace:                req.MinFreeSpace,
+			stopIfRequirementsAreNotMet: req.StopIfRequirementsAreNotMet,
+		}
 	}
 	result.HardwareRequirements = requirements
 
@@ -714,18 +719,16 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 }
 
 // CheckHardwareRequirements implements Daemon.CheckHardwareRequirements
-func (d *EgnDaemon) CheckHardwareRequirements(requirements hardwarechecker.HardwareMetrics) (bool, error) {
-	// address := d.monitoringMgr.ServiceEndpoints()[monitoring.PrometheusContainerName]
-	// address := "http://demo.robustperception.io:9090"
-	// log.Println(">>> ADDRESS FROM PROMETHEUS >>>", address)
-	// metrics, err := hardwarechecker.GetHardwareMetrics(address)
-
-	// log.Infof("Requirements from node: %s", &requirements)
+func (d *EgnDaemon) CheckHardwareRequirements(req HardwareRequirements) (bool, error) {
 	metrics, err := hardwarechecker.GetMetrics()
 	if err != nil {
 		return false, err
 	}
-	// log.Infof("Metrics from server: %s", &metrics)
+	requirements := hardwarechecker.HardwareMetrics{
+		CPU:       float64(req.minCPUCores),
+		RAM:       float64(req.minRAM),
+		DiskSpace: float64(req.minFreeSpace),
+	}
 	return metrics.Meets(requirements), nil
 }
 

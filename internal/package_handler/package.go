@@ -371,9 +371,10 @@ func (p *PackageHandler) HardwareRequirements(profileName string) (HardwareRequi
 	// TODO: Check if we will have to override all the requirements instead of only defined
 	if profile.HardwareRequirementsOverrides != nil {
 		return HardwareRequirements{
-			MinCPUCores:  profile.HardwareRequirementsOverrides.MinCPUCores,
-			MinRAM:       profile.HardwareRequirementsOverrides.MinRAM,
-			MinFreeSpace: profile.HardwareRequirementsOverrides.MinFreeSpace,
+			MinCPUCores:                 profile.HardwareRequirementsOverrides.MinCPUCores,
+			MinRAM:                      profile.HardwareRequirementsOverrides.MinRAM,
+			MinFreeSpace:                profile.HardwareRequirementsOverrides.MinFreeSpace,
+			StopIfRequirementsAreNotMet: profile.HardwareRequirementsOverrides.StopIfRequirementsAreNotMet,
 		}, nil
 	}
 

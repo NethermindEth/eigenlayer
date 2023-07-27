@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
-	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 )
 
@@ -101,29 +100,25 @@ the user to know which options are available for each profile.
 				}
 			}
 
+			profileOptions, ok := pullResult.Options[profile]
+			if !ok {
+				return fmt.Errorf("profile %s not found", profile)
+			}
+
 			// Check profile hardware requirements
 			requirements := pullResult.HardwareRequirements[profile]
-			metric := hardwarechecker.HardwareMetrics{
-				CPU:       float64(requirements.MinCPUCores),
-				RAM:       float64(requirements.MinRAM),
-				DiskSpace: float64(requirements.MinFreeSpace),
-			}
-			ok, err := d.CheckHardwareRequirements(metric)
+
+			ok, err = d.CheckHardwareRequirements(requirements)
 			if err != nil {
 				return err
 			}
 			if !ok {
-				if requirements.StopIfRequirementsAreNotMet {
+				if requirements.StopIfRequirementsAreNotMet() {
 					return fmt.Errorf("profile %s does not meet the hardware requirements", profile)
 				}
 				log.Warningf("Profile %s does not meet the hardware requirements", profile)
 			} else {
 				log.Infof("Profile %s meets the hardware requirements", profile)
-			}
-
-			profileOptions, ok := pullResult.Options[profile]
-			if !ok {
-				return fmt.Errorf("profile %s not found", profile)
 			}
 
 			// Build dynamic flags with the profile options

@@ -3,9 +3,6 @@ package daemon
 import (
 	"context"
 	"io"
-
-	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
-	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 )
 
 // Daemon is the interface for the egn daemon. It should be used as the entrypoint
@@ -53,10 +50,9 @@ type Daemon interface {
 	RunPlugin(instanceId string, pluginArgs []string, options RunPluginOptions) error
 
 	// CheckHardwareRequirements checks if the hardware of the system meets the
-	// specified requirements. It takes a HardwareMetrics struct as input and returns
+	// specified requirements. It takes a HardwareRequirements struct as input and returns
 	// a boolean value indicating whether the hardware meets the requirements.
-	// If the hardware does not meet the requirements, an error is returned.
-	CheckHardwareRequirements(requirements hardwarechecker.HardwareMetrics) (bool, error)
+	CheckHardwareRequirements(requirements HardwareRequirements) (bool, error)
 
 	// ListInstances returns a list of all the installed instances and their health.
 	ListInstances() ([]ListInstanceItem, error)
@@ -130,8 +126,7 @@ type PullResult struct {
 	Options map[string][]Option
 
 	// HardwareRequirements is the hardware requirements specified in the package manifest.
-	HardwareRequirements map[string]package_handler.HardwareRequirements
-	// map[Profile]package_handler.HardwareRequirements
+	HardwareRequirements map[string]HardwareRequirements
 }
 
 // InstallOptions is a set of options for installing a node software package.

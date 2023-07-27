@@ -33,7 +33,10 @@ func TestRun(t *testing.T) {
 			args: []string{"mock-avs-default"},
 			err:  nil,
 			mocker: func(d *daemonMock.MockDaemon) {
-				d.EXPECT().Run("mock-avs-default").Return(nil)
+				gomock.InOrder(
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(nil),
+				)
 			},
 		},
 		{
@@ -41,7 +44,10 @@ func TestRun(t *testing.T) {
 			args: []string{"mock-avs-default"},
 			err:  assert.AnError,
 			mocker: func(d *daemonMock.MockDaemon) {
-				d.EXPECT().Run("mock-avs-default").Return(assert.AnError)
+				gomock.InOrder(
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(assert.AnError),
+				)
 			},
 		},
 	}

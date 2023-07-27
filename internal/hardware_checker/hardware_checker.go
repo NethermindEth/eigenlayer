@@ -24,28 +24,28 @@ func (h *HardwareMetrics) String() string {
 }
 
 // GetHardwareMetrics retrieves hardware metrics from a Prometheus server using the provided address.
-func GetHardwareMetrics(address string) (hardwareMetrics HardwareMetrics, err error) {
-	cpuQuery := "count(count(node_cpu_seconds_total) by (cpu))"
-	ramQuery := "node_memory_MemTotal_bytes/1024/1024"                        // Mb
-	diskSpaceQuery := "node_filesystem_avail_bytes{mountpoint='/'}/1024/1024" // Mb
+// func GetHardwareMetrics(address string) (hardwareMetrics HardwareMetrics, err error) {
+// 	cpuQuery := "count(count(node_cpu_seconds_total) by (cpu))"
+// 	ramQuery := "node_memory_MemTotal_bytes/1024/1024"                        // Mb
+// 	diskSpaceQuery := "node_filesystem_avail_bytes{mountpoint='/'}/1024/1024" // Mb
 
-	hardwareMetrics.CPU, err = QueryNodeExporter(address, cpuQuery)
-	if err != nil {
-		return HardwareMetrics{}, err
-	}
+// 	hardwareMetrics.CPU, err = QueryNodeExporter(address, cpuQuery)
+// 	if err != nil {
+// 		return HardwareMetrics{}, err
+// 	}
 
-	hardwareMetrics.RAM, err = QueryNodeExporter(address, ramQuery)
-	if err != nil {
-		return HardwareMetrics{}, err
-	}
+// 	hardwareMetrics.RAM, err = QueryNodeExporter(address, ramQuery)
+// 	if err != nil {
+// 		return HardwareMetrics{}, err
+// 	}
 
-	hardwareMetrics.DiskSpace, err = QueryNodeExporter(address, diskSpaceQuery)
-	if err != nil {
-		return HardwareMetrics{}, err
-	}
+// 	hardwareMetrics.DiskSpace, err = QueryNodeExporter(address, diskSpaceQuery)
+// 	if err != nil {
+// 		return HardwareMetrics{}, err
+// 	}
 
-	return hardwareMetrics, nil
-}
+// 	return hardwareMetrics, nil
+// }
 
 // GetHardwareMetrics retrieves hardware metrics from a Linux computer
 func GetMetrics() (hardwareMetrics HardwareMetrics, err error) {

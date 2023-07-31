@@ -343,10 +343,10 @@ func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullRes
 			continue
 		}
 		requirements[profile.Name] = HardwareRequirements{
-			minCPUCores:                 req.MinCPUCores,
-			minRAM:                      req.MinRAM,
-			minFreeSpace:                req.MinFreeSpace,
-			stopIfRequirementsAreNotMet: req.StopIfRequirementsAreNotMet,
+			MinCPUCores:                 req.MinCPUCores,
+			MinRAM:                      req.MinRAM,
+			MinFreeSpace:                req.MinFreeSpace,
+			StopIfRequirementsAreNotMet: req.StopIfRequirementsAreNotMet,
 		}
 	}
 	result.HardwareRequirements = requirements
@@ -725,9 +725,9 @@ func (d *EgnDaemon) CheckHardwareRequirements(req HardwareRequirements) (bool, e
 		return false, err
 	}
 	requirements := hardwarechecker.HardwareMetrics{
-		CPU:       float64(req.minCPUCores),
-		RAM:       float64(req.minRAM),
-		DiskSpace: float64(req.minFreeSpace),
+		CPU:       float64(req.MinCPUCores),
+		RAM:       float64(req.MinRAM),
+		DiskSpace: float64(req.MinFreeSpace),
 	}
 	return metrics.Meets(requirements), nil
 }

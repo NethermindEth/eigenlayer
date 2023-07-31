@@ -168,3 +168,10 @@ type LocalInstallOptions struct {
 	// purposes only, and the user is responsible for passing the correct options.
 	Options map[string]string
 }
+
+type HardwareRequirements struct {
+	MinCPUCores                 int
+	MinRAM                      int
+	MinFreeSpace                int
+	StopIfRequirementsAreNotMet bool
+}

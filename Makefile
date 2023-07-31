@@ -10,6 +10,12 @@ build: generate ## Compile the binary
 	@mkdir -p bin
 	@go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 
+build-linux-amd64: generate ## Compile the binary for amd64
+	@env GOOS=linux GOARCH=amd64 go build -o bin/$(APP_NAME)-linux-amd64 cmd/$(APP_NAME)/main.go
+
+build-linux-arm64: generate ## Compile the binary for arm64
+	@env GOOS=linux GOARCH=arm64 go build -o bin/$(APP_NAME)-linux-arm64 cmd/$(APP_NAME)/main.go
+
 build-linux: generate ## Compile the binary for linux
 	@env GOOS=linux go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 

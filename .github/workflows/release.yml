@@ -18,15 +18,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        go: [1.20]
+        go: ["1.20"]
     runs-on: ${{ matrix.os }}
     env:
       VERSION: ${{ github.event.inputs.tag }}
     steps:
-      - name: Set git to use LF
-        run: \
-          git config --global core.autocrlf false
-          git config --global core.eol lf
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Go
@@ -60,14 +56,15 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: eigenlayer-${{env.VERSION}}-linux-amd64
-          path: build/eigenlayer-linux-amd64
+          path: bin/eigenlayer-linux-amd64
       - name: Upload eigenlayer-linux-arm64
         uses: actions/upload-artifact@v3
         with:
           name: eigenlayer-${{env.VERSION}}-linux-arm64
-          path: build/eigenlayer-linux-arm64
+          path: bin/eigenlayer-linux-arm64
   publish-github:
     name: Pre-release eigenlayer and upload binaries to GitHub
+    needs: eigenlayer-linux
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.inputs.tag }}

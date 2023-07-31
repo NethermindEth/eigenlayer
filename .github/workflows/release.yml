@@ -18,15 +18,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        go: [1.20]
+        go: ["1.20"]
     runs-on: ${{ matrix.os }}
     env:
       VERSION: ${{ github.event.inputs.tag }}
     steps:
-      - name: Set git to use LF
-        run: \
-          git config --global core.autocrlf false
-          git config --global core.eol lf
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Go
@@ -68,6 +64,7 @@ jobs:
           path: build/eigenlayer-linux-arm64
   publish-github:
     name: Pre-release eigenlayer and upload binaries to GitHub
+    needs: eigenlayer-linux
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.inputs.tag }}

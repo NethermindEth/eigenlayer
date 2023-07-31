@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
-	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
-	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
-	"github.com/NethermindEth/eigenlayer/internal/package_handler"
-	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
+	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
+	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
+	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 )
 
 func TestInstall(t *testing.T) {
@@ -50,11 +49,11 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
-							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
 								"profile1": {
 									MinCPUCores:                 2,
 									MinRAM:                      2048,
@@ -64,16 +63,17 @@ func TestInstall(t *testing.T) {
 							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
-					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
-						CPU:       2,
-						RAM:       2048,
-						DiskSpace: 5120,
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{
+						MinCPUCores:                 2,
+						MinRAM:                      2048,
+						MinFreeSpace:                5120,
+						StopIfRequirementsAreNotMet: true,
 					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -98,17 +98,21 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -132,17 +136,21 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -167,17 +175,21 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -200,17 +212,21 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -234,17 +250,21 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
+							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -268,36 +288,27 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
-							HardwareRequirements: map[string]package_handler.HardwareRequirements{
-								"profile1": {
-									MinCPUCores:                 2,
-									MinRAM:                      2048,
-									MinFreeSpace:                5120,
-									StopIfRequirementsAreNotMet: true,
-								},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {},
 							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
-					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
-						CPU:       2,
-						RAM:       2048,
-						DiskSpace: 5120,
-					}).Return(true, nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", errors.New("input string error")),
 				)
 			},
 		},
 		{
 			name: "pull error",
-			args: []string{"-v", "v2.0.2", "https://github.com/NethermindEth/mock-avs"},
+			args: []string{"-v", "v3.1.1", "https://github.com/NethermindEth/mock-avs"},
 			err:  errors.New("pull error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				d.EXPECT().
-					Pull("https://github.com/NethermindEth/mock-avs", "v2.0.2", true).
+					Pull("https://github.com/NethermindEth/mock-avs", "v3.1.1", true).
 					Return(daemon.PullResult{}, errors.New("pull error"))
 			},
 		},
@@ -310,7 +321,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -328,21 +339,12 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
-							HardwareRequirements: map[string]package_handler.HardwareRequirements{
-								"profile1": {
-									MinCPUCores:                 2,
-									MinRAM:                      2048,
-									MinFreeSpace:                5120,
-									StopIfRequirementsAreNotMet: true,
-								},
-							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("invalid-profile", nil),
-					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{}).Return(true, nil),
 				)
 			},
 		},
@@ -360,11 +362,72 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs", "", true).
 						Return(daemon.PullResult{
-							Version: "v2.0.2",
+							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
-							HardwareRequirements: map[string]package_handler.HardwareRequirements{
+							HardwareRequirements: map[string]daemon.HardwareRequirements{},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v3.1.1",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", errors.New("install error")),
+				)
+			},
+		},
+		{
+			name: "hardware requirements not met",
+			args: []string{"https://github.com/NethermindEth/mock-avs"},
+			err:  errors.New("hardware requirements not met"),
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v3.1.1",
+							Options: map[string][]daemon.Option{
+								"profile1": {},
+							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: false,
+								},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{
+						MinCPUCores:                 2,
+						MinRAM:                      2048,
+						MinFreeSpace:                5120,
+						StopIfRequirementsAreNotMet: false,
+					}).Return(false, errors.New("hardware requirements not met")),
+				)
+			},
+		},
+		{
+			name: "hardware not met and stop",
+			args: []string{"https://github.com/NethermindEth/mock-avs"},
+			err:  errors.New("profile profile1 does not meet the hardware requirements"),
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Return(daemon.PullResult{
+							Version: "v3.1.1",
+							Options: map[string][]daemon.Option{
+								"profile1": {},
+							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
 								"profile1": {
 									MinCPUCores:                 2,
 									MinRAM:                      2048,
@@ -374,20 +437,12 @@ func TestInstall(t *testing.T) {
 							},
 						}, nil),
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
-					d.EXPECT().CheckHardwareRequirements(hardwarechecker.HardwareMetrics{
-						CPU:       2,
-						RAM:       2048,
-						DiskSpace: 5120,
-					}).Return(true, nil),
-					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
-					d.EXPECT().
-						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v2.0.2",
-							Profile: "profile1",
-							Options: []daemon.Option{option},
-							Tag:     "default",
-						}).Return("mock-avs-default", errors.New("install error")),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{
+						MinCPUCores:                 2,
+						MinRAM:                      2048,
+						MinFreeSpace:                5120,
+						StopIfRequirementsAreNotMet: true,
+					}).Return(false, nil),
 				)
 			},
 		},

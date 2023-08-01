@@ -23,6 +23,7 @@ type Instance struct {
 	Name              string            `json:"name"`
 	URL               string            `json:"url"`
 	Version           string            `json:"version"`
+	Commit            string            `json:"commit,omitempty"`
 	Profile           string            `json:"profile"`
 	Tag               string            `json:"tag"`
 	MonitoringTargets MonitoringTargets `json:"monitoring"`
@@ -231,8 +232,8 @@ func (i *Instance) validate() error {
 	if i.URL == "" {
 		return fmt.Errorf("%w: url is empty", ErrInvalidInstance)
 	}
-	if i.Version == "" {
-		return fmt.Errorf("%w: version is empty", ErrInvalidInstance)
+	if i.Version == "" && i.Commit == "" {
+		return fmt.Errorf("%w: version and commit are empty", ErrInvalidInstance)
 	}
 	if i.Profile == "" {
 		return fmt.Errorf("%w: profile is empty", ErrInvalidInstance)

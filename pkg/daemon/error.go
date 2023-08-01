@@ -9,6 +9,7 @@ var (
 	ErrOptionWithoutValue         = errors.New("option without value")
 	ErrMonitoringTargetPortNotSet = errors.New("monitoring target port is not set")
 	ErrInstanceHasNoPlugin        = errors.New("instance has no plugin")
+	ErrVersionOrCommitNotSet      = errors.New("version or commit not set")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

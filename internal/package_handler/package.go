@@ -165,6 +165,22 @@ func (p *PackageHandler) HasVersion(version string) error {
 	return fmt.Errorf("%w: %s", ErrVersionNotFound, version)
 }
 
+// CheckoutCommit checkout the cloned repository to the given commit hash. If
+// the commit hash is not found, it returns an error.
+func (p *PackageHandler) CheckoutCommit(commitHash string) error {
+	pkgRepo, err := git.PlainOpen(p.path)
+	if err != nil {
+		return err
+	}
+	wt, err := pkgRepo.Worktree()
+	if err != nil {
+		return err
+	}
+	return wt.Checkout(&git.CheckoutOptions{
+		Hash: plumbing.NewHash(commitHash),
+	})
+}
+
 // LatestVersion returns the latest version of the package.
 func (p *PackageHandler) LatestVersion() (string, error) {
 	versions, err := p.Versions()
@@ -248,6 +264,19 @@ func (p *PackageHandler) CurrentVersion() (string, error) {
 		return strings.ToLower(headVersions[i]) > strings.ToLower(headVersions[j])
 	})
 	return headVersions[0], nil
+}
+
+// CurrentHash returns the git hash of the package HEAD
+func (p *PackageHandler) CurrentCommitHash() (string, error) {
+	gitRepo, err := git.PlainOpen(p.path)
+	if err != nil {
+		return "", err
+	}
+	head, err := gitRepo.Head()
+	if err != nil {
+		return "", err
+	}
+	return head.Hash().String(), nil
 }
 
 // Profiles returns the list of profiles defined in the package for the current version.

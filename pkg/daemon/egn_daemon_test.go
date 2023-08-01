@@ -339,6 +339,7 @@ func TestPull(t *testing.T) {
 
 	pullResult302 := PullResult{
 		Version: "v3.0.2",
+		Commit:  "e085e252383ff380d1c71bef6263d37622aa86e8",
 		Options: map[string][]Option{
 			"option-returner": {
 				&OptionID{
@@ -473,20 +474,166 @@ func TestPull(t *testing.T) {
 		},
 	}
 
+	pullResultV311_commit := PullResult{
+		Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+		Options: map[string][]Option{
+			"option-returner": {
+				&OptionID{
+					option: option{
+						name:   "main-container-name",
+						target: "MAIN_SERVICE_NAME",
+						help:   "Main service container name",
+					},
+					defValue: "option-returner",
+				},
+				&OptionPort{
+					option: option{
+						name:   "main-port",
+						target: "MAIN_PORT",
+						help:   "Main service server port",
+					},
+					defValue: 8080,
+				},
+				&OptionString{
+					option: option{
+						name:   "network-name",
+						target: "NETWORK_NAME",
+						help:   "Docker network name",
+					},
+					defValue: "eigenlayer",
+					validate: true,
+					Re2Regex: "^eigen.*",
+				},
+				&OptionInt{
+					option: option{
+						name:   "test-option-int",
+						target: "TEST_OPTION_INT",
+						help:   "Test option int",
+					},
+					defValue: 666,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 1000,
+				},
+				&OptionFloat{
+					option: option{
+						name:   "test-option-float",
+						target: "TEST_OPTION_FLOAT",
+						help:   "Test option float",
+					},
+					defValue: 666.666,
+					validate: true,
+					MinValue: 0.0,
+					MaxValue: 1000.0,
+				},
+				&OptionBool{
+					option: option{
+						name:   "test-option-bool",
+						target: "TEST_OPTION_BOOL",
+						help:   "Test option bool",
+					},
+					defValue: true,
+				},
+				&OptionPathDir{
+					option: option{
+						name:   "test-option-path-dir",
+						target: "TEST_OPTION_PATH_DIR",
+						help:   "Test option path dir",
+					},
+					defValue: "/tmp",
+				},
+				&OptionPathFile{
+					option: option{
+						name:   "test-option-path-file",
+						target: "TEST_OPTION_PATH_FILE",
+						help:   "Test option path file",
+					},
+					defValue: "/tmp/test.txt",
+					validate: true,
+					Format:   ".txt",
+				},
+				&OptionURI{
+					option: option{
+						name:   "test-option-uri",
+						target: "TEST_OPTION_URI",
+						help:   "Test option uri",
+					},
+					defValue: "https://www.google.com",
+					validate: true,
+					UriScheme: []string{
+						"https",
+					},
+				},
+				&OptionSelect{
+					option: option{
+						name:   "test-option-enum",
+						target: "TEST_OPTION_ENUM",
+						help:   "Test option enum",
+					},
+					defValue: "option1",
+					validate: true,
+					Options: []string{
+						"option1",
+						"option2",
+						"option3",
+					},
+				},
+			},
+			"health-checker": {
+				&OptionID{
+					option: option{
+						name:   "main-container-name",
+						target: "MAIN_SERVICE_NAME",
+						help:   "Main service container name",
+					},
+					defValue: "health-checker",
+				},
+				&OptionPort{
+					option: option{
+						name:   "main-port",
+						target: "MAIN_PORT",
+						help:   "Main service server port",
+					},
+					defValue: 8090,
+				},
+				&OptionString{
+					option: option{
+						name:   "network-name",
+						target: "NETWORK_NAME",
+						help:   "Docker network name",
+					},
+					defValue: "eigenlayer",
+					validate: true,
+					Re2Regex: "^eigen.*",
+				},
+			},
+			"high-requirements": {
+				&OptionPort{
+					option: option{
+						name:   "main-port",
+						target: "MAIN_PORT",
+						help:   "Main service server port",
+					},
+					defValue: 8070,
+				},
+			},
+		},
+	}
+
 	tests := []struct {
 		name    string
 		url     string
-		version string
+		ref     PullTarget
 		force   bool
 		want    PullResult
 		mocker  func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir
 		wantErr bool
 	}{
 		{
-			name:    "pull -> success",
-			url:     "https://github.com/NethermindEth/mock-avs",
-			want:    pullResult302,
-			version: "v3.0.2",
+			name: "pull -> success",
+			url:  "https://github.com/NethermindEth/mock-avs",
+			want: pullResult302,
+			ref:  PullTarget{Version: "v3.0.2"},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -496,10 +643,10 @@ func TestPull(t *testing.T) {
 			},
 		},
 		{
-			name:    "pull -> success, fixed version",
-			url:     "https://github.com/NethermindEth/mock-avs",
-			version: "v3.0.2",
-			want:    pullResult302,
+			name: "pull -> success, fixed version",
+			url:  "https://github.com/NethermindEth/mock-avs",
+			ref:  PullTarget{Version: "v3.0.2"},
+			want: pullResult302,
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -509,17 +656,31 @@ func TestPull(t *testing.T) {
 			},
 		},
 		{
-			name:    "pull -> success, force",
-			url:     "https://github.com/NethermindEth/mock-avs",
-			force:   true,
-			want:    pullResult302,
-			version: "v3.0.2",
+			name:  "pull -> success, force",
+			url:   "https://github.com/NethermindEth/mock-avs",
+			force: true,
+			want:  pullResult302,
+			ref:   PullTarget{Version: "v3.0.2"},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
 				dataDir, err := data.NewDataDir(tmp, afs, locker)
 				require.NoError(t, err)
 				afs.MkdirAll(filepath.Join(tmp, "temp", tempID("https://github.com/NethermindEth/mock-avs")), 0o755)
+				return dataDir
+			},
+		},
+		{
+			name:  "pull -> success, fixed commit hash",
+			url:   "https://github.com/NethermindEth/mock-avs",
+			force: true,
+			want:  pullResultV311_commit,
+			ref:   PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"},
+			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
+				tmp, err := afero.TempDir(afs, "", "egn-pull")
+				require.NoError(t, err)
+				dataDir, err := data.NewDataDir(tmp, afs, locker)
+				require.NoError(t, err)
 				return dataDir
 			},
 		},
@@ -537,13 +698,15 @@ func TestPull(t *testing.T) {
 			daemon, err := NewEgnDaemon(dataDir, nil, nil, nil, locker)
 			require.NoError(t, err)
 
-			result, err := daemon.Pull(tt.url, tt.version, tt.force)
+			result, err := daemon.Pull(tt.url, tt.ref, tt.force)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				// Deep check the result
 				assert.Equal(t, tt.want.Version, result.Version)
+				assert.Equal(t, tt.want.Commit, result.Commit)
+				assert.Len(t, tt.want.Options, len(result.Options))
 				for k, profile := range tt.want.Options {
 					gotProfile, ok := result.Options[k]
 					require.True(t, ok)
@@ -818,7 +981,7 @@ func TestInstall(t *testing.T) {
 			require.NoError(t, err)
 
 			// Pull the package
-			pullResult, err := daemon.Pull(tt.options.URL, tt.options.Version, true)
+			pullResult, err := daemon.Pull(tt.options.URL, PullTarget{Version: tt.options.Version}, true)
 			require.NoError(t, err)
 			tt.options.Options = pullResult.Options[tt.options.Profile]
 
@@ -1072,7 +1235,7 @@ func TestRun(t *testing.T) {
 
 			if tt.options != nil {
 				// Pull the package
-				pullResult, err := daemon.Pull(tt.options.URL, tt.options.Version, true)
+				pullResult, err := daemon.Pull(tt.options.URL, PullTarget{Version: tt.options.Version}, true)
 				require.NoError(t, err)
 				tt.options.Options = pullResult.Options[tt.options.Profile]
 
@@ -1191,7 +1354,7 @@ func TestStop(t *testing.T) {
 
 			if tt.options != nil {
 				// Pull the package
-				pullResult, err := daemon.Pull(tt.options.URL, tt.options.Version, true)
+				pullResult, err := daemon.Pull(tt.options.URL, PullTarget{Version: tt.options.Version}, true)
 				require.NoError(t, err)
 				tt.options.Options = pullResult.Options[tt.options.Profile]
 
@@ -1372,7 +1535,7 @@ func TestUninstall(t *testing.T) {
 
 			if tt.options != nil {
 				// Pull the package
-				pullResult, err := daemon.Pull(tt.options.URL, tt.options.Version, true)
+				pullResult, err := daemon.Pull(tt.options.URL, PullTarget{Version: tt.options.Version}, true)
 				require.NoError(t, err)
 				tt.options.Options = pullResult.Options[tt.options.Profile]
 

@@ -12,7 +12,7 @@ type Daemon interface {
 	// version and options of each profile in the package. If force is true and
 	// the package already exists, it will be removed and re-downloaded. After
 	// calling Pull all is ready to call Install.
-	Pull(url string, version string, force bool) (PullResult, error)
+	Pull(url string, ref PullTarget, force bool) (PullResult, error)
 
 	// Install downloads and installs a node software package using the provided options,
 	// and returns the instance ID of the installed package. Make sure to call Pull
@@ -67,6 +67,11 @@ type Daemon interface {
 	NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error
 }
 
+type PullTarget struct {
+	Version string
+	Commit  string
+}
+
 type RunPluginOptions struct {
 	NoDestroyImage bool
 	HostNetwork    bool
@@ -119,6 +124,9 @@ type PullResult struct {
 	// Version is the version of the pulled package.
 	Version string
 
+	// Commit hash of the pulled package.
+	Commit string
+
 	// HasPlugin is true if the package has a plugin.
 	HasPlugin bool
 
@@ -138,6 +146,9 @@ type InstallOptions struct {
 	// version will be installed. A package version is a git tag that matches the
 	// regex `^v\d+\.\d+\.\d+$`.
 	Version string
+
+	// Commit is the commit to install from. It has precedence over Version.
+	Commit string
 
 	// Profile is the name of the profile to use for the instance.
 	Profile string

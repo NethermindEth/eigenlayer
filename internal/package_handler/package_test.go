@@ -623,6 +623,90 @@ func TestCheckoutVersion(t *testing.T) {
 	}
 }
 
+func TestCheckoutCommit(t *testing.T) {
+	testDir := t.TempDir()
+	require.NoError(t, initGitRepo(testDir), "error initializing git repo")
+	var commitHashes []string
+
+	for i := 0; i < 3; i++ {
+		f, err := os.Create(filepath.Join(testDir, fmt.Sprintf("file-%d.txt", i)))
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString(fmt.Sprintf("Test file %d", i))
+		require.NoError(t, err)
+		require.NoError(t, stageAll(testDir), "error staging file %d", i)
+		commitHash, err := commit(testDir, fmt.Sprintf("Commit %d", i))
+		require.NoError(t, err)
+		commitHashes = append(commitHashes, commitHash)
+	}
+
+	pkgHandler := NewPackageHandler(testDir)
+
+	for i, commitHash := range commitHashes {
+		err := pkgHandler.CheckoutCommit(commitHash)
+		require.NoError(t, err)
+		headHash, err := headCommitHash(testDir)
+		require.NoError(t, err)
+		assert.Equal(t, commitHash, headHash, "checkout to commit %d failed", i)
+	}
+}
+
+func TestCurrentCommitHash(t *testing.T) {
+	testDir := t.TempDir()
+	require.NoError(t, initGitRepo(testDir), "error initializing git repo")
+	pkgHandler := NewPackageHandler(testDir)
+	for i := 0; i < 3; i++ {
+		f, err := os.Create(filepath.Join(testDir, fmt.Sprintf("file-%d.txt", i)))
+		require.NoError(t, err)
+		defer f.Close()
+		_, err = f.WriteString(fmt.Sprintf("Test file %d", i))
+		require.NoError(t, err)
+		require.NoError(t, stageAll(testDir), "error staging file %d", i)
+		expectedHash, err := commit(testDir, fmt.Sprintf("Commit %d", i))
+		require.NoError(t, err)
+		currentHash, err := pkgHandler.CurrentCommitHash()
+		assert.NoError(t, err, "error getting current commit hash")
+		assert.Equal(t, expectedHash, currentHash, "current commit hash does not match expected hash")
+	}
+}
+
+func initGitRepo(path string) error {
+	for _, cmd := range []*exec.Cmd{
+		exec.Command("git", "-C", path, "init"),
+		exec.Command("git", "-C", path, "config", "user.name", "user"),
+		exec.Command("git", "-C", path, "config", "user.email", "user@email.com"),
+	} {
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func stageAll(path string) error {
+	return exec.Command("git", "-C", path, "add", ".").Run()
+}
+
+func commit(path string, message string) (string, error) {
+	err := exec.Command("git", "-C", path, "commit", "-m", message).Run()
+	if err != nil {
+		return "", err
+	}
+	return headCommitHash(path)
+}
+
+func headCommitHash(path string) (string, error) {
+	out, err := exec.Command("git", "-C", path, "rev-parse", "HEAD").Output()
+	if err != nil {
+		return "", err
+	}
+	if len(out) != 0 && out[len(out)-1] == '\n' {
+		out = out[:len(out)-1]
+	}
+	return string(out), nil
+}
+
 func TestCurrentVersion(t *testing.T) {
 	type testCase struct {
 		name    string

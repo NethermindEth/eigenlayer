@@ -59,6 +59,30 @@ func TestInstall_ValidArgument(t *testing.T) {
 	e2eTest.run()
 }
 
+func TestInstall_FromCommitHash(t *testing.T) {
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		nil,
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", "d1d4bb7009549c431d7b3317f004a56e2c3b2031", "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, runErr, "install command should succeed")
+			checkContainerRunning(t, "option-returner")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
 func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 	// Test context
 	var (

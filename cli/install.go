@@ -16,6 +16,7 @@ func InstallCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		version  string
 		profile  string
 		tag      string
+		commit   string
 		noPrompt bool
 		help     bool
 		yes      bool
@@ -76,17 +77,20 @@ the user to know which options are available for each profile.
 			}
 
 			// Pull the package
-			pullResult, err := d.Pull(url, version, true)
+			pullResult, err := d.Pull(url, daemon.PullTarget{
+				Version: version,
+				Commit:  commit,
+			}, true)
 			if err != nil {
 				return err
 			}
 
-			// Select version if not specified
-			if version == "" {
-				log.Println("Version not specified, using latest.")
+			if pullResult.Version != "" {
+				log.Printf("Version %s", pullResult.Version)
 			}
-			version = pullResult.Version
-			log.Printf("Using version %s\n", version)
+			if pullResult.Commit != "" {
+				log.Infof("Commit %s", pullResult.Commit)
+			}
 
 			// Select profile if not specified
 			if !noPrompt && profile == "" {
@@ -157,7 +161,8 @@ the user to know which options are available for each profile.
 
 			instanceId, err := d.Install(daemon.InstallOptions{
 				URL:     url,
-				Version: version,
+				Version: pullResult.Version,
+				Commit:  pullResult.Commit,
 				Tag:     tag,
 				Profile: profile,
 				Options: profileOptions,
@@ -191,9 +196,11 @@ the user to know which options are available for each profile.
 	}
 
 	cmd.Flags().StringVarP(&version, "version", "v", "", "version to install. If not specified the latest version will be installed.")
+	cmd.Flags().StringVar(&commit, "commit", "", "commit to install from. If not specified the latest version will be installed.")
 	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance name. If not specified a list of available profiles will be shown to select from.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance name.")
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
+	cmd.MarkFlagsMutuallyExclusive("version", "commit")
 	return &cmd
 }

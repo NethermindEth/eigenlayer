@@ -260,7 +260,7 @@ func checkHealth(ip string, port string) (NodeHealth, error) {
 }
 
 // Pull implements Daemon.Pull.
-func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullResult, err error) {
+func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullResult, err error) {
 	tID := tempID(url)
 	if force {
 		if err = d.dataDir.RemoveTemp(tID); err != nil {
@@ -278,15 +278,31 @@ func (d *EgnDaemon) Pull(url string, version string, force bool) (result PullRes
 	if err != nil {
 		return
 	}
-	// Set version
-	if version == "" {
-		version, err = pkgHandler.LatestVersion()
+	if ref.Version != "" {
+		result.Version = ref.Version
+		// Set version
+		err = pkgHandler.CheckoutVersion(ref.Version)
+		if err != nil {
+			return
+		}
+	} else if ref.Commit != "" {
+		err = pkgHandler.CheckoutCommit(ref.Commit)
+		if err != nil {
+			return
+		}
+	} else {
+		var latestVersion string
+		latestVersion, err = pkgHandler.LatestVersion()
+		if err != nil {
+			return
+		}
+		result.Version = latestVersion
+		err = pkgHandler.CheckoutVersion(latestVersion)
 		if err != nil {
 			return
 		}
 	}
-	result.Version = version
-	err = pkgHandler.CheckoutVersion(version)
+	result.Commit, err = pkgHandler.CurrentCommitHash()
 	if err != nil {
 		return
 	}
@@ -539,12 +555,21 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
-	// Check if selected version is valid
-	if err := pkgHandler.HasVersion(options.Version); err != nil {
-		return "", tID, err
-	}
-	if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
-		return "", tID, err
+	if options.Version != "" {
+		// Check if selected version is valid
+		if err := pkgHandler.HasVersion(options.Version); err != nil {
+			return "", tID, err
+		}
+		if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
+			return "", tID, err
+		}
+	} else if options.Commit != "" {
+		err := pkgHandler.CheckoutCommit(options.Commit)
+		if err != nil {
+			return "", tID, err
+		}
+	} else {
+		return "", tID, fmt.Errorf("%w: %s", ErrVersionOrCommitNotSet, options.URL)
 	}
 
 	pkgProfiles, err := pkgHandler.Profiles()
@@ -613,6 +638,7 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		Name:              instanceName,
 		Profile:           selectedProfile.Name,
 		Version:           options.Version,
+		Commit:            options.Commit,
 		URL:               options.URL,
 		Tag:               options.Tag,
 		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},

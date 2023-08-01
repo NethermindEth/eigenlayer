@@ -70,7 +70,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag"}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"mainnet","tag":"test_tag"}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -82,7 +82,8 @@ func TestNewInstance(t *testing.T) {
 					Name:    "test_name",
 					Tag:     "test_tag",
 					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v0.1.0",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					path:    testDir,
 				},
@@ -114,7 +115,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"image":"nethermind/egn-plugin:latest"}}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"mainnet","tag":"test_tag","plugin":{"image":"nethermind/egn-plugin:latest"}}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -126,7 +127,8 @@ func TestNewInstance(t *testing.T) {
 					Name:    "test_name",
 					Tag:     "test_tag",
 					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v0.1.0",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
 						Image: "nethermind/egn-plugin:latest",
@@ -143,7 +145,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin"}}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin"}}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -155,7 +157,8 @@ func TestNewInstance(t *testing.T) {
 					Name:    "test_name",
 					Tag:     "test_tag",
 					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v0.1.0",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
 						BuildFrom: "https://github.com/NethermindEth/mock-avs.git#main:plugin",
@@ -172,7 +175,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin","image":"nethermind/egn-plugin:latest"}}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"mainnet","tag":"test_tag","plugin":{"build_from":"https://github.com/NethermindEth/mock-avs.git#main:plugin","image":"nethermind/egn-plugin:latest"}}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -184,7 +187,8 @@ func TestNewInstance(t *testing.T) {
 					Name:    "test_name",
 					Tag:     "test_tag",
 					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v0.1.0",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
 						Image:     "nethermind/egn-plugin:latest",
@@ -202,7 +206,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v0.1.0","profile":"mainnet","tag":"test_tag","plugin":{}}`)
+			_, err = io.WriteString(stateFile, `{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"mainnet","tag":"test_tag","plugin":{}}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -214,7 +218,8 @@ func TestNewInstance(t *testing.T) {
 					Name:    "test_name",
 					Tag:     "test_tag",
 					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v0.1.0",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin:  &Plugin{},
 					path:    testDir,
@@ -266,7 +271,8 @@ func TestInstance_Init(t *testing.T) {
 				Name:    "test_name",
 				Tag:     "test_tag",
 				URL:     "https://github.com/NethermindEth/mock-avs",
-				Version: "v2.1.0",
+				Version: "v3.1.1",
+				Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 				Profile: "option-returner",
 				MonitoringTargets: MonitoringTargets{
 					Targets: []MonitoringTarget{
@@ -278,7 +284,7 @@ func TestInstance_Init(t *testing.T) {
 					},
 				},
 			},
-			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v2.1.0","profile":"option-returner","tag":"test_tag","monitoring":{"targets":[{"service":"main-service","port":"8080","path":"/metrics"}]}}`),
+			stateJSON: []byte(`{"name":"test_name","url":"https://github.com/NethermindEth/mock-avs","version":"v3.1.1","commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031","profile":"option-returner","tag":"test_tag","monitoring":{"targets":[{"service":"main-service","port":"8080","path":"/metrics"}]}}`),
 			mocker: func(path string, locker *mocks.MockLocker) {
 				locker.EXPECT().New(filepath.Join(path, ".lock")).Return(locker)
 			},
@@ -331,7 +337,8 @@ func TestInstance_Setup(t *testing.T) {
 	i := Instance{
 		Name:    "mock-avs",
 		URL:     "https://github.com/NethermindEth/mock-avs",
-		Version: "v2.0.2",
+		Version: "v3.1.1",
+		Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 		Profile: "option-returner",
 		Tag:     "test-tag",
 	}

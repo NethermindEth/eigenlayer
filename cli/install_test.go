@@ -47,7 +47,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -96,7 +96,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -134,7 +134,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -173,7 +173,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -210,7 +210,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -248,7 +248,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -286,7 +286,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -308,7 +308,7 @@ func TestInstall(t *testing.T) {
 			err:  errors.New("pull error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				d.EXPECT().
-					Pull("https://github.com/NethermindEth/mock-avs", "v3.1.1", true).
+					Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{Version: "v3.1.1"}, true).
 					Return(daemon.PullResult{}, errors.New("pull error"))
 			},
 		},
@@ -319,7 +319,7 @@ func TestInstall(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -337,7 +337,7 @@ func TestInstall(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -360,7 +360,7 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -389,7 +389,7 @@ func TestInstall(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -421,7 +421,7 @@ func TestInstall(t *testing.T) {
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs", "", true).
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
 							Version: "v3.1.1",
 							Options: map[string][]daemon.Option{
@@ -443,6 +443,57 @@ func TestInstall(t *testing.T) {
 						MinFreeSpace:                5120,
 						StopIfRequirementsAreNotMet: true,
 					}).Return(false, nil),
+				)
+			},
+		},
+		{
+			name: "commit specified",
+			args: []string{"--commit", "d1d4bb7009549c431d7b3317f004a56e2c3b2031", "https://github.com/NethermindEth/mock-avs"},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1").Times(2)
+				option.EXPECT().Help().Return("help1").Times(2)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull("https://github.com/NethermindEth/mock-avs", daemon.PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"}, true).
+						Return(daemon.PullResult{
+							Version: "v3.1.1",
+							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{
+						MinCPUCores:                 2,
+						MinRAM:                      2048,
+						MinFreeSpace:                5120,
+						StopIfRequirementsAreNotMet: true,
+					}).Return(true, nil),
+					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     "https://github.com/NethermindEth/mock-avs",
+							Version: "v3.1.1",
+							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().Run("mock-avs-default").Return(nil),
 				)
 			},
 		},

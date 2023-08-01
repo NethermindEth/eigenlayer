@@ -67,7 +67,7 @@ func TestHardwareMetrics_Meets(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "metrics wtih same requirements",
+			name: "metrics with same requirements",
 			fields: fields{
 				CPU:       4,
 				RAM:       8,
@@ -91,7 +91,6 @@ func TestHardwareMetrics_Meets(t *testing.T) {
 				DiskSpace: tt.fields.DiskSpace,
 			}
 			got := h.Meets(tt.args.hm)
-			// t.Errorf("HardwareMetrics.Meets() = %v, want %v", got, tt.want)
 			assert.Equal(t, tt.want, got)
 		})
 	}

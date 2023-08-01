@@ -47,7 +47,7 @@ func (h *HardwareMetrics) String() string {
 // 	return hardwareMetrics, nil
 // }
 
-// GetHardwareMetrics retrieves hardware metrics from a Linux computer
+// GetHardwareMetrics retrieves hardware metrics from a Linux host
 func GetMetrics() (hardwareMetrics HardwareMetrics, err error) {
 	// CPU Cores
 	cpuCores := runtime.NumCPU()

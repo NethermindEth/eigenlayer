@@ -14,7 +14,7 @@ type Manifest struct {
 	NodeVersion          string               `yaml:"node_version"`
 	Name                 string               `yaml:"name"`
 	Upgrade              string               `yaml:"upgrade"`
-	HardwareRequirements HardwareRequirements `yaml:"hardware_requirements"`
+	HardwareRequirements hardwareRequirements `yaml:"hardware_requirements"`
 	Plugin               *Plugin              `yaml:"plugin"`
 	Profiles             []profileDefinition  `yaml:"profiles"`
 }
@@ -73,14 +73,14 @@ func (m *Manifest) validate() error {
 	return nil
 }
 
-type HardwareRequirements struct {
+type hardwareRequirements struct {
 	MinCPUCores                 int  `yaml:"min_cpu_cores"`
 	MinRAM                      int  `yaml:"min_ram"`
 	MinFreeSpace                int  `yaml:"min_free_space"`
 	StopIfRequirementsAreNotMet bool `yaml:"stop_if_requirements_are_not_met"`
 }
 
-func (h *HardwareRequirements) validate() error {
+func (h *hardwareRequirements) validate() error {
 	var invalidFields []string
 	if h.MinCPUCores < 0 {
 		invalidFields = append(invalidFields, "hardware_requirements.min_cpu_cores -> (negative value)")

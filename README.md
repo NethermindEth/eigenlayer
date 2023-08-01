@@ -24,7 +24,7 @@ AVS Node software can be installed from a Git repository, such as GitHub, or fro
 We have created a mock-avs repository to understand the structure of an AVS Node Software package and to test all the features of the `eigenlayer` CLI tool. The following command shows how to install `mock-avs` using the `eigenlayer` tool:
 
 ```bash
-eigenlayer install https://github.com/NethermindEth/mock-avs
+$ eigenlayer install https://github.com/NethermindEth/mock-avs
 ```
 
 Executing this command triggers an interactive installation process. During this process, the user can manually select the desired profile and all necessary options. Below is the final output after options have been selected.
@@ -155,6 +155,25 @@ To stop a running instance, use the `eigenlayer stop` command with the instance 
 
 ```bash
 $ eigenlayer stop mock-avs-default
+```
+
+## Logs
+
+AVS instance logs could be retrieved using the `eigenlayer logs` command. Logs are the merge of docker containers logs that compounds the AVS instance, for instance:
+
+```bash
+$ eigenlayer logs mock-avs-default
+```
+
+```bash
+option-returner: INFO:     Started server process [1]
+option-returner: INFO:     Waiting for application startup.
+option-returner: INFO:     Application startup complete.
+option-returner: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+option-returner: INFO:     172.20.0.3:59224 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
+option-returner: INFO:     172.20.0.3:59224 - "GET / HTTP/1.1" 200 OK
+option-returner: INFO:     172.20.0.3:40780 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
+option-returner: INFO:     172.20.0.3:40780 - "GET / HTTP/1.1" 200 OK
 ```
 
 ## Init Monitoring Stack

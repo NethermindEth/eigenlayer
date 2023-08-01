@@ -82,7 +82,7 @@ func (d *EgnDaemon) InitMonitoring(install, run bool) error {
 	// Check if the monitoring stack is running.
 	status, err := d.monitoringMgr.Status()
 	if err != nil {
-		log.Errorf("Monitoring stack status: unknown. Got error: %v", err)
+		log.Debugf("Monitoring stack status: unknown. Got error: %v", err)
 	}
 	// If the monitoring stack is not running, start it.
 	if status != common.Running && status != common.Restarting && run {

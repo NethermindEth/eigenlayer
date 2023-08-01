@@ -3,42 +3,43 @@
 Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine.
 
 
-* [Install `eigenlayer` CLI](#install-eigenlayer-cli)
-  * [Linux/amd64](#linuxamd64)
-  * [Linux/arm64](#linuxarm64)
-  * [Dependencies](#dependencies)
-* [Install an AVS](#install-an-avs)
-  * [From GitHub](#from-github)
-  * [Non-interactive installation](#non-interactive-installation)
-  * [From local directory](#from-local-directory)
-* [Uninstalling AVS Node Software](#uninstalling-avs-node-software)
-* [List installed instances](#list-installed-instances)
-* [Run an AVS instance](#run-an-avs-instance)
-* [Stop an AVS instance](#stop-an-avs-instance)
-* [Logs](#logs)
-* [Init Monitoring Stack](#init-monitoring-stack)
-* [Clean Up Monitoring Stack](#clean-up-monitoring-stack)
-* [Running a Plugin](#running-a-plugin)
-  * [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
+- [Eigenlayer CLI](#eigenlayer-cli)
+  - [Install `eigenlayer` CLI](#install-eigenlayer-cli)
+    - [Linux/amd64](#linuxamd64)
+    - [Linux/arm64](#linuxarm64)
+    - [Dependencies](#dependencies)
+  - [Install an AVS](#install-an-avs)
+    - [From GitHub](#from-github)
+    - [Non-interactive installation](#non-interactive-installation)
+    - [From local directory](#from-local-directory)
+  - [Uninstalling AVS Node Software](#uninstalling-avs-node-software)
+  - [List installed instances](#list-installed-instances)
+  - [Run an AVS instance](#run-an-avs-instance)
+  - [Stop an AVS instance](#stop-an-avs-instance)
+  - [Logs](#logs)
+  - [Init Monitoring Stack](#init-monitoring-stack)
+  - [Clean Up Monitoring Stack](#clean-up-monitoring-stack)
+  - [Running a Plugin](#running-a-plugin)
+    - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
 
 ## Install `eigenlayer` CLI
 
-The `eigenlayer` CLI tool versions are managed with GitHub releases. To install it, you can download the binary directly from the release assets manually, or by using the following command replacing the <VERSION> and <ARCH> with the proper values:
+The `eigenlayer` CLI tool versions are managed with GitHub releases. To install it, you can download the binary directly from the release assets manually, or by using the following command replacing the `<VERSION>` and `<ARCH>` with the proper values:
 
 ```bash
-curl -L <https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
 ```
 
 ### Linux/amd64
 
 ```bash
-curl -L <https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-amd64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-amd64 --output eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
-curl -L <https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-arm64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-arm64 --output eigenlayer
 ```
 
 ### Dependencies
@@ -54,7 +55,7 @@ AVS Node software can be installed from a Git repository, such as GitHub, or fro
 We have created a mock-avs repository to understand the structure of an AVS Node Software package and to test all the features of the `eigenlayer` CLI tool. The following command shows how to install `mock-avs` using the `eigenlayer` tool:
 
 ```bash
-eigenlayer install <https://github.com/NethermindEth/mock-avs>
+eigenlayer install https://github.com/NethermindEth/mock-avs
 ```
 
 Executing this command triggers an interactive installation process. During this process, the user can manually select the desired profile and all necessary options. Below is the final output after options have been selected.
@@ -71,7 +72,7 @@ INFO[0000] Using version v3.1.0
 ? test-option-bool true
 ? test-option-path-dir /tmp
 ? test-option-path-file /tmp/test.txt
-? test-option-uri <https://www.google.com>
+? test-option-uri https://www.google.com
 ? test-option-enum option1
 INFO[0004] Installed successfully with instance id: mock-avs-default
 INFO[0004] The installed node software has a plugin.
@@ -83,10 +84,10 @@ INFO[0004] The installed node software has a plugin.
 To skip the interactive installation, the user can use the available flags of the `install` command. To see all available `install` options, run the `eigenlayer install --help` command. This is an example of installing the same `mock-avs` without interactive installation:
 
 ```bash
-$ eigenlayer install \\
- --profile option-returner \\
- --no-prompt \\
- <https://github.com/NethermindEth/mock-avs>
+$ eigenlayer install \
+ --profile option-returner \
+ --no-prompt \
+ https://github.com/NethermindEth/mock-avs
 ```
 
 Output:
@@ -100,17 +101,17 @@ INFO[0002] The installed node software has a plugin.
 
 Notice the usage of:
 
-- `-profile` to select the `option-returner` profile without prompt.
-- `-no-prompt` to skip options prompts.
+* `--profile` to select the `option-returner` profile without prompt.
+* `--no-prompt` to skip options prompts.
 
-In this case, the `option-returner` profile uses all default values. To set option values, use the `-option.<option-name>` dynamic flags. For instance:
+In this case, the `option-returner` profile uses all the default values. To set option values, use the `--option.<option-name>` dynamic flags. For instance:
 
 ```bash
-$ eigenlayer install \\
- --profile option-returner \\
- --no-prompt \\
- --option.main-port 8081 \\
- <https://github.com/NethermindEth/mock-avs>
+$ eigenlayer install \
+ --profile option-returner \
+ --no-prompt \
+ --option.main-port 8081 \
+ https://github.com/NethermindEth/mock-avs
 ```
 
 Output:
@@ -129,15 +130,14 @@ In this case, the `main-port` has a value of 8081 instead of the default value o
 > THIS INSTALLATION METHOD IS INSECURE
 > 
 
-Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone `mock-avs` to a local directory, remove the `.git` folder (this is not necessary, it’s only to avoid Git as a requirement for local installation), and use it as a local package.
+Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs` to a local directory, and use it as a local package.
 
 First, clone the `mock-avs` package:
 
 > If you already have a local package, you can skip this step
-> 
 
 ```bash
-git clone --branch v3.1.0 <https://github.com/NethermindEth/mock-avs>
+git clone --branch v3.1.0 https://github.com/NethermindEth/mock-avs
 ```
 
 Now we can install the package from the `mock-avs` directory with the following command:
@@ -161,8 +161,7 @@ When uninstalling AVS Node Software, it is stopped, disconnected from the Monito
 eigenlayer uninstall mock-avs-default
 ```
 
-> To see the ID of all installed instances, use the eigenlayer ls command.
-> 
+> To see the ID of all installed instances, use the `eigenlayer ls` command.
 
 ## List installed instances
 

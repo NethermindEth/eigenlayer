@@ -27,18 +27,22 @@ func TestList(t *testing.T) {
 						Running: true,
 						Health:  daemon.NodeHealthy,
 						Comment: "comment1",
+						Version: "v3.1.1",
+						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					}, {
 						ID:      "id2",
 						Running: false,
 						Health:  daemon.NodeHealthUnknown,
 						Comment: "comment2",
+						Version: "v3.1.1",
+						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					},
 				}, nil)
 			},
 			stdOut: []byte(
-				"AVS Instance ID\tRUNNING\tHEALTH\tCOMMENT\t\n" +
-					"id1\ttrue\thealthy\tcomment1\t\n" +
-					"id2\tfalse\tunknown\tcomment2\t\n",
+				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
+					"id1                true       healthy    v3.1.1     d1d4bb700954    comment1    \n" +
+					"id2                false      unknown    v3.1.1     d1d4bb700954    comment2    \n",
 			),
 		},
 		{
@@ -47,7 +51,7 @@ func TestList(t *testing.T) {
 				d.EXPECT().ListInstances().Return([]daemon.ListInstanceItem{}, nil)
 			},
 			stdOut: []byte(
-				"AVS Instance ID\tRUNNING\tHEALTH\tCOMMENT\t\n",
+				"AVS Instance ID    RUNNING    HEALTH    VERSION    COMMIT    COMMENT    \n",
 			),
 		},
 		{
@@ -82,6 +86,7 @@ func TestList(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Empty(t, errOut.Bytes())
+				assert.Equal(t, tt.stdOut, stdOut.Bytes())
 			}
 		})
 	}

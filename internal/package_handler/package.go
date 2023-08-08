@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	pkgDirName       = "pkg"
-	checksumFileName = "checksum.txt"
-	manifestFileName = "manifest.yml"
-	profileFileName  = "profile.yml"
+	pkgDirName             = "pkg"
+	checksumFileName       = "checksum.txt"
+	manifestFileName       = "manifest.yml"
+	profileFileName        = "profile.yml"
+	manifestSchemaFileName = "schema/manifest_schema.yml"
+	profileSchemaFileName  = "schema/profile_schema.yml"
 )
 
 var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
@@ -363,6 +365,11 @@ func (p *PackageHandler) Plugin() (*Plugin, error) {
 
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
 	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
+	// Validate YAML Schema
+	err := validateYAMLSchema(manifestSchemaFileName, manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("yaml schema validation error: %v", err)
+	}
 	// Read the manifest file
 	data, err := afero.ReadFile(p.afs, manifestPath)
 	if err != nil {
@@ -438,7 +445,14 @@ func (p *PackageHandler) profilesNames() ([]string, error) {
 }
 
 func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
-	data, err := afero.ReadFile(p.afs, filepath.Join(p.path, pkgDirName, profileName, profileFileName))
+	profilePath := filepath.Join(p.path, pkgDirName, profileName, profileFileName)
+	// Validate YAML Schemas
+	err := validateYAMLSchema(manifestSchemaFileName, profilePath)
+	if err != nil {
+		return nil, fmt.Errorf("yaml schema validation error: %v", err)
+	}
+	// Read the profile file
+	data, err := afero.ReadFile(p.afs, profilePath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ReadingProfileError{
 			profileName: profileName,

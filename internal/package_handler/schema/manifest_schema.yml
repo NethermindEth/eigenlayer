@@ -1,0 +1,78 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+properties:
+  version:
+    type: string
+  node_version:
+    type: string
+  name:
+    type: string
+  upgrade:
+    type: string
+  hardware_requirements:
+    type: object
+    properties:
+      min_cpu_cores:
+        type: integer
+        minimum: 0
+      min_ram:
+        type: integer
+        minimum: 0
+      min_free_space:
+        type: integer
+        minimum: 0
+      stop_if_requirements_are_not_met:
+        type: boolean
+    required:
+    - min_cpu_cores
+    - min_ram
+    - min_free_space
+    - stop_if_requirements_are_not_met
+    additionalProperties: false
+  plugin:
+    type: object
+    properties:
+      image:
+        type: string
+      build_from:
+        type: string
+    required:
+    - image
+    - build_from
+    additionalProperties: false
+  profiles:
+    type: array
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+        from_profile:
+          type: object
+          properties:
+            compose:
+              type: string
+            env:
+              type: string
+            dashboards:
+              type: string
+            panels:
+              type: string
+            alerts:
+              type: string
+          required:
+          - compose
+          - env
+          - dashboards
+          - panels
+          - alerts
+          additionalProperties: false
+      required:
+      - name
+      additionalProperties: false
+required:
+- version
+- node_version
+- name
+- profiles
+additionalProperties: false

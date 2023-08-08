@@ -82,6 +82,8 @@ type RunPluginOptions struct {
 // ListInstanceItem is an item in the list of instances returned by ListInstances.
 type ListInstanceItem struct {
 	ID      string
+	Version string
+	Commit  string
 	Health  NodeHealth
 	Running bool
 	Comment string

@@ -34,6 +34,10 @@ type Instance struct {
 	locker            locker.Locker
 }
 
+func (i *Instance) ID() string {
+	return InstanceId(i.Name, i.Tag)
+}
+
 type MonitoringTargets struct {
 	Targets []MonitoringTarget `json:"targets"`
 }

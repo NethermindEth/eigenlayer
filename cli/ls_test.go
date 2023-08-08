@@ -46,6 +46,33 @@ func TestList(t *testing.T) {
 			),
 		},
 		{
+			name: "success, short commit hash",
+			mocker: func(d *daemonMock.MockDaemon) {
+				d.EXPECT().ListInstances().Return([]daemon.ListInstanceItem{
+					{
+						ID:      "id1",
+						Running: true,
+						Health:  daemon.NodeHealthy,
+						Comment: "comment1",
+						Version: "v3.1.1",
+						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+					}, {
+						ID:      "id2",
+						Running: false,
+						Health:  daemon.NodeHealthUnknown,
+						Comment: "comment2",
+						Version: "v3.1.1",
+						Commit:  "d1d4bb7",
+					},
+				}, nil)
+			},
+			stdOut: []byte(
+				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
+					"id1                true       healthy    v3.1.1     d1d4bb700954    comment1    \n" +
+					"id2                false      unknown    v3.1.1     d1d4bb7         comment2    \n",
+			),
+		},
+		{
 			name: "success, empty list",
 			mocker: func(d *daemonMock.MockDaemon) {
 				d.EXPECT().ListInstances().Return([]daemon.ListInstanceItem{}, nil)

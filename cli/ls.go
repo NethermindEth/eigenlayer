@@ -10,13 +10,22 @@ import (
 
 type tableItem struct {
 	avs     string
+	version string
+	commit  string
 	running bool
 	health  string
 	comment string
 }
 
 func (i tableItem) String() string {
-	return fmt.Sprintf("%s\t%t\t%s\t%s\t", i.avs, i.running, i.health, i.comment)
+	return fmt.Sprintf("%s\t%t\t%s\t%s\t%s\t%s\t", i.avs, i.running, i.health, i.version, commitPrefix(i.commit), i.comment)
+}
+
+func commitPrefix(commit string) string {
+	if len(commit) > 12 {
+		return commit[:12]
+	}
+	return commit
 }
 
 func ListCmd(d daemon.Daemon) *cobra.Command {
@@ -34,13 +43,15 @@ Eigenlayer AVS Specification link https://eigen.nethermind.io/docs/metrics/metri
 			}
 
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 4, ' ', 0)
-			fmt.Fprintln(w, "AVS Instance ID\tRUNNING\tHEALTH\tCOMMENT\t")
+			fmt.Fprintln(w, "AVS Instance ID\tRUNNING\tHEALTH\tVERSION\tCOMMIT\tCOMMENT\t")
 			for _, instance := range instances {
 				fmt.Fprintln(w, tableItem{
 					avs:     instance.ID,
 					running: instance.Running,
 					health:  instance.Health.String(),
 					comment: instance.Comment,
+					version: instance.Version,
+					commit:  instance.Commit,
 				})
 			}
 			w.Flush()

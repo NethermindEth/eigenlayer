@@ -101,12 +101,12 @@ func (d *EgnDaemon) InitMonitoring(install, run bool) error {
 	}
 
 	// Add monitoring targets
-	instanceIds, err := d.dataDir.ListInstances()
+	instances, err := d.dataDir.ListInstances()
 	if err != nil {
 		return err
 	}
-	for _, instanceId := range instanceIds {
-		if err := d.addTarget(instanceId); err != nil {
+	for _, instance := range instances {
+		if err := d.addTarget(instance.ID()); err != nil {
 			return err
 		}
 	}
@@ -134,26 +134,30 @@ func (d *EgnDaemon) CleanMonitoring() error {
 // ListInstances implements Daemon.ListInstances.
 func (d *EgnDaemon) ListInstances() ([]ListInstanceItem, error) {
 	var result []ListInstanceItem
-	instanceIds, err := d.dataDir.ListInstances()
+	instances, err := d.dataDir.ListInstances()
 	if err != nil {
 		return result, err
 	}
-	for _, instanceId := range instanceIds {
-		running, err := d.instanceRunning(instanceId)
+	for _, instance := range instances {
+		running, err := d.instanceRunning(instance.ID())
 		if err != nil {
 			result = append(result, ListInstanceItem{
-				ID:      instanceId,
+				ID:      instance.ID(),
 				Health:  NodeHealthUnknown,
 				Comment: fmt.Sprintf("Failed to get instance status: %v", err),
+				Version: instance.Version,
+				Commit:  instance.Commit,
 			})
 			continue
 		}
 		var item ListInstanceItem
 		if running {
-			item = d.instanceHealth(instanceId)
+			item = d.instanceHealth(instance.ID())
 		}
-		item.ID = instanceId
+		item.ID = instance.ID()
 		item.Running = running
+		item.Version = instance.Version
+		item.Commit = instance.Commit
 		result = append(result, item)
 	}
 	return result, nil

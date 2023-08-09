@@ -1,0 +1,15 @@
+Source: eigenlayer
+Section: devel
+Priority: medium
+Maintainer: Demerzel Solutions Limited <hello@nethermind.io>
+Build-Depends: debhelper (>= 13~), golang-go
+Standards-Version: 4.6.1
+Homepage: https://www.eigenlayer.xyz
+Vcs-Git: https://github.com/NethermindEth/eigenlayer.git
+Vcs-Browser: https://github.com/NethermindEth/eigenlayer
+
+Package: eigenlayer
+Architecture: darwin-i386 darwin-amd64 darwin-arm64 i386 amd64 arm64
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: EigenLayer Node setup wizard
+  Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine.

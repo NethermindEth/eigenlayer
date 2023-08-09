@@ -53,9 +53,27 @@ type APITarget struct {
 	Port    string `json:"port"`
 }
 
+type PluginType string
+
+const (
+	PluginTypeLocalImage    PluginType = "local-image"
+	PluginTypeRemoteImage   PluginType = "remote-image"
+	PluginTypeRemoteContext PluginType = "remote-context"
+)
+
 type Plugin struct {
-	Image     string `json:"image,omitempty"`
-	BuildFrom string `json:"build_from,omitempty"`
+	Src  string     `json:"src"`
+	Type PluginType `json:"type"`
+}
+
+func (p *Plugin) validate() error {
+	if p.Src == "" {
+		return fmt.Errorf("%w: plugin src is empty", ErrInvalidInstance)
+	}
+	if p.Type != PluginTypeLocalImage && p.Type != PluginTypeRemoteImage && p.Type != PluginTypeRemoteContext {
+		return fmt.Errorf("%w: plugin type is invalid", ErrInvalidInstance)
+	}
+	return nil
 }
 
 // newInstance creates a new instance with the given path as root. It loads the
@@ -245,8 +263,11 @@ func (i *Instance) validate() error {
 	if i.Tag == "" {
 		return fmt.Errorf("%w: tag is empty", ErrInvalidInstance)
 	}
-	if i.Plugin != nil && i.Plugin.BuildFrom == "" && i.Plugin.Image == "" {
-		return fmt.Errorf("%w: plugin git and image are empty", ErrInvalidInstance)
+
+	if i.Plugin != nil {
+		if err := i.Plugin.validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

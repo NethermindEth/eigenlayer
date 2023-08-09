@@ -11,7 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -566,20 +568,9 @@ func (d *EgnDaemon) install(
 	}
 
 	// Build plugin info
-	var plugin *data.Plugin
-	hasPlugin, err := pkgHandler.HasPlugin()
+	plugin, err := d.getPluginData(pkgHandler, instanceID)
 	if err != nil {
 		return instanceID, tID, err
-	}
-	if hasPlugin {
-		pkgPlugin, err := pkgHandler.Plugin()
-		if err != nil {
-			return instanceID, tID, err
-		}
-		plugin = &data.Plugin{
-			Image:     pkgPlugin.Image,
-			BuildFrom: pkgPlugin.BuildFrom,
-		}
 	}
 
 	// Build API target info
@@ -621,6 +612,53 @@ func (d *EgnDaemon) install(
 	}
 
 	return instanceID, tID, nil
+}
+
+func (d *EgnDaemon) getPluginData(pkgHandler *package_handler.PackageHandler, instanceID string) (*data.Plugin, error) {
+	hasPlugin, err := pkgHandler.HasPlugin()
+	if err != nil {
+		return nil, err
+	}
+	if !hasPlugin {
+		return nil, nil
+	}
+	pkgPlugin, err := pkgHandler.Plugin()
+	if err != nil {
+		return nil, err
+	}
+	// Remote image
+	if pkgPlugin.Image != "" {
+		return &data.Plugin{
+			Type: data.PluginTypeRemoteImage,
+			Src:  pkgPlugin.Image,
+		}, nil
+	}
+	// Remote context
+	if strings.HasPrefix(pkgPlugin.BuildFrom, "http://") || strings.HasPrefix(pkgPlugin.BuildFrom, "https://") {
+		pluginURL, err := url.Parse(pkgPlugin.BuildFrom)
+		if err != nil {
+			return nil, err
+		}
+		return &data.Plugin{
+			Type: data.PluginTypeRemoteContext,
+			Src:  pluginURL.String(),
+		}, nil
+	}
+	// Relative path
+	pluginPath := filepath.Join(filepath.Dir(filepath.Join(pkgHandler.ManifestFilePath())), pkgPlugin.BuildFrom)
+	if !strings.HasPrefix(pluginPath, pkgHandler.Path()) {
+		return nil, fmt.Errorf("%w: %s", ErrPluginPathNotInsidePackage, pluginPath)
+	}
+	// TODO: Build plugin image
+	pluginImage := "eigenlayer-plugin-" + instanceID
+	err = d.docker.BuildFromLocalPath(pluginPath, pluginImage)
+	if err != nil {
+		return nil, err
+	}
+	return &data.Plugin{
+		Type: data.PluginTypeLocalImage,
+		Src:  pluginImage,
+	}, nil
 }
 
 func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, installErr error) error {
@@ -767,20 +805,25 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 	}
 	// Create plugin container
 	var image string
-	if instance.Plugin.Image != "" {
-		// Pull image
-		if err = d.docker.Pull(instance.Plugin.Image); err != nil {
+	switch instance.Plugin.Type {
+	case data.PluginTypeRemoteImage:
+		err := d.docker.Pull(instance.Plugin.Src)
+		if err != nil {
 			return err
 		}
-		image = instance.Plugin.Image
-	} else if instance.Plugin.BuildFrom != "" {
+		image = instance.Plugin.Src
+	case data.PluginTypeRemoteContext:
 		image = "eigen-plugin-" + instanceId
-		// Build image
-		if err = d.docker.BuildFromURI(instance.Plugin.BuildFrom, image); err != nil {
+		err := d.docker.BuildFromURI(instance.Plugin.Src, image)
+		if err != nil {
 			return err
 		}
+	case data.PluginTypeLocalImage:
+		image = instance.Plugin.Src
+	default:
+		return fmt.Errorf("%w: %s", ErrUnknownPluginType, instance.Plugin.Type)
 	}
-	if !options.NoDestroyImage {
+	if instance.Plugin.Type != data.PluginTypeLocalImage && !options.NoDestroyImage {
 		defer func() {
 			if err := d.docker.ImageRemove(image); err != nil {
 				log.Errorf("Failed to destroy plugin image %s: %v", image, err)

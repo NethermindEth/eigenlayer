@@ -8,6 +8,6 @@ hardware_requirements:
   min_free_space: -1
 plugin:
   image: "http://your-organization/plugin-service"
-  build_from: "github.com/NethermindEth/el-node-spec"
+  build_from: "github.com NethermindEth/el-node-spec"
 profiles:
   - name: "profile1"

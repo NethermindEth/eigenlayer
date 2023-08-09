@@ -110,7 +110,7 @@ func (p *Plugin) validate() error {
 	// Validate plugin git field is a valid git url
 	if p.BuildFrom != "" {
 		_, errURI := url.ParseRequestURI(p.BuildFrom)
-		if !pathRe.Match([]byte(p.BuildFrom)) && errURI != nil {
+		if !pathRe.MatchString(p.BuildFrom) && errURI != nil {
 			invalidFields = append(invalidFields, "plugin.build_from -> (invalid build from)")
 		}
 	}

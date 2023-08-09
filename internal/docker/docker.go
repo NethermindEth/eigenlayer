@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
@@ -344,6 +345,34 @@ func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
 	}
 	defer buildResult.Body.Close()
 
+	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
+	if err != nil {
+		return err
+	}
+	defer loadResult.Body.Close()
+	return nil
+}
+
+// BuildFromLocalPath build a docker image from a local path.
+func (d *DockerManager) BuildFromLocalPath(absPath string, tag string) (err error) {
+	log.Debugf("Building image from %s", absPath)
+	// Build docker context
+	buildContext, err := archive.TarWithOptions(absPath, &archive.TarOptions{})
+	if err != nil {
+		return err
+	}
+	// Build plugin image
+	buildResult, err := d.dockerClient.ImageBuild(context.Background(), buildContext, types.ImageBuildOptions{
+		Tags:        []string{tag},
+		Remove:      true,
+		ForceRemove: true,
+	})
+	if err != nil {
+		log.Info("HERE")
+		return err
+	}
+	defer buildResult.Body.Close()
+	// Save image
 	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
 	if err != nil {
 		return err

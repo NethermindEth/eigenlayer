@@ -10,6 +10,8 @@ var (
 	ErrMonitoringTargetPortNotSet = errors.New("monitoring target port is not set")
 	ErrInstanceHasNoPlugin        = errors.New("instance has no plugin")
 	ErrVersionOrCommitNotSet      = errors.New("version or commit not set")
+	ErrPluginPathNotInsidePackage = errors.New("plugin path is not inside package")
+	ErrUnknownPluginType          = errors.New("unknown plugin type")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

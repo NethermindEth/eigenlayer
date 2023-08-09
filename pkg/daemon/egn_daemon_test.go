@@ -2581,7 +2581,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				gomock.InOrder(
@@ -2609,7 +2610,7 @@ func TestRunPlugin(t *testing.T) {
 			},
 		},
 		{
-			name:       `run plugin building the image`,
+			name:       `run plugin with local image`,
 			instanceId: "mock-avs-default",
 			args:       []string{"arg1", "arg2"},
 			options: RunPluginOptions{
@@ -2628,7 +2629,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"build_from": "./plugin"
+						"type": "local-image",
+						"src": "eigenlayer-plugin-mock-avs-default"
 					}
 				}`)
 				gomock.InOrder(
@@ -2638,8 +2640,7 @@ func TestRunPlugin(t *testing.T) {
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().BuildFromURI("./plugin", "eigen-plugin-mock-avs-default").Return(nil),
-					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run("eigenlayer-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2651,7 +2652,6 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
 				)
 			},
 		},
@@ -2676,7 +2676,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				gomock.InOrder(
@@ -2728,7 +2729,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2750,7 +2752,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2772,7 +2775,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2795,7 +2799,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2818,7 +2823,8 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"image": "mock-avs-plugin"
+						"type": "remote-image",
+						"src": "mock-avs-plugin"
 					}
 				}`)
 				gomock.InOrder(
@@ -2829,32 +2835,6 @@ func TestRunPlugin(t *testing.T) {
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
 					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(assert.AnError),
-				)
-			},
-		},
-		{
-			name:       `error building plugin image`,
-			instanceId: "mock-avs-default",
-			wantErr:    true,
-			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
-					"name": "mock-avs",
-					"tag": "default",
-					"version": "v3.0.3",
-					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
-					"plugin": {
-						"build_from": "./plugin"
-					}
-				}`)
-				gomock.InOrder(
-					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						FilterRunning: true,
-						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format:        "json",
-					}).Return(`[{"ID":"abc123"}]`, nil),
-					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().BuildFromURI("./plugin", "eigen-plugin-mock-avs-default").Return(assert.AnError),
 				)
 			},
 		},

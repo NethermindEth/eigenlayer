@@ -409,6 +409,16 @@ func (p *PackageHandler) HardwareRequirements(profileName string) (hardwareRequi
 	return hr, nil
 }
 
+// Path returns the path of the package.
+func (p *PackageHandler) Path() string {
+	return p.path
+}
+
+// ManifestFilePath returns the path of the manifest file.
+func (p *PackageHandler) ManifestFilePath() string {
+	return filepath.Join(p.path, pkgDirName, manifestFileName)
+}
+
 func (p *PackageHandler) profilesNames() ([]string, error) {
 	manifest, err := p.parseManifest()
 	if err != nil {

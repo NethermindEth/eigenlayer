@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"io"
 	"path/filepath"
 	"testing"
@@ -115,7 +116,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{
+			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
 				"name":"test_name",
 				"url":"https://github.com/NethermindEth/mock-avs",
 				"version":"v3.1.1",
@@ -123,10 +124,10 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"type": "remote-image",
+					"type": "%s",
 					"src":"nethermind/egn-plugin:latest"
 					}
-				}`)
+				}`, PluginTypeRemoteImage))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -157,7 +158,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{
+			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
 				"name":"test_name",
 				"url":"https://github.com/NethermindEth/mock-avs",
 				"version":"v3.1.1",
@@ -165,10 +166,10 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"type": "remote-context",
+					"type": "%s",
 					"src":"https://github.com/NethermindEth/mock-avs.git#main:plugin"
 					}
-				}`)
+				}`, PluginTypeRemoteContext))
 			if err != nil {
 				t.Fatal(err)
 			}

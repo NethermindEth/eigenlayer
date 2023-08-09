@@ -368,7 +368,6 @@ func (d *DockerManager) BuildFromLocalPath(absPath string, tag string) (err erro
 		ForceRemove: true,
 	})
 	if err != nil {
-		log.Info("HERE")
 		return err
 	}
 	defer buildResult.Body.Close()

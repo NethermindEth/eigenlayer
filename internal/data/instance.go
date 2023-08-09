@@ -71,7 +71,7 @@ func (p *Plugin) validate() error {
 		return fmt.Errorf("%w: plugin src is empty", ErrInvalidInstance)
 	}
 	if p.Type != PluginTypeLocalImage && p.Type != PluginTypeRemoteImage && p.Type != PluginTypeRemoteContext {
-		return fmt.Errorf("%w: plugin type is invalid", ErrInvalidInstance)
+		return fmt.Errorf(`%w: plugin type "%s" is invalid`, ErrInvalidInstance, p.Type)
 	}
 	return nil
 }

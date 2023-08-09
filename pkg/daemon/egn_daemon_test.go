@@ -2574,17 +2574,17 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
@@ -2622,17 +2622,17 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "local-image",
+						"type": "%s",
 						"src": "eigenlayer-plugin-mock-avs-default"
 					}
-				}`)
+				}`, data.PluginTypeLocalImage))
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
@@ -2669,17 +2669,17 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				gomock.InOrder(
 					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(nil),
 					d.dockerManager.EXPECT().Run("mock-avs-plugin", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
@@ -2722,17 +2722,17 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2745,17 +2745,17 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2768,17 +2768,17 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2792,17 +2792,17 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2816,17 +2816,17 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
-						"type": "remote-image",
+						"type": "%s",
 						"src": "mock-avs-plugin"
 					}
-				}`)
+				}`, data.PluginTypeRemoteImage))
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,

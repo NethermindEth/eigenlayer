@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -353,16 +354,20 @@ func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
 	return nil
 }
 
-// BuildFromLocalPath build a docker image from a local path.
-func (d *DockerManager) BuildFromLocalPath(absPath string, tag string) (err error) {
-	log.Debugf("Building image from %s", absPath)
-	// Build docker context
-	buildContext, err := archive.TarWithOptions(absPath, &archive.TarOptions{})
-	if err != nil {
-		return err
+// LoadImageContext loads an image context from a local path.
+func (d *DockerManager) LoadImageContext(path string) (io.ReadCloser, error) {
+	log.Debug("Loading context from ", path)
+	if !filepath.IsAbs(path) {
+		return nil, fmt.Errorf("path must be absolute")
 	}
+	return archive.TarWithOptions(path, &archive.TarOptions{})
+}
+
+// BuildFromLocalPath build a docker image from a local path.
+func (d *DockerManager) BuildImageFromContext(ctx io.ReadCloser, tag string) (err error) {
+	log.Debugf("Building image from context")
 	// Build plugin image
-	buildResult, err := d.dockerClient.ImageBuild(context.Background(), buildContext, types.ImageBuildOptions{
+	buildResult, err := d.dockerClient.ImageBuild(context.Background(), ctx, types.ImageBuildOptions{
 		Tags:        []string{tag},
 		Remove:      true,
 		ForceRemove: true,

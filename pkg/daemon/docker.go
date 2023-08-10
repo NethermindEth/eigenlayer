@@ -20,8 +20,11 @@ type DockerManager interface {
 	// Build builds the given image from the given remote and sets the given tag.
 	BuildFromURI(remote string, tag string) error
 
-	// Build builds the given image from the given local path and sets the given tag.
-	BuildFromLocalPath(path string, tag string) error
+	// BuildImageFromContext builds the given image from the given context and sets the given tag.
+	BuildImageFromContext(ctx io.ReadCloser, tag string) error
+
+	// LoadImageContext loads the given context.
+	LoadImageContext(path string) (io.ReadCloser, error)
 
 	// Run runs the given image with the given network and arguments.
 	Run(image string, network string, args []string, mounts []docker.Mount) error

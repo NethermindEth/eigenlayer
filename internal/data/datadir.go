@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -13,6 +14,7 @@ import (
 const (
 	nodesDirName = "nodes"
 	tempDir      = "temp"
+	pluginsDir   = "plugin"
 )
 
 const monitoringStackDirName = "monitoring"
@@ -31,6 +33,11 @@ func NewDataDir(path string, fs afero.Fs, locker locker.Locker) (*DataDir, error
 		return nil, err
 	}
 	return &DataDir{path: absPath, fs: fs, locker: locker}, nil
+}
+
+// Path returns the path of the data dir.
+func (d *DataDir) Path() string {
+	return d.path
 }
 
 // NewDataDirDefault creates a new DataDir instance with the default path as root.
@@ -219,4 +226,48 @@ func (d *DataDir) ListInstances() ([]Instance, error) {
 		}
 	}
 	return instances, nil
+}
+
+// SavePluginImageContext saves the plugin image context to the data dir as a tar file.
+func (d *DataDir) SavePluginImageContext(id string, ctx io.ReadCloser) (err error) {
+	defer ctx.Close()
+	err = d.fs.MkdirAll(filepath.Join(d.path, pluginsDir), 0o755)
+	if err != nil {
+		return err
+	}
+	ctxF, err := d.fs.Create(filepath.Join(d.pluginDir(), id+".tar"))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		errClose := ctxF.Close()
+		if err != nil {
+			err = errClose
+		}
+	}()
+	_, err = io.Copy(ctxF, ctx)
+	return err
+}
+
+// GetPluginContext returns the plugin image context tar file.
+func (d *DataDir) GetPluginContext(id string) (io.ReadCloser, error) {
+	return d.fs.Open(filepath.Join(d.pluginDir(), id+".tar"))
+}
+
+// RemovePluginContext removes the plugin image context tar file. If the file
+// does not exist, it return nil.
+func (d *DataDir) RemovePluginContext(id string) error {
+	fileName := filepath.Join(d.pluginDir(), id+".tar")
+	exist, err := afero.Exists(d.fs, fileName)
+	if err != nil {
+		return err
+	}
+	if exist {
+		return d.fs.Remove(fileName)
+	}
+	return nil
+}
+
+func (d *DataDir) pluginDir() string {
+	return filepath.Join(d.path, pluginsDir)
 }

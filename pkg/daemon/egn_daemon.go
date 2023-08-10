@@ -568,7 +568,7 @@ func (d *EgnDaemon) install(
 	}
 
 	// Build plugin info
-	plugin, err := d.getPluginData(pkgHandler, instanceID)
+	plugin, err := d.getPluginData(d.dataDir, pkgHandler, instanceID)
 	if err != nil {
 		return instanceID, tID, err
 	}
@@ -614,7 +614,7 @@ func (d *EgnDaemon) install(
 	return instanceID, tID, nil
 }
 
-func (d *EgnDaemon) getPluginData(pkgHandler *package_handler.PackageHandler, instanceID string) (*data.Plugin, error) {
+func (d *EgnDaemon) getPluginData(dataDir *data.DataDir, pkgHandler *package_handler.PackageHandler, instanceID string) (*data.Plugin, error) {
 	hasPlugin, err := pkgHandler.HasPlugin()
 	if err != nil {
 		return nil, err
@@ -644,20 +644,22 @@ func (d *EgnDaemon) getPluginData(pkgHandler *package_handler.PackageHandler, in
 			Src:  pluginURL.String(),
 		}, nil
 	}
-	// Relative path
+	// Local context
 	pluginPath := filepath.Join(filepath.Dir(filepath.Join(pkgHandler.ManifestFilePath())), pkgPlugin.BuildFrom)
 	if !strings.HasPrefix(pluginPath, pkgHandler.Path()) {
 		return nil, fmt.Errorf("%w: %s", ErrPluginPathNotInsidePackage, pluginPath)
 	}
-	// TODO: Build plugin image
-	pluginImage := "eigenlayer-plugin-" + instanceID
-	err = d.docker.BuildFromLocalPath(pluginPath, pluginImage)
+	pluginContext, err := d.docker.LoadImageContext(pluginPath)
+	if err != nil {
+		return nil, err
+	}
+	err = dataDir.SavePluginImageContext(instanceID, pluginContext)
 	if err != nil {
 		return nil, err
 	}
 	return &data.Plugin{
-		Type: data.PluginTypeLocalImage,
-		Src:  pluginImage,
+		Type: data.PluginTypeLocalContext,
+		Src:  instanceID,
 	}, nil
 }
 
@@ -724,6 +726,10 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 			log.Warnf("Instance %s not found. It may be due to a incomplete instance installation process.", instanceID)
 			return nil
 		}
+		return err
+	}
+
+	if err := d.dataDir.RemovePluginContext(instanceID); err != nil {
 		return err
 	}
 
@@ -818,12 +824,20 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		if err != nil {
 			return err
 		}
-	case data.PluginTypeLocalImage:
-		image = instance.Plugin.Src
+	case data.PluginTypeLocalContext:
+		image = "eigen-plugin-" + instanceId
+		pluginContext, err := d.dataDir.GetPluginContext(instanceId)
+		if err != nil {
+			return err
+		}
+		err = d.docker.BuildImageFromContext(pluginContext, image)
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("%w: %s", ErrUnknownPluginType, instance.Plugin.Type)
 	}
-	if instance.Plugin.Type != data.PluginTypeLocalImage && !options.NoDestroyImage {
+	if !options.NoDestroyImage {
 		defer func() {
 			if err := d.docker.ImageRemove(image); err != nil {
 				log.Errorf("Failed to destroy plugin image %s: %v", image, err)

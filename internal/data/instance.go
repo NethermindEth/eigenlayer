@@ -56,7 +56,7 @@ type APITarget struct {
 type PluginType string
 
 const (
-	PluginTypeLocalImage    PluginType = "local-image"
+	PluginTypeLocalContext  PluginType = "local-context"
 	PluginTypeRemoteImage   PluginType = "remote-image"
 	PluginTypeRemoteContext PluginType = "remote-context"
 )
@@ -70,7 +70,7 @@ func (p *Plugin) validate() error {
 	if p.Src == "" {
 		return fmt.Errorf("%w: plugin src is empty", ErrInvalidInstance)
 	}
-	if p.Type != PluginTypeLocalImage && p.Type != PluginTypeRemoteImage && p.Type != PluginTypeRemoteContext {
+	if p.Type != PluginTypeLocalContext && p.Type != PluginTypeRemoteImage && p.Type != PluginTypeRemoteContext {
 		return fmt.Errorf(`%w: plugin type "%s" is invalid`, ErrInvalidInstance, p.Type)
 	}
 	return nil

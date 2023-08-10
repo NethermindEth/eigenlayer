@@ -2546,7 +2546,7 @@ func TestNodeLogs(t *testing.T) {
 func TestRunPlugin(t *testing.T) {
 	afs := afero.NewOsFs()
 	type mockerData struct {
-		dataDirPath       string
+		dataDir           *data.DataDir
 		fs                afero.Fs
 		composeManager    *mocks.MockComposeManager
 		dockerManager     *mocks.MockDockerManager
@@ -2574,7 +2574,7 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2588,7 +2588,7 @@ func TestRunPlugin(t *testing.T) {
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
-						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
@@ -2610,7 +2610,7 @@ func TestRunPlugin(t *testing.T) {
 			},
 		},
 		{
-			name:       `run plugin with local image`,
+			name:       `run plugin with local context`,
 			instanceId: "mock-avs-default",
 			args:       []string{"arg1", "arg2"},
 			options: RunPluginOptions{
@@ -2622,7 +2622,7 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2630,17 +2630,23 @@ func TestRunPlugin(t *testing.T) {
 					"url": "https://github.com/NethermindEth/mock-avs",
 					"plugin": {
 						"type": "%s",
-						"src": "eigenlayer-plugin-mock-avs-default"
+						"src": "mock-avs-default"
 					}
-				}`, data.PluginTypeLocalImage))
+				}`, data.PluginTypeLocalContext))
+
+				pluginContext := new(bytes.Buffer)
+				err := d.dataDir.SavePluginImageContext("mock-avs-default", io.NopCloser(pluginContext))
+				require.NoError(t, err)
+
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
-						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Run("eigenlayer-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().BuildImageFromContext(gomock.Any(), "eigen-plugin-mock-avs-default"),
+					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2652,6 +2658,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
+					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
 				)
 			},
 		},
@@ -2669,7 +2676,7 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2708,7 +2715,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2722,7 +2729,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2735,7 +2742,7 @@ func TestRunPlugin(t *testing.T) {
 				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
-					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 					Format:        "json",
 				}).Return("", assert.AnError)
 			},
@@ -2745,7 +2752,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2758,7 +2765,7 @@ func TestRunPlugin(t *testing.T) {
 				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
-					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 					Format:        "json",
 				}).Return("[]", nil)
 			},
@@ -2768,7 +2775,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2781,7 +2788,7 @@ func TestRunPlugin(t *testing.T) {
 				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
-					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 					Format:        "json",
 				}).Return(`[{"ID":"abc123"}]`, nil)
 				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return(nil, assert.AnError)
@@ -2792,7 +2799,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2805,7 +2812,7 @@ func TestRunPlugin(t *testing.T) {
 				}`, data.PluginTypeRemoteImage))
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
-					Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 					Format:        "json",
 				}).Return(`[{"ID":"abc123"}]`, nil)
 				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{}, nil)
@@ -2816,7 +2823,7 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
@@ -2830,7 +2837,7 @@ func TestRunPlugin(t *testing.T) {
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
-						Path:          filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
@@ -2857,7 +2864,7 @@ func TestRunPlugin(t *testing.T) {
 			// Set up mocks
 			if tt.mocker != nil {
 				tt.mocker(t, &mockerData{
-					dataDirPath:       tmp,
+					dataDir:           dataDir,
 					fs:                afs,
 					composeManager:    composeManager,
 					dockerManager:     dockerManager,

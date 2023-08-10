@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -29,6 +27,7 @@ func TestInstall_WithoutArguments(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.Error(t, runErr, "install command should fail without arguments")
+			checkInstanceNotInstalled(t, "mock-avs-default")
 		},
 	)
 	// Run test case
@@ -52,6 +51,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
+			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
 		},
 	)
@@ -76,6 +76,7 @@ func TestInstall_FromCommitHash(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
+			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
 		},
 	)
@@ -106,6 +107,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
+			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
 
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
@@ -113,7 +115,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 
 			waitForMonitoring()
 			checkGrafanaHealth(t)
-			checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 		},
 	)
 	// Run test case
@@ -137,6 +139,7 @@ func TestInstall_ValidArgumentNotRun(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
+			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerNotRunning(t, "option-returner")
 		},
 	)
@@ -154,7 +157,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "https://github.com/NethermindEth/mock-avs")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}
@@ -167,6 +170,8 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.Error(t, runErr, "install command should fail with duplicated ID")
+			checkInstanceInstalled(t, "mock-avs-integration")
+			checkContainerRunning(t, "option-returner")
 		},
 	)
 	// Run test case
@@ -195,6 +200,8 @@ func TestInstall_MultipleAVS(t *testing.T) {
 				assert.NoError(t, err, "install command (%d) should succeed", i)
 			}
 
+			checkInstanceInstalled(t, "mock-avs-option-returner-1")
+			checkInstanceInstalled(t, "mock-avs-option-returner-2")
 			checkContainerRunning(t, "main-service-1", "main-service-2")
 			checkContainerNotRunning(t, "health-checker")
 		},
@@ -233,6 +240,9 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 				assert.NoError(t, err, "install command (%d) should succeed", i)
 			}
 
+			checkInstanceInstalled(t, "mock-avs-option-returner-1")
+			checkInstanceInstalled(t, "mock-avs-option-returner-2")
+			checkInstanceInstalled(t, "mock-avs-health-checker")
 			checkContainerRunning(t, "main-service-1", "main-service-2", "health-checker")
 
 			mainService1IP, err := getContainerIPByName("main-service-1", "eigenlayer")
@@ -243,129 +253,7 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 			assert.NoError(t, err)
 
 			waitForMonitoring()
-			checkPrometheusTargets(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
-		},
-	)
-	// Run test case
-	e2eTest.run()
-}
-
-func TestLocalInstall(t *testing.T) {
-	// Test context
-	var (
-		testDir = t.TempDir()
-		pkgDir  = filepath.Join(testDir, "mock-avs")
-		runErr  error
-	)
-	// Build test case
-	e2eTest := newE2ETestCase(
-		t,
-		// Arrange
-		func(t *testing.T, egnPath string) error {
-			err := os.MkdirAll(pkgDir, 0o755)
-			if err != nil {
-				return err
-			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", "v3.0.3", mockAVSRepo, pkgDir)
-			if err != nil {
-				return err
-			}
-			// remove .git folder
-			return os.RemoveAll(filepath.Join(pkgDir, ".git"))
-		},
-		// Act
-		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
-		},
-		// Assert
-		func(t *testing.T) {
-			assert.NoError(t, runErr, "local-install command should succeed")
-			checkContainerRunning(t, "option-returner")
-		},
-	)
-	// Run test case
-	e2eTest.run()
-}
-
-func TestLocalInstallNotRunning(t *testing.T) {
-	// Test context
-	var (
-		testDir = t.TempDir()
-		pkgDir  = filepath.Join(testDir, "mock-avs")
-		runErr  error
-	)
-	// Build test case
-	e2eTest := newE2ETestCase(
-		t,
-		// Arrange
-		func(t *testing.T, egnPath string) error {
-			err := os.MkdirAll(pkgDir, 0o755)
-			if err != nil {
-				return err
-			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", "v3.0.3", mockAVSRepo, pkgDir)
-			if err != nil {
-				return err
-			}
-			// remove .git folder
-			return os.RemoveAll(filepath.Join(pkgDir, ".git"))
-		},
-		// Act
-		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--log-debug")
-		},
-		// Assert
-		func(t *testing.T) {
-			assert.NoError(t, runErr, "local-install command should succeed")
-			checkContainerNotRunning(t, "option-returner")
-		},
-	)
-	// Run test case
-	e2eTest.run()
-}
-
-func TestLocalInstallWithMonitoring(t *testing.T) {
-	// Test context
-	var (
-		testDir = t.TempDir()
-		pkgDir  = filepath.Join(testDir, "mock-avs")
-		runErr  error
-	)
-	// Build test case
-	e2eTest := newE2ETestCase(
-		t,
-		// Arrange
-		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "init-monitoring")
-			if err != nil {
-				return err
-			}
-			err = os.MkdirAll(pkgDir, 0o755)
-			if err != nil {
-				return err
-			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", "v3.0.3", mockAVSRepo, pkgDir)
-			if err != nil {
-				return err
-			}
-			// remove .git folder
-			return os.RemoveAll(filepath.Join(pkgDir, ".git"))
-		},
-		// Act
-		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
-		},
-		// Assert
-		func(t *testing.T) {
-			assert.NoError(t, runErr, "local-install command should succeed")
-
-			checkContainerRunning(t, "option-returner")
-			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
-			require.NoError(t, err, "failed to get option-returner container IP")
-
-			waitForMonitoring()
-			checkGrafanaHealth(t)
-			checkPrometheusTargets(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
 		},
 	)
 	// Run test case

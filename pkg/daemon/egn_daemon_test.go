@@ -1467,16 +1467,10 @@ func TestUninstall(t *testing.T) {
 			},
 		},
 		{
-			name:       "failure, not installed instance",
+			name:       "not installed instance, do nothing",
 			instanceID: "mock-avs-default",
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				gomock.InOrder(
-					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
-					monitoringManager.EXPECT().Status().Return(common.Running, nil),
-					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
-				)
 			},
-			wantErr: true,
 		},
 		{
 			name:       "failure, Down error",

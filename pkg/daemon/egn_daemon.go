@@ -670,7 +670,7 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 }
 
 func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, installErr error) error {
-	if installErr != nil && instanceId != "" {
+	if installErr != nil && !errors.Is(installErr, ErrInstanceAlreadyExists) {
 		// Cleanup if Install fails
 		if cerr := d.uninstall(instanceId, false); cerr != nil {
 			return fmt.Errorf("install failed: %w. Failed to cleanup after installation failure: %w", installErr, cerr)
@@ -726,15 +726,20 @@ func (d *EgnDaemon) Uninstall(instanceID string) error {
 }
 
 func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
+	instancePath, err := d.dataDir.InstancePath(instanceID)
+	if err != nil {
+		if errors.Is(err, data.ErrInstanceNotFound) {
+			log.Warnf("Instance %s not found. It may be due to a incomplete instance installation process.", instanceID)
+			return nil
+		}
+		return err
+	}
+
 	if err := d.removeTarget(instanceID); err != nil {
 		return err
 	}
 
 	if down {
-		instancePath, err := d.dataDir.InstancePath(instanceID)
-		if err != nil {
-			return err
-		}
 		composePath := path.Join(instancePath, "docker-compose.yml")
 		// docker compose down
 		if err = d.dockerCompose.Down(compose.DockerComposeDownOptions{
@@ -942,6 +947,8 @@ func (d *EgnDaemon) idToIP(id string) (string, error) {
 	return ip, nil
 }
 
+// addTarget adds an instance to the monitoring stack
+// If the monitoring stack is not installed or running, it does nothing
 func (d *EgnDaemon) addTarget(instanceID string) error {
 	// Check if the monitoring stack is installed.
 	installStatus, err := d.monitoringMgr.InstallationStatus()
@@ -1006,6 +1013,8 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 	return nil
 }
 
+// removeTarget removes the instance from the monitoring stack.
+// If the monitoring stack is not installed or not running, it does nothing.
 func (d *EgnDaemon) removeTarget(instanceID string) error {
 	// Check if the monitoring stack is installed.
 	installStatus, err := d.monitoringMgr.InstallationStatus()

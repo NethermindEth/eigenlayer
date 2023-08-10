@@ -2,6 +2,8 @@ package e2e
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -127,4 +129,9 @@ func prometheusTargets(t *testing.T) (*PrometheusTargetsResponse, error) {
 		return nil, err
 	}
 	return &r, nil
+}
+
+func tempID(url string) string {
+	tempHash := sha256.Sum256([]byte(url))
+	return hex.EncodeToString(tempHash[:])
 }

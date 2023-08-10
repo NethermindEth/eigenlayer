@@ -64,8 +64,8 @@ func checkContainerRunning(t *testing.T, containerNames ...string) {
 	}
 }
 
-// checkPrometheusTargets checks that the prometheus targets are up
-func checkPrometheusTargets(t *testing.T, targets ...string) {
+// checkPrometheusTargetsUp checks that the prometheus targets are up
+func checkPrometheusTargetsUp(t *testing.T, targets ...string) {
 	promTargets, err := prometheusTargets(t)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func checkPrometheusTargets(t *testing.T, targets ...string) {
 	assert.Len(t, promTargets.Data.ActiveTargets, len(targets))
 	// Check success
 	assert.Equal(t, "success", promTargets.Status)
-	// Check node exporter target
+
 	var labels []string
 	for _, target := range promTargets.Data.ActiveTargets {
 		assert.Contains(t, promTargets.Data.ActiveTargets[0].Labels, "instance")
@@ -100,6 +100,28 @@ func checkPrometheusTargets(t *testing.T, targets ...string) {
 			}
 		}
 		assert.Equal(t, "up", promTargets.Data.ActiveTargets[i].Health, "target %s is not up", promTargets.Data.ActiveTargets[i].Labels["instance"])
+	}
+}
+
+// checkPrometheusTargetsDown checks that the prometheus targets are up
+func checkPrometheusTargetsDown(t *testing.T, targets ...string) {
+	promTargets, err := prometheusTargets(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Check prometheus targets
+	// Check number of targets
+	assert.Len(t, promTargets.Data.ActiveTargets, len(targets))
+	// Check success
+	assert.Equal(t, "success", promTargets.Status)
+
+	var labels []string
+	for _, target := range promTargets.Data.ActiveTargets {
+		assert.Contains(t, promTargets.Data.ActiveTargets[0].Labels, "instance")
+		labels = append(labels, target.Labels["instance"])
+	}
+	for _, target := range targets {
+		assert.NotContains(t, labels, target)
 	}
 }
 
@@ -151,4 +173,51 @@ func checkContainerNotExisting(t *testing.T, containerNames ...string) {
 		_, err := dockerClient.ContainerInspect(context.Background(), containerName)
 		assert.Error(t, err)
 	}
+}
+
+// checkInstanceInstalled checks that the instance directory does exist and is not empty
+func checkInstanceInstalled(t *testing.T, instanceId string) {
+	t.Logf("Checking instance directory")
+	// Check nodes folder exists
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does exist and is not empty
+	instancePath := filepath.Join(nodesDir, instanceId)
+	assert.DirExists(t, instancePath)
+	assert.FileExists(t, filepath.Join(instancePath, "docker-compose.yml"))
+	assert.FileExists(t, filepath.Join(instancePath, ".env"))
+	assert.FileExists(t, filepath.Join(instancePath, "profile.yml"))
+	assert.FileExists(t, filepath.Join(instancePath, "state.json"))
+}
+
+// checkInstanceNotInstalled checks that the instance directory does not exist
+func checkInstanceNotInstalled(t *testing.T, instanceId string) {
+	t.Logf("Checking instance directory")
+	// Check nodes folder exists
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does not exist
+	assert.NoDirExists(t, filepath.Join(nodesDir, instanceId))
+}
+
+// checkTemporaryPackageNotExisting checks that the temporary package directory does not exist
+func checkTemporaryPackageNotExisting(t *testing.T, instance string) {
+	t.Logf("Checking temporary package directory")
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDir := filepath.Join(dataDir, "temp")
+	tID := tempID(instance)
+
+	// Check package directory does not exist
+	assert.NoDirExists(t, filepath.Join(tempDir, tID))
 }

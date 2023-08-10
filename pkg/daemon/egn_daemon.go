@@ -376,7 +376,7 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 
 // Install implements Daemon.Install.
 func (d *EgnDaemon) Install(options InstallOptions) (string, error) {
-	instanceId, tempDirID, err := d.install(options)
+	instanceId, tempDirID, err := d.remoteInstall(options)
 	return instanceId, d.postInstallation(instanceId, tempDirID, err)
 }
 
@@ -401,6 +401,7 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	if err != nil {
 		return instanceID, tID, err
 	}
+
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
 	pkgProfiles, err := pkgHandler.Profiles()
@@ -471,75 +472,17 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 			return instanceID, tID, fmt.Errorf("%w: %s", ErrOptionWithoutValue, o.Name())
 		}
 	}
-	// Get Monitoring targets
-	monitoringTargets := make([]data.MonitoringTarget, 0)
-	for _, target := range selectedProfile.Monitoring.Targets {
-		if target.Port == nil {
-			return instanceID, tID, ErrMonitoringTargetPortNotSet
-		}
-		mt := data.MonitoringTarget{
-			Service: target.Service,
-			Port:    strconv.Itoa(*target.Port),
-			Path:    target.Path,
-		}
-		monitoringTargets = append(monitoringTargets, mt)
-	}
-	// Build plugin info
-	var plugin *data.Plugin
-	hasPlugin, err := pkgHandler.HasPlugin()
-	if err != nil {
-		return instanceID, tID, err
-	}
-	if hasPlugin {
-		pkgPlugin, err := pkgHandler.Plugin()
-		if err != nil {
-			return instanceID, tID, err
-		}
-		plugin = &data.Plugin{
-			Image:     pkgPlugin.Image,
-			BuildFrom: pkgPlugin.BuildFrom,
-		}
-	}
 
-	// Build API target info
-	var apiTarget *data.APITarget
-	if selectedProfile.API != nil {
-		apiTarget = &data.APITarget{
-			Service: selectedProfile.API.Service,
-			Port:    strconv.Itoa(selectedProfile.API.Port),
-		}
+	installOptions := InstallOptions{
+		Profile: options.Profile,
+		Tag:     options.Tag,
+		URL:     "http://localhost",
+		Version: "local",
 	}
-
-	// Init instance
-	instance := data.Instance{
-		Name:              options.Name,
-		Profile:           selectedProfile.Name,
-		Version:           "v1.0.0",
-		URL:               "http://localhost",
-		Tag:               options.Tag,
-		MonitoringTargets: data.MonitoringTargets{Targets: monitoringTargets},
-		APITarget:         apiTarget,
-		Plugin:            plugin,
-	}
-	if err = d.dataDir.InitInstance(&instance); err != nil {
-		return instanceID, tID, err
-	}
-	if err = instance.Setup(env, pkgHandler.ProfilePath(instance.Profile)); err != nil {
-		return instanceID, tID, err
-	}
-
-	// Create containers
-	if err = d.dockerCompose.Create(compose.DockerComposeCreateOptions{
-		Path:  instance.ComposePath(),
-		Build: true,
-	}); err != nil {
-		return instanceID, tID, err
-	}
-
-	return instanceID, tID, nil
+	return d.install(options.Name, instanceID, tID, pkgHandler, selectedProfile, env, installOptions)
 }
 
-func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
+func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error) {
 	// Get temp folder ID
 	tID := tempID(options.URL)
 	tempPath, err := d.dataDir.TempPath(tID)
@@ -549,12 +492,12 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 
 	instanceName, err := instanceNameFromURL(options.URL)
 	if err != nil {
-		return "", tID, err
+		return instanceName, tID, err
 	}
-	instanceId := data.InstanceId(instanceName, options.Tag)
+	instanceID := data.InstanceId(instanceName, options.Tag)
 
-	if d.dataDir.HasInstance(instanceId) {
-		return "", tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceId)
+	if d.dataDir.HasInstance(instanceID) {
+		return instanceID, tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
 	}
 
 	// Init package handler from temp path
@@ -562,23 +505,23 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	if options.Version != "" {
 		// Check if selected version is valid
 		if err := pkgHandler.HasVersion(options.Version); err != nil {
-			return "", tID, err
+			return instanceID, tID, err
 		}
 		if err = pkgHandler.CheckoutVersion(options.Version); err != nil {
-			return "", tID, err
+			return instanceID, tID, err
 		}
 	} else if options.Commit != "" {
 		err := pkgHandler.CheckoutCommit(options.Commit)
 		if err != nil {
-			return "", tID, err
+			return instanceID, tID, err
 		}
 	} else {
-		return "", tID, fmt.Errorf("%w: %s", ErrVersionOrCommitNotSet, options.URL)
+		return instanceID, tID, fmt.Errorf("%w: %s", ErrVersionOrCommitNotSet, options.URL)
 	}
 
 	pkgProfiles, err := pkgHandler.Profiles()
 	if err != nil {
-		return "", tID, err
+		return instanceID, tID, err
 	}
 	var selectedProfile *package_handler.Profile
 	// Check if selected profile is valid
@@ -589,7 +532,7 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		}
 	}
 	if selectedProfile == nil {
-		return "", tID, fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
+		return instanceID, tID, fmt.Errorf("%w: %s", ErrProfileDoesNotExist, options.Profile)
 	}
 
 	// Build environment variables
@@ -597,6 +540,17 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	for _, o := range options.Options {
 		env[o.Target()] = o.Value()
 	}
+
+	return d.install(instanceName, instanceID, tID, pkgHandler, selectedProfile, env, options)
+}
+
+func (d *EgnDaemon) install(
+	instanceName, instanceID, tID string,
+	pkgHandler *package_handler.PackageHandler,
+	selectedProfile *package_handler.Profile,
+	env map[string]string,
+	options InstallOptions,
+) (string, string, error) {
 	// Get monitoring targets
 	monitoringTargets := make([]data.MonitoringTarget, 0)
 	for _, target := range selectedProfile.Monitoring.Targets {
@@ -615,12 +569,12 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 	var plugin *data.Plugin
 	hasPlugin, err := pkgHandler.HasPlugin()
 	if err != nil {
-		return "", tID, err
+		return instanceID, tID, err
 	}
 	if hasPlugin {
 		pkgPlugin, err := pkgHandler.Plugin()
 		if err != nil {
-			return "", tID, err
+			return instanceID, tID, err
 		}
 		plugin = &data.Plugin{
 			Image:     pkgPlugin.Image,
@@ -650,11 +604,11 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		Plugin:            plugin,
 	}
 	if err = d.dataDir.InitInstance(&instance); err != nil {
-		return instanceId, tID, err
+		return instanceID, tID, err
 	}
 
 	if err = instance.Setup(env, pkgHandler.ProfilePath(instance.Profile)); err != nil {
-		return instanceId, tID, err
+		return instanceID, tID, err
 	}
 
 	// Create containers
@@ -663,10 +617,10 @@ func (d *EgnDaemon) install(options InstallOptions) (string, string, error) {
 		Path:  instance.ComposePath(),
 		Build: true,
 	}); err != nil {
-		return instanceId, tID, err
+		return instanceID, tID, err
 	}
 
-	return instanceId, tID, nil
+	return instanceID, tID, nil
 }
 
 func (d *EgnDaemon) postInstallation(instanceId string, tempDirID string, installErr error) error {

@@ -162,7 +162,7 @@ func TestMonitoring_Restart(t *testing.T) {
 			waitForMonitoring()
 
 			checkGrafanaHealth(t)
-			checkPrometheusTargets(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080")
+			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080")
 			checkContainerRunning(t, "main-service-1")
 			checkContainerRunning(t, "main-service-2")
 		},

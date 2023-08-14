@@ -45,8 +45,7 @@ properties:
           type: string
         type:
           type: string
-        default:
-          type: string
+        default: {}
         help:
           type: string
         validate:
@@ -68,11 +67,11 @@ properties:
               type: array
               items:
                 type: string
+          additionalProperties: false
       required:
       - name
       - target
       - type
-      - default
       - help
       additionalProperties: false
   monitoring:
@@ -94,7 +93,11 @@ properties:
           required:
           - service
           - path
+          - port
           additionalProperties: false
+    required:
+      - targets
+    additionalProperties: false
   api:
     type: object
     properties:
@@ -102,11 +105,12 @@ properties:
         type: string
       port:
         type: integer
+        minumum: 1
+        maximum: 65535
     required:
     - service
     - port
     additionalProperties: false
 required:
-- name
-- options
+  - monitoring
 additionalProperties: false

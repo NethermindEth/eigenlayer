@@ -36,40 +36,11 @@ properties:
         type: string
       build_from:
         type: string
-    required:
-    - image
-    - build_from
     additionalProperties: false
   profiles:
     type: array
     items:
-      type: object
-      properties:
-        name:
-          type: string
-        from_profile:
-          type: object
-          properties:
-            compose:
-              type: string
-            env:
-              type: string
-            dashboards:
-              type: string
-            panels:
-              type: string
-            alerts:
-              type: string
-          required:
-          - compose
-          - env
-          - dashboards
-          - panels
-          - alerts
-          additionalProperties: false
-      required:
-      - name
-      additionalProperties: false
+      type: string
 required:
 - version
 - node_version

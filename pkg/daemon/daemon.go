@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"io"
 )
 
@@ -188,4 +189,8 @@ type HardwareRequirements struct {
 	MinRAM                      int
 	MinFreeSpace                int
 	StopIfRequirementsAreNotMet bool
+}
+
+func (h HardwareRequirements) String() string {
+	return fmt.Sprintf("CPU: %d Cores, RAM: %d Mb, Disk Space: %d Mb", h.MinCPUCores, h.MinRAM, h.MinFreeSpace)
 }

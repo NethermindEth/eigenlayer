@@ -11,4 +11,4 @@ plugin:
   image: "your-organization/plugin-service:latest"
   build_from: "https://github.com/NethermindEth/mock-avs#main:plugin"
 profiles:
-  - name: "profile1"
+  - "profile1"

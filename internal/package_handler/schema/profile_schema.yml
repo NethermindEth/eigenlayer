@@ -45,7 +45,7 @@ properties:
           type: string
         type:
           type: string
-        default: {}
+        default: {} #TODO: Add minimun_count = 1
         help:
           type: string
         validate:

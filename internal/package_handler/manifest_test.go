@@ -4,11 +4,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 )
 
 func TestManifestValidate(t *testing.T) {
@@ -45,7 +46,7 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Missing Fields Manifest in profile",
 			filePath:  "missing-fields-profile/pkg/manifest.yml",
-			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade: invalid profiles: Profile #1 is invalid -> missing fields: name",
+			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade: invalid profiles",
 		},
 	}
 	for _, tt := range tests {

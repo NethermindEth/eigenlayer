@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 )
 
 // Manifest represents the manifest file of a package
@@ -16,7 +15,7 @@ type Manifest struct {
 	Upgrade              string               `yaml:"upgrade"`
 	HardwareRequirements hardwareRequirements `yaml:"hardware_requirements"`
 	Plugin               *Plugin              `yaml:"plugin"`
-	Profiles             []profileDefinition  `yaml:"profiles"`
+	Profiles             []string             `yaml:"profiles"`
 }
 
 func (m *Manifest) validate() error {
@@ -46,10 +45,10 @@ func (m *Manifest) validate() error {
 
 	profileErr := errors.New("invalid profiles")
 	invalidProfiles := false
-	for i, profile := range m.Profiles {
-		if err := profile.validate(i); err != nil {
+	for _, profile := range m.Profiles {
+		if profile == "" {
 			invalidProfiles = true
-			profileErr = fmt.Errorf("%w: %w", profileErr, err)
+			break
 		}
 	}
 
@@ -128,32 +127,4 @@ func (p *Plugin) validate() error {
 		}
 	}
 	return nil
-}
-
-type profileDefinition struct {
-	Name        string      `yaml:"name"`
-	FromProfile fromProfile `yaml:"from_profile"`
-}
-
-func (p *profileDefinition) validate(i int) error {
-	var missingFields []string
-	if p.Name == "" {
-		missingFields = append(missingFields, "name")
-	}
-
-	if len(missingFields) > 0 {
-		return InvalidConfError{
-			message:       "Profile #" + strconv.Itoa(i+1) + " is invalid",
-			missingFields: missingFields,
-		}
-	}
-	return nil
-}
-
-type fromProfile struct {
-	Compose    string `yaml:"compose"`
-	Env        string `yaml:"env"`
-	Dashboards string `yaml:"dashboards"`
-	Panels     string `yaml:"panels"`
-	Alerts     string `yaml:"alerts"`
 }

@@ -3,5 +3,5 @@ node_version: "v0.1.0"
 name: sample-avs
 upgrade: required
 profiles:
-  - name: "profile1"
-  - name: "profile2"
+  - "profile1"
+  - "profile2"

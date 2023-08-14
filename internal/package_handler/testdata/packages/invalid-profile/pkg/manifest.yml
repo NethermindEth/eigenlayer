@@ -9,6 +9,6 @@ hardware_requirements:
   stop_if_requirements_are_not_met: true
 plugin: 
   image: "your-organization/plugin-service:latest"
-  git:   "https://github.com/NethermindEth/el-node-spec.git"
+  build_from:   "https://github.com/NethermindEth/el-node-spec.git"
 profiles:
-  - name: "invalid-profile"
+  - "invalid-profile"

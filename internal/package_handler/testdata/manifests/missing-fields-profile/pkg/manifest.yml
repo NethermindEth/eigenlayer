@@ -6,5 +6,4 @@ hardware_requirements:
 plugin: 
   image: "your-organization/plugin-service:latest"
 profiles:
-  - from_profile:
-      compose: profile1
+  - ""

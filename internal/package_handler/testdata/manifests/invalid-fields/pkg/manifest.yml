@@ -6,8 +6,9 @@ hardware_requirements:
   min_cpu_cores: -1
   min_ram: -1
   min_free_space: -1
+  stop_if_requirements_are_not_met: false
 plugin:
   image: "http://your-organization/plugin-service"
   build_from: "github.com NethermindEth/el-node-spec"
 profiles:
-  - name: "profile1"
+  - "profile1"

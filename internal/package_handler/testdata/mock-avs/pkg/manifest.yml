@@ -5,4 +5,4 @@ upgrade: recommended
 # TODO: add hardware requirements
 # TODO: add plugin
 profiles:
-  - name: sepolia
+  - "sepolia"

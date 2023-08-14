@@ -15,6 +15,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -27,18 +33,157 @@ import (
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
 	"github.com/docker/docker/client"
-	"github.com/golang/mock/gomock"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	MockAVSLatestVersion = "v3.1.1"
-	MockAVSRepo          = "https://github.com/NethermindEth/mock-avs"
+	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs"
+	MockAVSLatestVersion       = "v4.0.0"
+	MockAVSLatestVersionCommit = "f9a1cbe784c9aa72c1da46aa86c7f910908b1969"
 )
+
+var MockAVSLatestOptions = map[string][]Option{
+	"option-returner": {
+		&OptionID{
+			option: option{
+				name:   "main-container-name",
+				target: "MAIN_SERVICE_NAME",
+				help:   "Main service container name",
+			},
+			defValue: "option-returner",
+		},
+		&OptionPort{
+			option: option{
+				name:   "main-port",
+				target: "MAIN_PORT",
+				help:   "Main service server port",
+			},
+			defValue: 8080,
+		},
+		&OptionString{
+			option: option{
+				name:   "network-name",
+				target: "NETWORK_NAME",
+				help:   "Docker network name",
+			},
+			defValue: "eigenlayer",
+			validate: true,
+			Re2Regex: "^eigen.*",
+		},
+		&OptionInt{
+			option: option{
+				name:   "test-option-int",
+				target: "TEST_OPTION_INT",
+				help:   "Test option int",
+			},
+			defValue: 666,
+			validate: true,
+			MinValue: 0,
+			MaxValue: 1000,
+		},
+		&OptionFloat{
+			option: option{
+				name:   "test-option-float",
+				target: "TEST_OPTION_FLOAT",
+				help:   "Test option float",
+			},
+			defValue: 666.666,
+			validate: true,
+			MinValue: 0.0,
+			MaxValue: 1000.0,
+		},
+		&OptionBool{
+			option: option{
+				name:   "test-option-bool",
+				target: "TEST_OPTION_BOOL",
+				help:   "Test option bool",
+			},
+			defValue: true,
+		},
+		&OptionPathDir{
+			option: option{
+				name:   "test-option-path-dir",
+				target: "TEST_OPTION_PATH_DIR",
+				help:   "Test option path dir",
+			},
+			defValue: "/tmp",
+		},
+		&OptionPathFile{
+			option: option{
+				name:   "test-option-path-file",
+				target: "TEST_OPTION_PATH_FILE",
+				help:   "Test option path file",
+			},
+			defValue: "/tmp/test.txt",
+			validate: true,
+			Format:   ".txt",
+		},
+		&OptionURI{
+			option: option{
+				name:   "test-option-uri",
+				target: "TEST_OPTION_URI",
+				help:   "Test option uri",
+			},
+			defValue: "https://www.google.com",
+			validate: true,
+			UriScheme: []string{
+				"https",
+			},
+		},
+		&OptionSelect{
+			option: option{
+				name:   "test-option-enum",
+				target: "TEST_OPTION_ENUM",
+				help:   "Test option enum",
+			},
+			defValue: "option1",
+			validate: true,
+			Options: []string{
+				"option1",
+				"option2",
+				"option3",
+			},
+		},
+	},
+	"health-checker": {
+		&OptionID{
+			option: option{
+				name:   "main-container-name",
+				target: "MAIN_SERVICE_NAME",
+				help:   "Main service container name",
+			},
+			defValue: "health-checker",
+		},
+		&OptionPort{
+			option: option{
+				name:   "main-port",
+				target: "MAIN_PORT",
+				help:   "Main service server port",
+			},
+			defValue: 8090,
+		},
+		&OptionString{
+			option: option{
+				name:   "network-name",
+				target: "NETWORK_NAME",
+				help:   "Docker network name",
+			},
+			defValue: "eigenlayer",
+			validate: true,
+			Re2Regex: "^eigen.*",
+		},
+	},
+	"high-requirements": {
+		&OptionPort{
+			option: option{
+				name:   "main-port",
+				target: "MAIN_PORT",
+				help:   "Main service server port",
+			},
+			defValue: 8070,
+		},
+	},
+}
 
 func TestInitMonitoring(t *testing.T) {
 	// Silence logger
@@ -347,289 +492,6 @@ func TestCleanMonitoring(t *testing.T) {
 func TestPull(t *testing.T) {
 	afs := afero.NewOsFs()
 
-	pullResult302 := PullResult{
-		Version: "v3.0.2",
-		Commit:  "e085e252383ff380d1c71bef6263d37622aa86e8",
-		Options: map[string][]Option{
-			"option-returner": {
-				&OptionID{
-					option: option{
-						name:   "main-container-name",
-						target: "MAIN_SERVICE_NAME",
-						help:   "Main service container name",
-					},
-					defValue: "option-returner",
-				},
-				&OptionPort{
-					option: option{
-						name:   "main-port",
-						target: "MAIN_PORT",
-						help:   "Main service server port",
-					},
-					defValue: 8080,
-				},
-				&OptionString{
-					option: option{
-						name:   "network-name",
-						target: "NETWORK_NAME",
-						help:   "Docker network name",
-					},
-					defValue: "eigenlayer",
-					validate: true,
-					Re2Regex: "^eigen.*",
-				},
-				&OptionInt{
-					option: option{
-						name:   "test-option-int",
-						target: "TEST_OPTION_INT",
-						help:   "Test option int",
-					},
-					defValue: 666,
-					validate: true,
-					MinValue: 0,
-					MaxValue: 1000,
-				},
-				&OptionFloat{
-					option: option{
-						name:   "test-option-float",
-						target: "TEST_OPTION_FLOAT",
-						help:   "Test option float",
-					},
-					defValue: 666.666,
-					validate: true,
-					MinValue: 0.0,
-					MaxValue: 1000.0,
-				},
-				&OptionBool{
-					option: option{
-						name:   "test-option-bool",
-						target: "TEST_OPTION_BOOL",
-						help:   "Test option bool",
-					},
-					defValue: true,
-				},
-				&OptionPathDir{
-					option: option{
-						name:   "test-option-path-dir",
-						target: "TEST_OPTION_PATH_DIR",
-						help:   "Test option path dir",
-					},
-					defValue: "/tmp",
-				},
-				&OptionPathFile{
-					option: option{
-						name:   "test-option-path-file",
-						target: "TEST_OPTION_PATH_FILE",
-						help:   "Test option path file",
-					},
-					defValue: "/tmp/test.txt",
-					validate: true,
-					Format:   ".txt",
-				},
-				&OptionURI{
-					option: option{
-						name:   "test-option-uri",
-						target: "TEST_OPTION_URI",
-						help:   "Test option uri",
-					},
-					defValue: "https://www.google.com",
-					validate: true,
-					UriScheme: []string{
-						"https",
-					},
-				},
-				&OptionSelect{
-					option: option{
-						name:   "test-option-enum",
-						target: "TEST_OPTION_ENUM",
-						help:   "Test option enum",
-					},
-					defValue: "option1",
-					validate: true,
-					Options: []string{
-						"option1",
-						"option2",
-						"option3",
-					},
-				},
-			},
-			"health-checker": {
-				&OptionID{
-					option: option{
-						name:   "main-container-name",
-						target: "MAIN_SERVICE_NAME",
-						help:   "Main service container name",
-					},
-					defValue: "health-checker",
-				},
-				&OptionPort{
-					option: option{
-						name:   "main-port",
-						target: "MAIN_PORT",
-						help:   "Main service server port",
-					},
-					defValue: 8090,
-				},
-				&OptionString{
-					option: option{
-						name:   "network-name",
-						target: "NETWORK_NAME",
-						help:   "Docker network name",
-					},
-					defValue: "eigenlayer",
-					validate: true,
-					Re2Regex: "^eigen.*",
-				},
-			},
-		},
-	}
-
-	pullResultV311_commit := PullResult{
-		Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-		Options: map[string][]Option{
-			"option-returner": {
-				&OptionID{
-					option: option{
-						name:   "main-container-name",
-						target: "MAIN_SERVICE_NAME",
-						help:   "Main service container name",
-					},
-					defValue: "option-returner",
-				},
-				&OptionPort{
-					option: option{
-						name:   "main-port",
-						target: "MAIN_PORT",
-						help:   "Main service server port",
-					},
-					defValue: 8080,
-				},
-				&OptionString{
-					option: option{
-						name:   "network-name",
-						target: "NETWORK_NAME",
-						help:   "Docker network name",
-					},
-					defValue: "eigenlayer",
-					validate: true,
-					Re2Regex: "^eigen.*",
-				},
-				&OptionInt{
-					option: option{
-						name:   "test-option-int",
-						target: "TEST_OPTION_INT",
-						help:   "Test option int",
-					},
-					defValue: 666,
-					validate: true,
-					MinValue: 0,
-					MaxValue: 1000,
-				},
-				&OptionFloat{
-					option: option{
-						name:   "test-option-float",
-						target: "TEST_OPTION_FLOAT",
-						help:   "Test option float",
-					},
-					defValue: 666.666,
-					validate: true,
-					MinValue: 0.0,
-					MaxValue: 1000.0,
-				},
-				&OptionBool{
-					option: option{
-						name:   "test-option-bool",
-						target: "TEST_OPTION_BOOL",
-						help:   "Test option bool",
-					},
-					defValue: true,
-				},
-				&OptionPathDir{
-					option: option{
-						name:   "test-option-path-dir",
-						target: "TEST_OPTION_PATH_DIR",
-						help:   "Test option path dir",
-					},
-					defValue: "/tmp",
-				},
-				&OptionPathFile{
-					option: option{
-						name:   "test-option-path-file",
-						target: "TEST_OPTION_PATH_FILE",
-						help:   "Test option path file",
-					},
-					defValue: "/tmp/test.txt",
-					validate: true,
-					Format:   ".txt",
-				},
-				&OptionURI{
-					option: option{
-						name:   "test-option-uri",
-						target: "TEST_OPTION_URI",
-						help:   "Test option uri",
-					},
-					defValue: "https://www.google.com",
-					validate: true,
-					UriScheme: []string{
-						"https",
-					},
-				},
-				&OptionSelect{
-					option: option{
-						name:   "test-option-enum",
-						target: "TEST_OPTION_ENUM",
-						help:   "Test option enum",
-					},
-					defValue: "option1",
-					validate: true,
-					Options: []string{
-						"option1",
-						"option2",
-						"option3",
-					},
-				},
-			},
-			"health-checker": {
-				&OptionID{
-					option: option{
-						name:   "main-container-name",
-						target: "MAIN_SERVICE_NAME",
-						help:   "Main service container name",
-					},
-					defValue: "health-checker",
-				},
-				&OptionPort{
-					option: option{
-						name:   "main-port",
-						target: "MAIN_PORT",
-						help:   "Main service server port",
-					},
-					defValue: 8090,
-				},
-				&OptionString{
-					option: option{
-						name:   "network-name",
-						target: "NETWORK_NAME",
-						help:   "Docker network name",
-					},
-					defValue: "eigenlayer",
-					validate: true,
-					Re2Regex: "^eigen.*",
-				},
-			},
-			"high-requirements": {
-				&OptionPort{
-					option: option{
-						name:   "main-port",
-						target: "MAIN_PORT",
-						help:   "Main service server port",
-					},
-					defValue: 8070,
-				},
-			},
-		},
-	}
-
 	tests := []struct {
 		name    string
 		url     string
@@ -642,8 +504,12 @@ func TestPull(t *testing.T) {
 		{
 			name: "pull -> success",
 			url:  MockAVSRepo,
-			want: pullResult302,
-			ref:  PullTarget{Version: "v3.0.2"},
+			want: PullResult{
+				Version: MockAVSLatestVersion,
+				Commit:  MockAVSLatestVersionCommit,
+				Options: MockAVSLatestOptions,
+			},
+			ref: PullTarget{Version: MockAVSLatestVersion},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -655,8 +521,12 @@ func TestPull(t *testing.T) {
 		{
 			name: "pull -> success, fixed version",
 			url:  MockAVSRepo,
-			ref:  PullTarget{Version: "v3.0.2"},
-			want: pullResult302,
+			ref:  PullTarget{Version: MockAVSLatestVersion},
+			want: PullResult{
+				Version: MockAVSLatestVersion,
+				Commit:  MockAVSLatestVersionCommit,
+				Options: MockAVSLatestOptions,
+			},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -669,8 +539,12 @@ func TestPull(t *testing.T) {
 			name:  "pull -> success, force",
 			url:   MockAVSRepo,
 			force: true,
-			want:  pullResult302,
-			ref:   PullTarget{Version: "v3.0.2"},
+			want: PullResult{
+				Version: MockAVSLatestVersion,
+				Commit:  MockAVSLatestVersionCommit,
+				Options: MockAVSLatestOptions,
+			},
+			ref: PullTarget{Version: MockAVSLatestVersion},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -684,8 +558,11 @@ func TestPull(t *testing.T) {
 			name:  "pull -> success, fixed commit hash",
 			url:   MockAVSRepo,
 			force: true,
-			want:  pullResultV311_commit,
-			ref:   PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"},
+			want: PullResult{
+				Commit:  MockAVSLatestVersionCommit,
+				Options: MockAVSLatestOptions,
+			},
+			ref: PullTarget{Commit: MockAVSLatestVersionCommit},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)

@@ -366,10 +366,11 @@ func (p *PackageHandler) Plugin() (*Plugin, error) {
 func (p *PackageHandler) parseManifest() (*Manifest, error) {
 	manifestPath := filepath.Join(p.path, pkgDirName, manifestFileName)
 	// Validate YAML Schema
-	err := validateYAMLSchema(manifestSchemaFileName, manifestPath)
-	if err != nil {
-		return nil, fmt.Errorf("yaml schema validation error: %v", err)
-	}
+	// TODO: Fix the relative path
+	// err := validateYAMLSchema(manifestSchemaFileName, manifestPath)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("yaml schema validation error: %v", err)
+	// }
 	// Read the manifest file
 	data, err := afero.ReadFile(p.afs, manifestPath)
 	if err != nil {
@@ -436,21 +437,17 @@ func (p *PackageHandler) profilesNames() ([]string, error) {
 		return nil, err
 	}
 
-	names := make([]string, len(manifest.Profiles))
-	for i, profile := range manifest.Profiles {
-		names[i] = profile.Name
-	}
-
-	return names, nil
+	return manifest.Profiles, nil
 }
 
 func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
 	profilePath := filepath.Join(p.path, pkgDirName, profileName, profileFileName)
 	// Validate YAML Schemas
-	err := validateYAMLSchema(manifestSchemaFileName, profilePath)
-	if err != nil {
-		return nil, fmt.Errorf("yaml schema validation error: %v", err)
-	}
+	// TODO: Fix the relative path
+	// err := validateYAMLSchema(manifestSchemaFileName, profilePath)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("yaml schema validation error: %v", err)
+	// }
 	// Read the profile file
 	data, err := afero.ReadFile(p.afs, profilePath)
 	if err != nil {

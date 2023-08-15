@@ -133,7 +133,7 @@ func TestNewInstance(t *testing.T) {
 			}
 
 			return testCase{
-				name: "with plugin image",
+				name: "with plugin, remote image",
 				path: testDir,
 				instance: &Instance{
 					Name:    "test_name",
@@ -175,7 +175,7 @@ func TestNewInstance(t *testing.T) {
 			}
 
 			return testCase{
-				name: "with plugin build_from",
+				name: "with plugin, remote context",
 				path: testDir,
 				instance: &Instance{
 					Name:    "test_name",
@@ -191,6 +191,106 @@ func TestNewInstance(t *testing.T) {
 					path: testDir,
 				},
 				err: nil,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
+				"name":"test_name",
+				"url":"https://github.com/NethermindEth/mock-avs",
+				"version":"v3.1.1",
+				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+				"profile":"mainnet",
+				"tag":"test_tag",
+				"plugin":{
+					"type": "%s",
+					"src":"eigen-plugin-mock-avs-default"
+					}
+				}`, PluginTypeLocalContext))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "with plugin, local context",
+				path: testDir,
+				instance: &Instance{
+					Name:    "test_name",
+					Tag:     "test_tag",
+					URL:     "https://github.com/NethermindEth/mock-avs",
+					Version: "v3.1.1",
+					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+					Profile: "mainnet",
+					Plugin: &Plugin{
+						Type: PluginTypeLocalContext,
+						Src:  "eigen-plugin-mock-avs-default",
+					},
+					path: testDir,
+				},
+				err: nil,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, `{
+				"name":"test_name",
+				"url":"https://github.com/NethermindEth/mock-avs",
+				"version":"v3.1.1",
+				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+				"profile":"mainnet",
+				"tag":"test_tag",
+				"plugin":{
+					"type": "unknown-type",
+					"src":"eigen-plugin-mock-avs-default"
+					}
+				}`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "invalid plugin, unknown type",
+				path: testDir,
+				err:  ErrInvalidInstance,
+			}
+		}(),
+		func() testCase {
+			testDir := t.TempDir()
+			stateFile, err := fs.Create(testDir + "/state.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stateFile.Close()
+			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
+				"name":"test_name",
+				"url":"https://github.com/NethermindEth/mock-avs",
+				"version":"v3.1.1",
+				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+				"profile":"mainnet",
+				"tag":"test_tag",
+				"plugin":{
+					"type": "%s",
+					"src":""
+					}
+				}`, PluginTypeLocalContext))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return testCase{
+				name: "invalid plugin, empty src",
+				path: testDir,
+				err:  ErrInvalidInstance,
 			}
 		}(),
 		func() testCase {

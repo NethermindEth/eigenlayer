@@ -18,6 +18,7 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		instanceId     string
 		noDestroyImage bool
 		host           bool
+		buildArgs      map[string]string
 		pluginArgs     []string
 		volumes        []string
 	)
@@ -60,11 +61,19 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var bArgs map[string]*string
+			if buildArgs != nil {
+				bArgs = make(map[string]*string)
+				for k, v := range buildArgs {
+					bArgs[k] = stringPtr(v)
+				}
+			}
 			runPluginOptions := daemon.RunPluginOptions{
 				NoDestroyImage: noDestroyImage,
 				HostNetwork:    host,
 				Volumes:        make(map[string]string),
 				Binds:          make(map[string]string),
+				BuildArgs:      bArgs,
 			}
 			for _, v := range volumes {
 				vSplit := strings.Split(v, ":")
@@ -86,6 +95,11 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 	cmd.Flags().BoolVar(&noDestroyImage, "no-rm-image", false, "Do not remove the plugin image after plugin execution")
 	cmd.Flags().BoolVar(&host, "host", false, "Run the plugin on the host network instead of the AVS network")
 	cmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Bind mount a volume. Format: <volume_name>:<path> or <path>:<path>. Can be specified multiple times")
+	cmd.Flags().StringToStringVar(&buildArgs, "build-arg", nil, "arguments to pass to the plugin image build")
 	cmd.Flags().SetInterspersed(false)
 	return &cmd
+}
+
+func stringPtr(s string) *string {
+	return &s
 }

@@ -7,9 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/docker/docker/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // checkMonitoringStackDir checks that the monitoring stack directory exists and contains the docker-compose file
@@ -220,4 +222,26 @@ func checkTemporaryPackageNotExisting(t *testing.T, instance string) {
 
 	// Check package directory does not exist
 	assert.NoDirExists(t, filepath.Join(tempDir, tID))
+}
+
+func getInstance(t *testing.T, instanceId string) data.Instance {
+	t.Logf("Getting instance state")
+
+	// Check nodes folder exists
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does exist and is not empty
+	instancePath := filepath.Join(nodesDir, instanceId)
+	assert.DirExists(t, instancePath)
+	stateFilePath := filepath.Join(instancePath, "state.json")
+	assert.FileExists(t, filepath.Join(stateFilePath))
+
+	// Get instance state
+	instance, err := readState(stateFilePath)
+	require.NoError(t, err)
+	return instance
 }

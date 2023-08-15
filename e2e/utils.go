@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
 
@@ -93,6 +95,36 @@ func getContainerIDByName(containerName string) (string, error) {
 	}
 
 	return container.ID, nil
+}
+
+func getNetworkIDByName(networkName string) (string, error) {
+	// Docker client
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return "", err
+	}
+	defer dockerClient.Close()
+
+	network, err := dockerClient.NetworkInspect(context.Background(), networkName, types.NetworkInspectOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return network.ID, nil
+}
+
+func readState(stateFilePath string) (data.Instance, error) {
+	stateFile, err := os.Open(stateFilePath)
+	if err != nil {
+		return data.Instance{}, err
+	}
+	defer stateFile.Close()
+	var state data.Instance
+	err = json.NewDecoder(stateFile).Decode(&state)
+	if err != nil {
+		return data.Instance{}, err
+	}
+	return state, nil
 }
 
 type Target struct {

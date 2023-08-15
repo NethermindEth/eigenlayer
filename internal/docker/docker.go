@@ -333,10 +333,11 @@ func (d *DockerManager) NetworkDisconnect(container, network string) error {
 }
 
 // BuildFromURL build an image from a Git repository URI or HTTP/HTTPS context URI.
-func (d *DockerManager) BuildFromURI(remote string, tag string) (err error) {
+func (d *DockerManager) BuildImageFromURI(remote string, tag string, buildArgs map[string]*string) (err error) {
 	log.Debugf("Building image from %s", remote)
 	buildResult, err := d.dockerClient.ImageBuild(context.Background(), nil, types.ImageBuildOptions{
 		RemoteContext: remote,
+		BuildArgs:     buildArgs,
 		Tags:          []string{tag},
 		Remove:        true,
 		ForceRemove:   true,
@@ -364,10 +365,11 @@ func (d *DockerManager) LoadImageContext(path string) (io.ReadCloser, error) {
 }
 
 // BuildFromLocalPath build a docker image from a local path.
-func (d *DockerManager) BuildImageFromContext(ctx io.ReadCloser, tag string) (err error) {
+func (d *DockerManager) BuildImageFromContext(ctx io.ReadCloser, tag string, buildArgs map[string]*string) (err error) {
 	log.Debugf("Building image from context")
 	// Build plugin image
 	buildResult, err := d.dockerClient.ImageBuild(context.Background(), ctx, types.ImageBuildOptions{
+		BuildArgs:   buildArgs,
 		Tags:        []string{tag},
 		Remove:      true,
 		ForceRemove: true,

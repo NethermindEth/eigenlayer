@@ -2615,6 +2615,54 @@ func TestRunPlugin(t *testing.T) {
 			},
 		},
 		{
+			name:       `run plugin from remote context`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "v3.0.3",
+					"profile": "option-returner",
+					"url": "https://github.com/NethermindEth/mock-avs",
+					"plugin": {
+						"type": "%s",
+						"src": "https://github.com/NethermindEth/mock-avs.git#main:plugin"
+					}
+				}`, data.PluginTypeRemoteContext))
+				gomock.InOrder(
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return(`[{"ID":"abc123"}]`, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().BuildImageFromURI("https://github.com/NethermindEth/mock-avs.git#main:plugin", "eigen-plugin-mock-avs-default", nil),
+					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+						{
+							Type:   docker.VolumeTypeBind,
+							Source: "/tmp",
+							Target: "/tmp",
+						},
+						{
+							Type:   docker.VolumeTypeVolume,
+							Source: "volume1",
+							Target: "/tmp/volume1",
+						},
+					}),
+					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
+				)
+			},
+		},
+		{
 			name:       `run plugin with local context`,
 			instanceId: "mock-avs-default",
 			args:       []string{"arg1", "arg2"},

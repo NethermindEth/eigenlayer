@@ -18,6 +18,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/docker"
 	mock_locker "github.com/NethermindEth/eigenlayer/internal/locker/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
@@ -2545,6 +2546,10 @@ func TestNodeLogs(t *testing.T) {
 
 func TestRunPlugin(t *testing.T) {
 	afs := afero.NewOsFs()
+	buildArgs := map[string]*string{
+		"agr1": utils.StringPtr("value1"),
+		"arg2": utils.StringPtr("value2"),
+	}
 	type mockerData struct {
 		dataDir           *data.DataDir
 		fs                afero.Fs
@@ -2620,6 +2625,7 @@ func TestRunPlugin(t *testing.T) {
 				Volumes: map[string]string{
 					"volume1": "/tmp/volume1",
 				},
+				BuildArgs: buildArgs,
 			},
 			mocker: func(t *testing.T, d *mockerData) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
@@ -2645,7 +2651,7 @@ func TestRunPlugin(t *testing.T) {
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().BuildImageFromContext(gomock.Any(), "eigen-plugin-mock-avs-default"),
+					d.dockerManager.EXPECT().BuildImageFromContext(gomock.Any(), "eigen-plugin-mock-avs-default", buildArgs),
 					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,

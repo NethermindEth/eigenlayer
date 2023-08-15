@@ -820,7 +820,7 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		image = instance.Plugin.Src
 	case data.PluginTypeRemoteContext:
 		image = "eigen-plugin-" + instanceId
-		err := d.docker.BuildFromURI(instance.Plugin.Src, image)
+		err := d.docker.BuildImageFromURI(instance.Plugin.Src, image, options.BuildArgs)
 		if err != nil {
 			return err
 		}
@@ -830,7 +830,7 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		if err != nil {
 			return err
 		}
-		err = d.docker.BuildImageFromContext(pluginContext, image)
+		err = d.docker.BuildImageFromContext(pluginContext, image, options.BuildArgs)
 		if err != nil {
 			return err
 		}

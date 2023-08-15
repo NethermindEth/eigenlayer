@@ -8,7 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const mockAVSRepo = "https://github.com/NethermindEth/mock-avs"
+const (
+	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
+	latestMockAVSVersion    = "v3.1.1"
+	latestMockAVSCommitHash = "d1d4bb7009549c431d7b3317f004a56e2c3b2031"
+)
 
 func TestInstall_WithoutArguments(t *testing.T) {
 	// Test context
@@ -46,7 +50,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -71,7 +75,7 @@ func TestInstall_FromCommitHash(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", "d1d4bb7009549c431d7b3317f004a56e2c3b2031", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", latestMockAVSCommitHash, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -102,7 +106,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -134,7 +138,7 @@ func TestInstall_ValidArgumentNotRun(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -157,7 +161,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "https://github.com/NethermindEth/mock-avs")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}
@@ -165,7 +169,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -190,9 +194,9 @@ func TestInstall_MultipleAVS(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "https://github.com/NethermindEth/mock-avs")
-			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "https://github.com/NethermindEth/mock-avs")
-			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--tag", "health-checker", "https://github.com/NethermindEth/mock-avs")
+			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--tag", "health-checker", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -228,11 +232,11 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "https://github.com/NethermindEth/mock-avs")
+			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			time.Sleep(5 * time.Second)
-			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "https://github.com/NethermindEth/mock-avs")
+			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			time.Sleep(5 * time.Second)
-			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--yes", "--tag", "health-checker", "https://github.com/NethermindEth/mock-avs")
+			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--yes", "--tag", "health-checker", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -272,7 +276,7 @@ func TestInstall_HighRequirements(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "high-requirements", "--no-prompt", "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "high-requirements", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Assert
 		func(t *testing.T) {

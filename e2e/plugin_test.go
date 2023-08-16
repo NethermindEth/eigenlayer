@@ -279,6 +279,73 @@ func TestPlugin_LocalInstall_LocalContext_Run(t *testing.T) {
 	e2eTest.run()
 }
 
+func TestPlugin_LocalInstall_LocalContext_Run_InvalidPath(t *testing.T) {
+	// Test context
+	var (
+		testDir      = t.TempDir()
+		pkgDir       = filepath.Join(testDir, "mock-avs")
+		runPluginErr error
+	)
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
+				return err
+			}
+			err := runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			if err != nil {
+				return err
+			}
+			// remove .git folder
+			if err := os.RemoveAll(filepath.Join(pkgDir, ".git")); err != nil {
+				return err
+			}
+			// modify manifest to use local context
+			manifestFile, err := os.OpenFile(filepath.Join(pkgDir, "pkg", "manifest.yml"), os.O_RDWR, 0o755)
+			if err != nil {
+				return err
+			}
+			manifestData, err := io.ReadAll(manifestFile)
+			if err != nil {
+				return err
+			}
+			if err = manifestFile.Close(); err != nil {
+				return err
+			}
+			var manifest package_handler.Manifest
+			if err = yaml.Unmarshal(manifestData, &manifest); err != nil {
+				return err
+			}
+			manifest.Plugin.BuildFrom = "./plugin"
+			manifestData, err = yaml.Marshal(manifest)
+			if err != nil {
+				return err
+			}
+			manifestFile, err = os.OpenFile(filepath.Join(pkgDir, "pkg", "manifest.yml"), os.O_RDWR|os.O_TRUNC, 0o755)
+			if err != nil {
+				return err
+			}
+			if _, err = manifestFile.Write(manifestData); err != nil {
+				return err
+			}
+			if err = manifestFile.Close(); err != nil {
+				return err
+			}
+			return runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run")
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			runPluginErr = runCommand(t, egnPath, "plugin", "mock-avs-default")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runPluginErr, "plugin command should succeed")
+		},
+	)
+	e2eTest.run()
+}
+
 func TestPlugin_LocalInstall_RemoteImage(t *testing.T) {
 	// Test context
 	var (

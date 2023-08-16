@@ -7,3 +7,5 @@ plugin:
   image: "your-organization/plugin-service:latest"
 profiles:
   - ""
+  - "profile 2"
+  - ""

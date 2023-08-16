@@ -45,7 +45,10 @@ func TestPlugin_Install_RemoteContext(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, installErr, "local-install command should succeed")
-			instance := getInstance(t, "mock-avs-default")
+			instanceID := "mock-avs-default"
+			checkInstanceExists(t, instanceID)
+			instance, err := getInstance(t, instanceID)
+			require.NoError(t, err, "getInstance should succeed")
 			assert.NotNil(t, instance.Plugin, "plugin should be installed")
 			assert.Equal(t, instance.Plugin.Type, data.PluginTypeRemoteContext, "plugin type should be ", data.PluginTypeRemoteContext)
 			assert.Equal(t, instance.Plugin.Src, "https://github.com/NethermindEth/mock-avs.git#main:plugin")
@@ -119,7 +122,10 @@ func TestPlugin_Install_LocalContext(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, installErr, "local-install command should succeed")
-			instance := getInstance(t, "mock-avs-default")
+			instanceID := "mock-avs-default"
+			checkInstanceExists(t, instanceID)
+			instance, err := getInstance(t, instanceID)
+			require.NoError(t, err, "getInstance should succeed")
 			assert.NotNil(t, instance.Plugin, "plugin should be installed")
 			assert.Equal(t, instance.Plugin.Type, data.PluginTypeLocalContext, "plugin type should be ", data.PluginTypeLocalContext)
 			assert.Equal(t, instance.Plugin.Src, "mock-avs-default")
@@ -189,7 +195,10 @@ func TestPlugin_Install_RemoteImage(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, installErr, "local-install command should succeed")
-			instance := getInstance(t, "mock-avs-default")
+			instanceID := "mock-avs-default"
+			checkInstanceExists(t, instanceID)
+			instance, err := getInstance(t, instanceID)
+			require.NoError(t, err, "getInstance should succeed")
 			assert.NotNil(t, instance.Plugin, "plugin should be installed")
 			assert.Equal(t, instance.Plugin.Type, data.PluginTypeRemoteImage, "plugin type should be ", data.PluginTypeRemoteImage)
 			assert.Equal(t, instance.Plugin.Src, "busybox:1.36")

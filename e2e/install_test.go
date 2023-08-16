@@ -10,8 +10,8 @@ import (
 
 const (
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
-	latestMockAVSVersion    = "v3.1.1"
-	latestMockAVSCommitHash = "d1d4bb7009549c431d7b3317f004a56e2c3b2031"
+	latestMockAVSVersion    = "v4.0.0"
+	latestMockAVSCommitHash = "f9a1cbe784c9aa72c1da46aa86c7f910908b1969"
 )
 
 func TestInstall_WithoutArguments(t *testing.T) {
@@ -75,7 +75,7 @@ func TestInstall_FromCommitHash(t *testing.T) {
 		nil,
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", latestMockAVSCommitHash, "https://github.com/NethermindEth/mock-avs")
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", latestMockAVSCommitHash, mockAVSRepo)
 		},
 		// Assert
 		func(t *testing.T) {

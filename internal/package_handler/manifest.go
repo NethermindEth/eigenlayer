@@ -45,10 +45,10 @@ func (m *Manifest) validate() error {
 
 	profileErr := errors.New("invalid profiles")
 	invalidProfiles := false
-	for _, profile := range m.Profiles {
+	for i, profile := range m.Profiles {
 		if profile == "" {
 			invalidProfiles = true
-			break
+			profileErr = fmt.Errorf("%w: profile %d", profileErr, i)
 		}
 	}
 

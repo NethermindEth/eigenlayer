@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/docker/docker/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
@@ -224,8 +223,8 @@ func checkTemporaryPackageNotExisting(t *testing.T, instance string) {
 	assert.NoDirExists(t, filepath.Join(tempDir, tID))
 }
 
-func getInstance(t *testing.T, instanceId string) data.Instance {
-	t.Logf("Getting instance state")
+func checkInstanceExists(t *testing.T, instanceID string) {
+	t.Logf("Checking instance %s exists", instanceID)
 
 	// Check nodes folder exists
 	dataDir, err := dataDirPath()
@@ -235,13 +234,8 @@ func getInstance(t *testing.T, instanceId string) data.Instance {
 	nodesDir := filepath.Join(dataDir, "nodes")
 
 	// Check instance directory does exist and is not empty
-	instancePath := filepath.Join(nodesDir, instanceId)
-	assert.DirExists(t, instancePath)
+	instancePath := filepath.Join(nodesDir, instanceID)
+	require.DirExists(t, instancePath)
 	stateFilePath := filepath.Join(instancePath, "state.json")
-	assert.FileExists(t, filepath.Join(stateFilePath))
-
-	// Get instance state
-	instance, err := readState(stateFilePath)
-	require.NoError(t, err)
-	return instance
+	require.FileExists(t, filepath.Join(stateFilePath))
 }

@@ -113,18 +113,18 @@ func getNetworkIDByName(networkName string) (string, error) {
 	return network.ID, nil
 }
 
-func readState(stateFilePath string) (data.Instance, error) {
+func readState(stateFilePath string) (*data.Instance, error) {
 	stateFile, err := os.Open(stateFilePath)
 	if err != nil {
-		return data.Instance{}, err
+		return nil, err
 	}
 	defer stateFile.Close()
 	var state data.Instance
 	err = json.NewDecoder(stateFile).Decode(&state)
 	if err != nil {
-		return data.Instance{}, err
+		return nil, err
 	}
-	return state, nil
+	return &state, nil
 }
 
 type Target struct {
@@ -166,4 +166,16 @@ func prometheusTargets(t *testing.T) (*PrometheusTargetsResponse, error) {
 func tempID(url string) string {
 	tempHash := sha256.Sum256([]byte(url))
 	return hex.EncodeToString(tempHash[:])
+}
+
+func getInstance(t *testing.T, instanceID string) (*data.Instance, error) {
+	dataDir, err := dataDirPath()
+	if err != nil {
+		return nil, err
+	}
+	stateFilePath := filepath.Join(dataDir, "nodes", instanceID, "state.json")
+
+	// Get instance state
+	instance, err := readState(stateFilePath)
+	return instance, err
 }

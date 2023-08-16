@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -17,19 +19,26 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/docker"
+	"github.com/NethermindEth/eigenlayer/internal/locker"
 	mock_locker "github.com/NethermindEth/eigenlayer/internal/locker/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/package_handler"
 	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+	"github.com/docker/docker/client"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
-const MockAVSLatestVersion = "v3.0.3"
+const (
+	MockAVSLatestVersion = "v3.1.1"
+	MockAVSRepo          = "https://github.com/NethermindEth/mock-avs"
+)
 
 func TestInitMonitoring(t *testing.T) {
 	// Silence logger
@@ -632,7 +641,7 @@ func TestPull(t *testing.T) {
 	}{
 		{
 			name: "pull -> success",
-			url:  "https://github.com/NethermindEth/mock-avs",
+			url:  MockAVSRepo,
 			want: pullResult302,
 			ref:  PullTarget{Version: "v3.0.2"},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
@@ -645,7 +654,7 @@ func TestPull(t *testing.T) {
 		},
 		{
 			name: "pull -> success, fixed version",
-			url:  "https://github.com/NethermindEth/mock-avs",
+			url:  MockAVSRepo,
 			ref:  PullTarget{Version: "v3.0.2"},
 			want: pullResult302,
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
@@ -658,7 +667,7 @@ func TestPull(t *testing.T) {
 		},
 		{
 			name:  "pull -> success, force",
-			url:   "https://github.com/NethermindEth/mock-avs",
+			url:   MockAVSRepo,
 			force: true,
 			want:  pullResult302,
 			ref:   PullTarget{Version: "v3.0.2"},
@@ -667,13 +676,13 @@ func TestPull(t *testing.T) {
 				require.NoError(t, err)
 				dataDir, err := data.NewDataDir(tmp, afs, locker)
 				require.NoError(t, err)
-				afs.MkdirAll(filepath.Join(tmp, "temp", tempID("https://github.com/NethermindEth/mock-avs")), 0o755)
+				afs.MkdirAll(filepath.Join(tmp, "temp", tempID(MockAVSRepo)), 0o755)
 				return dataDir
 			},
 		},
 		{
 			name:  "pull -> success, fixed commit hash",
-			url:   "https://github.com/NethermindEth/mock-avs",
+			url:   MockAVSRepo,
 			force: true,
 			want:  pullResultV311_commit,
 			ref:   PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"},
@@ -739,7 +748,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> success, default tag",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -769,7 +778,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> success, specific tag, option-returner",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "option-returner",
 				Tag:     "specific",
@@ -799,7 +808,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> failure, bad tap version, got empty instanceID -> no install cleanup",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "invalid-profile",
 				Tag:     "default",
@@ -821,7 +830,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> failure, compose create error -> install cleanup with monitoring target removal",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -856,7 +865,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> failure, compose create error -> install cleanup with monitoring target removal failed",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -890,7 +899,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> failure, compose create error -> install cleanup with monitoring not installed",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -923,7 +932,7 @@ func TestInstall(t *testing.T) {
 		{
 			name: "install -> failure, compose create error -> install cleanup with monitoring installed but not running",
 			options: InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1083,7 +1092,7 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1120,7 +1129,7 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1146,7 +1155,7 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1170,7 +1179,7 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1200,7 +1209,7 @@ func TestRun(t *testing.T) {
 				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1288,7 +1297,7 @@ func TestStop(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1319,7 +1328,7 @@ func TestStop(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1410,7 +1419,7 @@ func TestUninstall(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1435,7 +1444,7 @@ func TestUninstall(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1461,7 +1470,7 @@ func TestUninstall(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1494,7 +1503,7 @@ func TestUninstall(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     "https://github.com/NethermindEth/mock-avs",
+				URL:     MockAVSRepo,
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
@@ -1594,7 +1603,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -1649,7 +1658,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1669,7 +1678,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1689,7 +1698,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1768,7 +1777,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1801,7 +1810,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1865,7 +1874,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1895,7 +1904,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs"
+							"url": "` + MockAVSRepo + `"
 						}`,
 						mocks: []*gomock.Call{
 							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -1953,7 +1962,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs",
+							"url": "` + MockAVSRepo + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1969,7 +1978,7 @@ func TestListInstances(t *testing.T) {
 							"version": "v3.0.3",
 							"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 							"profile": "option-returner",
-							"url": "https://github.com/NethermindEth/mock-avs"
+							"url": "` + MockAVSRepo + `"
 						}`,
 					},
 				}
@@ -2016,7 +2025,7 @@ func TestListInstances(t *testing.T) {
 				"version": "v3.0.3",
 				"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 				"profile": "option-returner",
-				"url": "https://github.com/NethermindEth/mock-avs",
+				"url": "`+MockAVSRepo+`",
 				"api": {
 					"service": "main-service",
 					"port": "`+apiServerURL.Port()+`"
@@ -2062,7 +2071,7 @@ func TestListInstances(t *testing.T) {
 						"version": "v3.0.3",
 						"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 						"profile": "option-returner",
-						"url": "https://github.com/NethermindEth/mock-avs",
+						"url": "`+MockAVSRepo+`",
 						"api": {
 							"service": "main-service",
 							"port": "`+apiServerURL.Port()+`"
@@ -2110,7 +2119,7 @@ func TestListInstances(t *testing.T) {
 				"version": "v3.0.3",
 				"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 				"profile": "option-returner",
-				"url": "https://github.com/NethermindEth/mock-avs",
+				"url": "`+MockAVSRepo+`",
 				"api": {
 					"service": "main-service",
 					"port": "`+apiServerURL.Port()+`"
@@ -2149,7 +2158,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2195,7 +2204,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2241,7 +2250,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2287,7 +2296,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2326,7 +2335,7 @@ func TestListInstances(t *testing.T) {
 					"version": "v3.0.3",
 					"commit": "d61b79ca779700dd4484a9846c4139d5a8c8c805",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2465,7 +2474,7 @@ func TestNodeLogs(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs"
+					"url": "`+MockAVSRepo+`"
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2492,7 +2501,7 @@ func TestNodeLogs(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs"
+					"url": "`+MockAVSRepo+`"
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2584,7 +2593,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2632,7 +2641,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "https://github.com/NethermindEth/mock-avs.git#main:plugin"
@@ -2681,7 +2690,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-default"
@@ -2735,7 +2744,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2774,7 +2783,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs"
+					"url": "`+MockAVSRepo+`"
 				}`)
 			},
 		},
@@ -2788,7 +2797,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2811,7 +2820,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2834,7 +2843,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2858,7 +2867,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2882,7 +2891,7 @@ func TestRunPlugin(t *testing.T) {
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
-					"url": "https://github.com/NethermindEth/mock-avs",
+					"url": "`+MockAVSRepo+`",
 					"plugin": {
 						"type": "%s",
 						"src": "mock-avs-plugin"
@@ -2939,4 +2948,169 @@ func TestRunPlugin(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetPluginData(t *testing.T) {
+	type args struct {
+		dataDir    *data.DataDir
+		pkgHandler *package_handler.PackageHandler
+		instanceID string
+	}
+	type want struct {
+		plugin *data.Plugin
+		err    error
+	}
+	type testCase struct {
+		name   string
+		daemon *EgnDaemon
+		args   args
+		want   want
+	}
+
+	// Init test dependencies
+	fs := afero.NewOsFs()
+	testDir := t.TempDir()
+	dataDirPath := filepath.Join(testDir, "data")
+	err := fs.MkdirAll(dataDirPath, 0o755)
+	require.NoError(t, err, "failed to create data dir")
+	lock := locker.NewFLock()
+	dataDir, err := data.NewDataDir(dataDirPath, fs, lock)
+	require.NoError(t, err, "failed to initialize data dir instance")
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer dockerClient.Close()
+	dockerManager := docker.NewDockerManager(dockerClient)
+	daemon, err := NewEgnDaemon(dataDir, nil, dockerManager, nil, lock)
+	require.NoError(t, err, "failed to initialize daemon")
+
+	// Tests
+	tests := []testCase{
+		func(t *testing.T) testCase {
+			name := "plugin with remote context"
+			pkgFolder := t.TempDir()
+			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
+			require.NoError(t, err, "failed to clone mock-avs repo")
+			return testCase{
+				name:   name,
+				daemon: daemon,
+				args: args{
+					dataDir:    dataDir,
+					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
+					instanceID: "mock-avs-remote-context",
+				},
+				want: want{
+					plugin: &data.Plugin{
+						Type: data.PluginTypeRemoteContext,
+						Src:  "https://github.com/NethermindEth/mock-avs.git#main:plugin",
+					},
+					err: nil,
+				},
+			}
+		}(t),
+		func(t *testing.T) testCase {
+			name := "plugin with remote image"
+			pkgFolder := t.TempDir()
+			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
+			require.NoError(t, err, "failed to clone mock-avs repo")
+			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
+			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{
+				Image: "busybox:3.16",
+			})
+			return testCase{
+				name:   name,
+				daemon: daemon,
+				args: args{
+					dataDir:    dataDir,
+					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
+					instanceID: "mock-avs-remote-image",
+				},
+				want: want{
+					plugin: &data.Plugin{
+						Type: data.PluginTypeRemoteImage,
+						Src:  "busybox:3.16",
+					},
+					err: nil,
+				},
+			}
+		}(t),
+		func(t *testing.T) testCase {
+			name := "plugin with local context"
+			pkgFolder := t.TempDir()
+			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
+			require.NoError(t, err, "failed to clone mock-avs repo")
+			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
+			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{
+				BuildFrom: "../plugin",
+			})
+			return testCase{
+				name:   name,
+				daemon: daemon,
+				args: args{
+					dataDir:    dataDir,
+					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
+					instanceID: "mock-avs-local-context",
+				},
+				want: want{
+					plugin: &data.Plugin{
+						Type: data.PluginTypeLocalContext,
+						Src:  "mock-avs-local-context",
+					},
+					err: nil,
+				},
+			}
+		}(t),
+		func(t *testing.T) testCase {
+			name := "plugin with local context outside of package folder"
+			pkgFolder := t.TempDir()
+			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
+			require.NoError(t, err, "failed to clone mock-avs repo")
+			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
+			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{
+				BuildFrom: "../../plugin",
+			})
+			return testCase{
+				name:   name,
+				daemon: daemon,
+				args: args{
+					dataDir:    dataDir,
+					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
+					instanceID: "mock-avs-local-context",
+				},
+				want: want{
+					plugin: nil,
+					err:    ErrPluginPathNotInsidePackage,
+				},
+			}
+		}(t),
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plugin, err := tt.daemon.getPluginData(tt.args.dataDir, tt.args.pkgHandler, tt.args.instanceID)
+			assert.ErrorIs(t, err, tt.want.err, "unexpected error")
+			assert.Equal(t, tt.want.plugin, plugin, "unexpected plugin")
+		})
+	}
+}
+
+func changeManifestPluginBuildFrom(t *testing.T, fs afero.Fs, manifestPath string, plugin package_handler.Plugin) {
+	t.Helper()
+	manifestFile, err := fs.Open(manifestPath)
+	require.NoError(t, err, "failed to open manifest file")
+	manifestData, err := io.ReadAll(manifestFile)
+	require.NoError(t, err, "failed to read manifest file")
+	err = manifestFile.Close()
+	require.NoError(t, err, "failed to close manifest file")
+	var manifest package_handler.Manifest
+	err = yaml.Unmarshal(manifestData, &manifest)
+	require.NoError(t, err, "failed to unmarshal manifest file")
+	manifest.Plugin = &plugin
+	manifestData, err = yaml.Marshal(manifest)
+	require.NoError(t, err, "failed to marshal manifest file")
+	manifestFile, err = fs.OpenFile(manifestPath, os.O_WRONLY|os.O_TRUNC, 0o644)
+	require.NoError(t, err, "failed to open manifest file")
+	_, err = manifestFile.Write(manifestData)
+	require.NoError(t, err, "failed to write manifest file")
 }

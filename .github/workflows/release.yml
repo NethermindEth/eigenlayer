@@ -89,7 +89,7 @@ jobs:
           name: ${{ github.event.inputs.tag }}
 
   publish-ppa:
-    name: "Publishing Sedge to PPA repository"
+    name: "Publishing eigenlayer to PPA repository"
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.inputs.tag }}

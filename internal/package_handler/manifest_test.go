@@ -46,7 +46,7 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Missing Fields Manifest in profile",
 			filePath:  "missing-fields-profile/pkg/manifest.yml",
-			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade: invalid profiles",
+			wantError: "Invalid manifest file -> missing fields: version, node_version, name, upgrade: invalid profiles: profile 0: profile 2",
 		},
 	}
 	for _, tt := range tests {

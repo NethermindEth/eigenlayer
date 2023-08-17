@@ -297,7 +297,7 @@
 			"calcs": [
 			  "lastNotNull"
 			],
-			"fields": "/^instance_commit_hash$/",
+			"fields": "/^short_commit_hash$/",
 			"values": false
 		  },
 		  "textMode": "auto"
@@ -309,9 +309,9 @@
 			  "type": "prometheus",
 			  "uid": "egn-prom"
 			},
-			"editorMode": "builder",
+			"editorMode": "code",
 			"exemplar": false,
-			"expr": "eigen_version",
+			"expr": "label_replace(eigen_version, \"short_commit_hash\", \"$1\", \"instance_commit_hash\", \"(.{12}).*\")",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -319,7 +319,7 @@
 			"refId": "A"
 		  }
 		],
-		"title": "AVS Commit Hash",
+		"title": "AVS Commit Hash (12 first characters)",
 		"type": "stat"
 	  },
 	  {
@@ -843,6 +843,6 @@
 	"timezone": "",
 	"title": "AVS Specification Metrics",
 	"uid": "l8RpPN94z",
-	"version": 1,
+	"version": 2,
 	"weekStart": ""
   }

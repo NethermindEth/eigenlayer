@@ -8,8 +8,8 @@ import (
 )
 
 type (
-	e2eArranger func(t *testing.T, egnPath string) error
-	e2eAct      func(t *testing.T, egnPath string)
+	e2eArranger func(t *testing.T, eigenlayerPath string) error
+	e2eAct      func(t *testing.T, eigenlayerPath string)
 	e2eAssert   func(t *testing.T)
 )
 
@@ -44,21 +44,21 @@ func (e *e2eTestCase) run() {
 	e.Cleanup()
 	defer e.Cleanup()
 	if e.arranger != nil {
-		err := e.arranger(e.t, e.EgnPath())
+		err := e.arranger(e.t, e.EigenlayerPath())
 		if err != nil {
 			e.t.Fatalf("error in Arrange step: %v", err)
 		}
 	}
 	if e.act != nil {
-		e.act(e.t, e.EgnPath())
+		e.act(e.t, e.EigenlayerPath())
 	}
 	if e.assert != nil {
 		e.assert(e.t)
 	}
 }
 
-func (e *e2eTestCase) EgnPath() string {
-	return filepath.Join(e.testDir, "egn")
+func (e *e2eTestCase) EigenlayerPath() string {
+	return filepath.Join(e.testDir, "eigenlayer")
 }
 
 func (e *e2eTestCase) Cleanup() {
@@ -113,7 +113,7 @@ func (e *e2eTestCase) installGoModules() {
 
 func (e *e2eTestCase) buildEgn() {
 	e.t.Helper()
-	outPath := filepath.Join(e.testDir, "egn")
+	outPath := filepath.Join(e.testDir, "eigenlayer")
 	e.t.Logf("Building eigenlayer to %s", outPath)
 	err := exec.Command("go", "build", "-o", outPath, filepath.Join(e.repoPath, "cmd", "eigenlayer", "main.go")).Run()
 	if err != nil {

@@ -161,8 +161,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
-			return err
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -193,8 +192,7 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
-			return err
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Act
 		func(t *testing.T, egnPath string) {

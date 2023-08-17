@@ -25,7 +25,6 @@
 	"editable": true,
 	"fiscalYearStartMonth": 0,
 	"graphTooltip": 0,
-	"id": 6,
 	"links": [],
 	"liveNow": false,
 	"panels": [
@@ -71,7 +70,7 @@
 		  "overrides": []
 		},
 		"gridPos": {
-		  "h": 5,
+		  "h": 3,
 		  "w": 12,
 		  "x": 0,
 		  "y": 1
@@ -150,7 +149,7 @@
 		  "overrides": []
 		},
 		"gridPos": {
-		  "h": 9,
+		  "h": 10,
 		  "w": 12,
 		  "x": 12,
 		  "y": 1
@@ -214,10 +213,10 @@
 		  "overrides": []
 		},
 		"gridPos": {
-		  "h": 4,
+		  "h": 3,
 		  "w": 12,
 		  "x": 0,
-		  "y": 6
+		  "y": 4
 		},
 		"id": 20,
 		"options": {
@@ -255,12 +254,81 @@
 		"type": "stat"
 	  },
 	  {
+		"datasource": {
+		  "type": "prometheus",
+		  "uid": "egn-prom"
+		},
+		"fieldConfig": {
+		  "defaults": {
+			"color": {
+			  "mode": "thresholds"
+			},
+			"mappings": [],
+			"thresholds": {
+			  "mode": "absolute",
+			  "steps": [
+				{
+				  "color": "green",
+				  "value": null
+				},
+				{
+				  "color": "red",
+				  "value": 80
+				}
+			  ]
+			},
+			"unit": "string"
+		  },
+		  "overrides": []
+		},
+		"gridPos": {
+		  "h": 4,
+		  "w": 12,
+		  "x": 0,
+		  "y": 7
+		},
+		"id": 27,
+		"options": {
+		  "colorMode": "value",
+		  "graphMode": "area",
+		  "justifyMode": "auto",
+		  "orientation": "auto",
+		  "reduceOptions": {
+			"calcs": [
+			  "lastNotNull"
+			],
+			"fields": "/^instance_commit_hash$/",
+			"values": false
+		  },
+		  "textMode": "auto"
+		},
+		"pluginVersion": "9.4.3",
+		"targets": [
+		  {
+			"datasource": {
+			  "type": "prometheus",
+			  "uid": "egn-prom"
+			},
+			"editorMode": "builder",
+			"exemplar": false,
+			"expr": "eigen_version",
+			"format": "table",
+			"instant": true,
+			"legendFormat": "__auto",
+			"range": false,
+			"refId": "A"
+		  }
+		],
+		"title": "AVS Commit Hash",
+		"type": "stat"
+	  },
+	  {
 		"collapsed": false,
 		"gridPos": {
 		  "h": 1,
 		  "w": 24,
 		  "x": 0,
-		  "y": 10
+		  "y": 11
 		},
 		"id": 10,
 		"panels": [],
@@ -295,7 +363,7 @@
 		  "h": 9,
 		  "w": 12,
 		  "x": 0,
-		  "y": 11
+		  "y": 12
 		},
 		"id": 2,
 		"options": {
@@ -358,7 +426,7 @@
 		  "h": 4,
 		  "w": 12,
 		  "x": 12,
-		  "y": 11
+		  "y": 12
 		},
 		"id": 6,
 		"options": {
@@ -420,7 +488,7 @@
 		  "h": 5,
 		  "w": 12,
 		  "x": 12,
-		  "y": 15
+		  "y": 16
 		},
 		"id": 4,
 		"options": {
@@ -460,7 +528,7 @@
 		  "h": 1,
 		  "w": 24,
 		  "x": 0,
-		  "y": 20
+		  "y": 21
 		},
 		"id": 18,
 		"panels": [],
@@ -529,7 +597,7 @@
 		  "h": 8,
 		  "w": 12,
 		  "x": 0,
-		  "y": 21
+		  "y": 22
 		},
 		"id": 26,
 		"options": {
@@ -618,7 +686,7 @@
 		  "h": 16,
 		  "w": 12,
 		  "x": 12,
-		  "y": 21
+		  "y": 22
 		},
 		"id": 14,
 		"options": {
@@ -692,7 +760,7 @@
 		  "h": 8,
 		  "w": 12,
 		  "x": 0,
-		  "y": 29
+		  "y": 30
 		},
 		"id": 16,
 		"options": {
@@ -739,7 +807,7 @@
 		{
 		  "current": {
 			"isNone": true,
-			"selected": true,
+			"selected": false,
 			"text": "None",
 			"value": ""
 		  },
@@ -775,6 +843,6 @@
 	"timezone": "",
 	"title": "AVS Specification Metrics",
 	"uid": "l8RpPN94z",
-	"version": 6,
+	"version": 1,
 	"weekStart": ""
   }

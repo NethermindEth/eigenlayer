@@ -310,6 +310,7 @@ func TestAddTarget(t *testing.T) {
 
 	type target struct {
 		instanceID string
+		commitHash string
 		network    string
 		target     types.MonitoringTarget
 	}
@@ -333,6 +334,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs",
+					commitHash: "76973ce6755edb6cce37efd62266e98c838f6968",
 					network:    "testnet",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -359,7 +361,8 @@ func TestAddTarget(t *testing.T) {
 								"localhost:8000",
 							},
 							Labels: map[string]string{
-								"instanceID": "test-avs",
+								monitoring.InstanceIDLabel: "test-avs",
+								monitoring.CommitHashLabel: "76973ce6755edb6cce37efd62266e98c838f6968",
 							},
 						},
 					},
@@ -377,6 +380,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs",
+					commitHash: "a0c93c0ce7af88bd6387d2a2522b6d7390e50d09",
 					network:    "testnet",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -404,7 +408,8 @@ func TestAddTarget(t *testing.T) {
 								"localhost:8000",
 							},
 							Labels: map[string]string{
-								"instanceID": "test-avs",
+								monitoring.InstanceIDLabel: "test-avs",
+								monitoring.CommitHashLabel: "a0c93c0ce7af88bd6387d2a2522b6d7390e50d09",
 							},
 						},
 					},
@@ -422,6 +427,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs1",
+					commitHash: "95d30fb815626090240f993aec21752f4a6866d5",
 					network:    "testnet1",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -430,6 +436,7 @@ func TestAddTarget(t *testing.T) {
 				},
 				{
 					instanceID: "test-avs2",
+					commitHash: "76973ce6755edb6cce37efd62266e98c838f6968",
 					network:    "testnet2",
 					target: types.MonitoringTarget{
 						Host: "168.0.0.66",
@@ -457,7 +464,8 @@ func TestAddTarget(t *testing.T) {
 								"localhost:8000",
 							},
 							Labels: map[string]string{
-								"instanceID": "test-avs1",
+								monitoring.InstanceIDLabel: "test-avs1",
+								monitoring.CommitHashLabel: "95d30fb815626090240f993aec21752f4a6866d5",
 							},
 						},
 					},
@@ -471,7 +479,8 @@ func TestAddTarget(t *testing.T) {
 								"168.0.0.66:8001",
 							},
 							Labels: map[string]string{
-								"instanceID": "test-avs2",
+								monitoring.InstanceIDLabel: "test-avs2",
+								monitoring.CommitHashLabel: "76973ce6755edb6cce37efd62266e98c838f6968",
 							},
 						},
 					},
@@ -489,6 +498,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs",
+					commitHash: "ddc7b0e122129a79bd74d922cdb9dcdaaa24c3ee",
 					network:    "testnet",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -515,7 +525,8 @@ func TestAddTarget(t *testing.T) {
 								"localhost:8000",
 							},
 							Labels: map[string]string{
-								"instanceID": "test-avs",
+								monitoring.InstanceIDLabel: "test-avs",
+								monitoring.CommitHashLabel: "ddc7b0e122129a79bd74d922cdb9dcdaaa24c3ee",
 							},
 						},
 					},
@@ -551,6 +562,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs",
+					commitHash: "ddc7b0e122129a79bd74d922cdb9dcdaaa24c3ee",
 					network:    "testnet",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -590,6 +602,7 @@ func TestAddTarget(t *testing.T) {
 			toAdd: []target{
 				{
 					instanceID: "test-avs",
+					commitHash: "da5c2d3f4d9494ac9f7f03e9b11bd7610ec537dc",
 					network:    "testnet",
 					target: types.MonitoringTarget{
 						Host: "localhost",
@@ -650,7 +663,11 @@ func TestAddTarget(t *testing.T) {
 
 			// Add the targets
 			for i, target := range tt.toAdd {
-				err = prometheus.AddTarget(target.target, target.instanceID, fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network))
+				labels := map[string]string{
+					monitoring.InstanceIDLabel: target.instanceID,
+					monitoring.CommitHashLabel: target.commitHash,
+				}
+				err = prometheus.AddTarget(target.target, labels, fmt.Sprintf("%s--%d++%s", target.instanceID, i, target.network))
 				if tt.wantErr || tt.badEndpoint {
 					require.Error(t, err)
 					return

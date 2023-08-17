@@ -8,4 +8,6 @@ const (
 	NodeExporterServiceName   = "node_exporter"
 	NodeExporterContainerName = "egn_node_exporter"
 	monitoringPath            = "monitoring"
+	InstanceIDLabel           = "instance_id"
+	CommitHashLabel           = "instance_commit_hash"
 )

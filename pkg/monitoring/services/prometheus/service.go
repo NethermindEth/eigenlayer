@@ -169,7 +169,7 @@ func (p *PrometheusService) RemoveTarget(instanceID string) (string, error) {
 	// Check if the target was removed
 	if network == "" {
 		// The target was not removed because it was not in the targets
-		return "", fmt.Errorf("%w: %s", ErrNonexistingTarget, instanceID)
+		return "", fmt.Errorf("%w: %s", monitoring.ErrNonexistingTarget, instanceID)
 	}
 
 	// Marshal the updated config back to YAML

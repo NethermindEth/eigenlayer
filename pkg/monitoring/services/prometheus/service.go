@@ -8,10 +8,13 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
+	"github.com/cenkalti/backoff/v4"
+	log "github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v3"
 )
@@ -262,15 +265,26 @@ func (p *PrometheusService) Endpoint() string {
 
 // reloadConfig reloads the Prometheus config by making a POST request to the /-/reload endpoint
 func (p *PrometheusService) reloadConfig() error {
-	resp, err := http.Post(fmt.Sprintf("http://%s:%d/-/reload", p.containerIP, p.port), "", nil)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	// Adding exponential retry
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = time.Minute
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w: %s", ErrReloadFailed, resp.Status)
-	}
+	err := backoff.Retry(func() (err error) {
+		resp, err := http.Post(fmt.Sprintf("http://%s:%d/-/reload", p.containerIP, p.port), "", nil)
+		if err != nil {
+			// TODO: Use fields to log the error
+			log.Debug("Retrying request...")
+			return err
+		}
+		defer resp.Body.Close()
 
-	return nil
+		if resp.StatusCode != http.StatusOK {
+			// TODO: Use fields to log the error
+			log.Debug("Retrying request...")
+			return fmt.Errorf("%w: %s", ErrReloadFailed, resp.Status)
+		}
+		return nil
+	}, b)
+
+	return err
 }

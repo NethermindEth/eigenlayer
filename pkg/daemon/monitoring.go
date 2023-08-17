@@ -12,10 +12,10 @@ type MonitoringManager interface {
 	// InstallStack installs the monitoring stack.
 	InstallStack() error
 
-	// AddTarget adds a new target to the monitoring stack.
-	// The instanceID is used to identify the node in the monitoring stack.
-	// The dockerNetwork is the name of the network the node is connected to.
-	AddTarget(target types.MonitoringTarget, instanceID, dockerNetwork string) error
+	// AddTarget adds a new target to all services in the monitoring stack.
+	// It also connects the target to the docker network of the monitoring stack if it isn't already connected.
+	// The labels are added to the service's metrics.
+	AddTarget(target types.MonitoringTarget, labels map[string]string, dockerNetwork string) error
 
 	// RemoveTarget removes a target from the monitoring stack.
 	// The dockerNetwork is the name of the network the node is connected to.

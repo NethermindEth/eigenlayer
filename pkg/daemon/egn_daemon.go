@@ -1012,11 +1012,15 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 			return err
 		}
 
+		labels := map[string]string{
+			monitoring.InstanceIDLabel: instanceID,
+			monitoring.CommitHashLabel: instance.Commit,
+		}
 		if err = d.monitoringMgr.AddTarget(types.MonitoringTarget{
 			Host: endpoint,
 			Port: uint16(port),
 			Path: target.Path,
-		}, instanceID, networks[0]); err != nil {
+		}, labels, networks[0]); err != nil {
 			return err
 		}
 	}

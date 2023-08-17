@@ -70,6 +70,7 @@ func TestInstall(t *testing.T) {
 						StopIfRequirementsAreNotMet: true,
 					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -79,7 +80,6 @@ func TestInstall(t *testing.T) {
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
 					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
-					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().Run("mock-avs-default").Return(nil),
 				)
 			},
@@ -109,15 +109,6 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
-					d.EXPECT().
-						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs",
-							Version: "v3.1.1",
-							Profile: "profile1",
-							Options: []daemon.Option{option},
-							Tag:     "default",
-						}).Return("mock-avs-default", nil),
-					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
 					d.EXPECT().InitMonitoring(false, false).Return(assert.AnError),
 				)
 			},
@@ -147,6 +138,7 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -156,7 +148,6 @@ func TestInstall(t *testing.T) {
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
 					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
-					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().Run("mock-avs-default").Return(assert.AnError),
 				)
 			},
@@ -186,6 +177,7 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -223,6 +215,7 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -231,7 +224,6 @@ func TestInstall(t *testing.T) {
 							Options: []daemon.Option{option},
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
-					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().Run("mock-avs-default").Return(nil),
 				)
 			},
@@ -261,6 +253,7 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -269,7 +262,6 @@ func TestInstall(t *testing.T) {
 							Options: []daemon.Option{option},
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
-					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().Run("mock-avs-default").Return(assert.AnError),
 				)
 			},
@@ -371,6 +363,7 @@ func TestInstall(t *testing.T) {
 					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
 					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -482,6 +475,7 @@ func TestInstall(t *testing.T) {
 						StopIfRequirementsAreNotMet: true,
 					}).Return(true, nil),
 					p.EXPECT().InputString("option1", "default1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs",
@@ -492,7 +486,6 @@ func TestInstall(t *testing.T) {
 							Tag:     "default",
 						}).Return("mock-avs-default", nil),
 					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
-					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().Run("mock-avs-default").Return(nil),
 				)
 			},

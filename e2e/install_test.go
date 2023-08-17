@@ -162,10 +162,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		// Arrange
 		func(t *testing.T, egnPath string) error {
 			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
-			if err != nil {
-				return err
-			}
-			return nil
+			return err
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -176,6 +173,50 @@ func TestInstall_DuplicatedID(t *testing.T) {
 			assert.Error(t, runErr, "install command should fail with duplicated ID")
 			checkInstanceInstalled(t, "mock-avs-integration")
 			checkContainerRunning(t, "option-returner")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			err := runCommand(t, egnPath, "init-monitoring")
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			return err
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			// Uses different tag, but docker compose create will fail because of duplicated container name
+			// The install should fail but the monitoring stack should be running and the instance should be cleaned up
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "install command should fail with duplicated container name")
+
+			checkInstanceInstalled(t, "mock-avs-default")
+			checkContainerRunning(t, "option-returner")
+			checkInstanceNotInstalled(t, "mock-avs-integration")
+			checkTemporaryPackageNotExisting(t, "mock-avs")
+
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+
+			waitForMonitoring()
+			checkGrafanaHealth(t)
+			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 		},
 	)
 	// Run test case

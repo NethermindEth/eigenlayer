@@ -116,6 +116,16 @@ profile.`,
 			if err != nil {
 				return err
 			}
+
+			// // If the monitoring stack is running, it needs to be initialized before the install
+			// // because if the install fails, the install cleanup will fail depending of the state.
+			// // Until the engine runs as a daemon, this is the best solution.
+
+			// Init monitoring stack. If won't do anything if it is not installed or running
+			if err = d.InitMonitoring(false, false); err != nil {
+				return err
+			}
+
 			instanceId, err := d.LocalInstall(tarFile, daemon.LocalInstallOptions{
 				Name:    name,
 				Tag:     tag,
@@ -128,10 +138,6 @@ profile.`,
 			log.Info("Installed successfully with instance id: ", instanceId)
 
 			if run {
-				// Init monitoring stack. If won't do anything if it is not installed or running
-				if err = d.InitMonitoring(false, false); err != nil {
-					return err
-				}
 				return d.Run(instanceId)
 			}
 			return nil

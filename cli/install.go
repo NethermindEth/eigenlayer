@@ -160,6 +160,15 @@ the user to know which options are available for each profile.
 				}
 			}
 
+			// // If the monitoring stack is running, it needs to be initialized before the install
+			// // because if the install fails, the install cleanup will fail depending of the state.
+			// // Until the engine runs as a daemon, this is the best solution.
+
+			// Init monitoring stack. If won't do anything if it is not installed or running
+			if err = d.InitMonitoring(false, false); err != nil {
+				return err
+			}
+
 			instanceId, err := d.Install(daemon.InstallOptions{
 				URL:     url,
 				Version: pullResult.Version,
@@ -186,10 +195,6 @@ the user to know which options are available for each profile.
 				}
 			}
 			if ok {
-				// Init monitoring stack. If won't do anything if it is not installed or running
-				if err = d.InitMonitoring(false, false); err != nil {
-					return err
-				}
 				return d.Run(instanceId)
 			}
 			return nil

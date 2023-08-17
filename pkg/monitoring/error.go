@@ -8,4 +8,5 @@ var (
 	ErrRunningMonitoringStack        = errors.New("error running monitoring stack")
 	ErrInstallingMonitoringMngr      = errors.New("error installing monitoring manager")
 	ErrConfiguringMonitoringServices = errors.New("error configuring monitoring services")
+	ErrNonexistingTarget             = errors.New("target to remove does not exist")
 )

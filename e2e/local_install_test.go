@@ -348,8 +348,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
-			return err
+			return runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
 		},
 		// Act
 		func(t *testing.T, egnPath string) {

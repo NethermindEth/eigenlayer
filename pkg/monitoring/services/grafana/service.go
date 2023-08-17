@@ -55,7 +55,7 @@ func (g *GrafanaService) Init(opts types.ServiceOptions) error {
 	return nil
 }
 
-func (g *GrafanaService) AddTarget(target types.MonitoringTarget, instanceID, jobName string) error {
+func (g *GrafanaService) AddTarget(target types.MonitoringTarget, labels map[string]string, jobName string) error {
 	return nil
 }
 

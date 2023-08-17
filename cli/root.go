@@ -8,7 +8,9 @@ import (
 
 func RootCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "eigenlayer",
+		Use:           "eigenlayer",
+		SilenceUsage:  true, // Don't show usage when an error occurs
+		SilenceErrors: true, // Don't show errors when an error occurs. We handle errors ourselves
 	}
 	cmd.AddCommand(
 		InstallCmd(d, p),

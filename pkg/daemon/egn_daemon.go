@@ -734,7 +734,11 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 	}
 
 	if err := d.removeTarget(instanceID); err != nil {
-		return err
+		if errors.Is(err, monitoring.ErrNonexistingTarget) {
+			log.Warnf("Monitoring target for instance %s not found. It may be due to an incomplete instance installation process or because the instance was never started.", instanceID)
+		} else {
+			return err
+		}
 	}
 
 	if down {

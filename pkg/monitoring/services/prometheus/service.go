@@ -79,7 +79,7 @@ func (p *PrometheusService) Init(opts types.ServiceOptions) error {
 
 // AddTarget adds a new target to the Prometheus config and reloads the Prometheus configuration.
 // Assumes endpoint is in the form http://<ip/domain>:<port>
-func (p *PrometheusService) AddTarget(target types.MonitoringTarget, instanceID, jobName string) error {
+func (p *PrometheusService) AddTarget(target types.MonitoringTarget, labels map[string]string, jobName string) error {
 	path := filepath.Join("prometheus", "prometheus.yml")
 	// Read the existing config
 	rawConfig, err := p.stack.ReadFile(path)
@@ -112,7 +112,7 @@ func (p *PrometheusService) AddTarget(target types.MonitoringTarget, instanceID,
 		StaticConfigs: []StaticConfig{
 			{
 				Targets: []string{target.Endpoint()},
-				Labels:  map[string]string{"instanceID": instanceID},
+				Labels:  labels,
 			},
 		},
 		MetricsPath: metricsPath,

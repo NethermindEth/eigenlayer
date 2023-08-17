@@ -1054,6 +1054,13 @@ func TestInstall(t *testing.T) {
 func TestRun(t *testing.T) {
 	afs := afero.NewOsFs()
 
+	instanceID := "mock-avs-default"
+	commit := "d1d4bb7009549c431d7b3317f004a56e2c3b2031"
+	labels := map[string]string{
+		monitoring.InstanceIDLabel: instanceID,
+		monitoring.CommitHashLabel: commit,
+	}
+
 	tests := []struct {
 		name       string
 		instanceID string
@@ -1063,13 +1070,13 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			name:       "success, monitoring stack installed and running",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
@@ -1088,7 +1095,7 @@ func TestRun(t *testing.T) {
 						Host: "168.66.44.1",
 						Port: 8090,
 						Path: "/metrics",
-					}, "mock-avs-default", "eigenlayer").Return(nil),
+					}, labels, "eigenlayer").Return(nil),
 				)
 			},
 			options: &InstallOptions{
@@ -1096,17 +1103,18 @@ func TestRun(t *testing.T) {
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
+				Commit:  commit,
 			},
 		},
 		{
 			name:       "success, monitoring stack installed and running, add target error",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
@@ -1125,7 +1133,7 @@ func TestRun(t *testing.T) {
 						Host: "168.66.44.1",
 						Port: 8090,
 						Path: "/metrics",
-					}, "mock-avs-default", "eigenlayer").Return(assert.AnError),
+					}, labels, "eigenlayer").Return(assert.AnError),
 				)
 			},
 			options: &InstallOptions{
@@ -1133,18 +1141,19 @@ func TestRun(t *testing.T) {
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
+				Commit:  commit,
 			},
 			wantErr: true,
 		},
 		{
 			name:       "success, monitoring stack installed but not running",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
@@ -1159,17 +1168,18 @@ func TestRun(t *testing.T) {
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
+				Commit:  commit,
 			},
 		},
 		{
 			name:       "success, monitoring stack not installed",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
@@ -1183,24 +1193,25 @@ func TestRun(t *testing.T) {
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
+				Commit:  commit,
 			},
 		},
 		{
 			name:       "failure, not installed instance",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 			},
 			wantErr: true,
 		},
 		{
 			name:       "failure, Up error",
-			instanceID: "mock-avs-default",
+			instanceID: instanceID,
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
-				path := filepath.Join(tmp, "nodes", "mock-avs-default", "docker-compose.yml")
+				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", "mock-avs-default", ".lock")).Return(locker),
+					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
 					locker.EXPECT().Lock().Return(nil),
 					locker.EXPECT().Locked().Return(true),
 					locker.EXPECT().Unlock().Return(nil),
@@ -1213,6 +1224,7 @@ func TestRun(t *testing.T) {
 				Version: MockAVSLatestVersion,
 				Profile: "health-checker",
 				Tag:     "default",
+				Commit:  commit,
 			},
 			wantErr: true,
 		},

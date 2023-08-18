@@ -128,6 +128,7 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusLabels(t, optionReturnerIP+":8080")
 		},
 	)
 	// Run test case
@@ -371,6 +372,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusLabels(t, optionReturnerIP+":8080")
 		},
 	)
 	// Run test case

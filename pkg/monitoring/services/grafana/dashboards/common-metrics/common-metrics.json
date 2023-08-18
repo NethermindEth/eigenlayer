@@ -99,7 +99,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_version",
+			"expr": "eigen_performance_score",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -149,7 +149,7 @@
 		  "overrides": []
 		},
 		"gridPos": {
-		  "h": 10,
+		  "h": 12,
 		  "w": 12,
 		  "x": 12,
 		  "y": 1
@@ -218,6 +218,75 @@
 		  "x": 0,
 		  "y": 4
 		},
+		"id": 27,
+		"options": {
+		  "colorMode": "value",
+		  "graphMode": "area",
+		  "justifyMode": "auto",
+		  "orientation": "auto",
+		  "reduceOptions": {
+			"calcs": [
+			  "lastNotNull"
+			],
+			"fields": "/^short_commit_hash$/",
+			"values": false
+		  },
+		  "textMode": "auto"
+		},
+		"pluginVersion": "9.4.3",
+		"targets": [
+		  {
+			"datasource": {
+			  "type": "prometheus",
+			  "uid": "egn-prom"
+			},
+			"editorMode": "code",
+			"exemplar": false,
+			"expr": "label_replace(eigen_performance_score, \"short_commit_hash\", \"$1\", \"instance_commit_hash\", \"(.{12}).*\")",
+			"format": "table",
+			"instant": true,
+			"legendFormat": "__auto",
+			"range": false,
+			"refId": "A"
+		  }
+		],
+		"title": "AVS Commit Hash (12 first characters)",
+		"type": "stat"
+	  },
+	  {
+		"datasource": {
+		  "type": "prometheus",
+		  "uid": "egn-prom"
+		},
+		"fieldConfig": {
+		  "defaults": {
+			"color": {
+			  "mode": "thresholds"
+			},
+			"mappings": [],
+			"thresholds": {
+			  "mode": "absolute",
+			  "steps": [
+				{
+				  "color": "green",
+				  "value": null
+				},
+				{
+				  "color": "red",
+				  "value": 80
+				}
+			  ]
+			},
+			"unit": "string"
+		  },
+		  "overrides": []
+		},
+		"gridPos": {
+		  "h": 3,
+		  "w": 12,
+		  "x": 0,
+		  "y": 7
+		},
 		"id": 20,
 		"options": {
 		  "colorMode": "value",
@@ -228,7 +297,7 @@
 			"calcs": [
 			  "lastNotNull"
 			],
-			"fields": "/^version$/",
+			"fields": "/^avs_version$/",
 			"values": false
 		  },
 		  "textMode": "auto"
@@ -242,7 +311,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_version",
+			"expr": "eigen_performance_score",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -282,12 +351,12 @@
 		  "overrides": []
 		},
 		"gridPos": {
-		  "h": 4,
+		  "h": 3,
 		  "w": 12,
 		  "x": 0,
-		  "y": 7
+		  "y": 10
 		},
-		"id": 27,
+		"id": 28,
 		"options": {
 		  "colorMode": "value",
 		  "graphMode": "area",
@@ -297,7 +366,7 @@
 			"calcs": [
 			  "lastNotNull"
 			],
-			"fields": "/^short_commit_hash$/",
+			"fields": "/^spec_version$/",
 			"values": false
 		  },
 		  "textMode": "auto"
@@ -309,9 +378,9 @@
 			  "type": "prometheus",
 			  "uid": "egn-prom"
 			},
-			"editorMode": "code",
+			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "label_replace(eigen_version, \"short_commit_hash\", \"$1\", \"instance_commit_hash\", \"(.{12}).*\")",
+			"expr": "eigen_performance_score",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -319,7 +388,7 @@
 			"refId": "A"
 		  }
 		],
-		"title": "AVS Commit Hash (12 first characters)",
+		"title": "AVS Node Specification Version",
 		"type": "stat"
 	  },
 	  {
@@ -328,7 +397,7 @@
 		  "h": 1,
 		  "w": 24,
 		  "x": 0,
-		  "y": 11
+		  "y": 13
 		},
 		"id": 10,
 		"panels": [],
@@ -363,7 +432,7 @@
 		  "h": 9,
 		  "w": 12,
 		  "x": 0,
-		  "y": 12
+		  "y": 14
 		},
 		"id": 2,
 		"options": {
@@ -426,7 +495,7 @@
 		  "h": 4,
 		  "w": 12,
 		  "x": 12,
-		  "y": 12
+		  "y": 14
 		},
 		"id": 6,
 		"options": {
@@ -488,7 +557,7 @@
 		  "h": 5,
 		  "w": 12,
 		  "x": 12,
-		  "y": 16
+		  "y": 18
 		},
 		"id": 4,
 		"options": {
@@ -528,7 +597,7 @@
 		  "h": 1,
 		  "w": 24,
 		  "x": 0,
-		  "y": 21
+		  "y": 23
 		},
 		"id": 18,
 		"panels": [],
@@ -597,7 +666,7 @@
 		  "h": 8,
 		  "w": 12,
 		  "x": 0,
-		  "y": 22
+		  "y": 24
 		},
 		"id": 26,
 		"options": {
@@ -686,7 +755,7 @@
 		  "h": 16,
 		  "w": 12,
 		  "x": 12,
-		  "y": 22
+		  "y": 24
 		},
 		"id": 14,
 		"options": {
@@ -760,7 +829,7 @@
 		  "h": 8,
 		  "w": 12,
 		  "x": 0,
-		  "y": 30
+		  "y": 32
 		},
 		"id": 16,
 		"options": {
@@ -815,7 +884,7 @@
 			"type": "prometheus",
 			"uid": "egn-prom"
 		  },
-		  "definition": "label_values(instanceID)",
+		  "definition": "label_values(instance_id)",
 		  "description": "AVS Node Instance ID",
 		  "hide": 0,
 		  "includeAll": false,
@@ -824,7 +893,7 @@
 		  "name": "InstanceID",
 		  "options": [],
 		  "query": {
-			"query": "label_values(instanceID)",
+			"query": "label_values(instance_id)",
 			"refId": "StandardVariableQuery"
 		  },
 		  "refresh": 1,
@@ -843,6 +912,6 @@
 	"timezone": "",
 	"title": "AVS Specification Metrics",
 	"uid": "l8RpPN94z",
-	"version": 2,
+	"version": 3,
 	"weekStart": ""
   }

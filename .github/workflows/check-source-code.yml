@@ -11,7 +11,7 @@ jobs:
     name: Code format
     strategy:
       matrix:
-        go: ["1.20"]
+        go: ["1.21"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
 

@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/docker/docker/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +81,7 @@ func checkPrometheusTargetsUp(t *testing.T, targets ...string) {
 
 	var labels []string
 	for _, target := range promTargets.Data.ActiveTargets {
-		assert.Contains(t, promTargets.Data.ActiveTargets[0].Labels, "instance")
+		assert.Contains(t, target.Labels, "instance")
 		labels = append(labels, target.Labels["instance"])
 	}
 	for _, target := range targets {
@@ -118,7 +120,7 @@ func checkPrometheusTargetsDown(t *testing.T, targets ...string) {
 
 	var labels []string
 	for _, target := range promTargets.Data.ActiveTargets {
-		assert.Contains(t, promTargets.Data.ActiveTargets[0].Labels, "instance")
+		assert.Contains(t, target.Labels, "instance")
 		labels = append(labels, target.Labels["instance"])
 	}
 	for _, target := range targets {
@@ -238,4 +240,49 @@ func checkInstanceExists(t *testing.T, instanceID string) {
 	require.DirExists(t, instancePath)
 	stateFilePath := filepath.Join(instancePath, "state.json")
 	require.FileExists(t, filepath.Join(stateFilePath))
+}
+
+// checkPrometheusLabels checks that the prometheus metrics from the given targets contain the injected labels.
+// Should be called after checkPrometheusTargetsUp.
+func checkPrometheusLabels(t *testing.T, targets ...string) {
+	promTargets, err := prometheusTargets(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Check prometheus targets
+	// Check number of targets
+	assert.Len(t, promTargets.Data.ActiveTargets, len(targets)+1)
+	// Check success
+	assert.Equal(t, "success", promTargets.Status)
+
+	labels := [...]string{
+		monitoring.InstanceIDLabel,
+		monitoring.CommitHashLabel,
+		monitoring.AVSNameLabel,
+		monitoring.AVSVersionLabel,
+		monitoring.SpecVersionLabel,
+	}
+
+	var instanceLabels []string
+	for _, target := range promTargets.Data.ActiveTargets {
+		require.Contains(t, target.Labels, "instance")
+		instanceLabels = append(instanceLabels, target.Labels["instance"])
+
+		// Skip node exporter target
+		if target.Labels["instance"] == monitoring.NodeExporterContainerName {
+			continue
+		}
+		// Skip if not in targets
+		if !slices.Contains(targets, target.Labels["instance"]) {
+			continue
+		}
+		for _, label := range labels {
+			assert.Contains(t, target.Labels, label, "target %s does not contain label %s", target.Labels[monitoring.InstanceIDLabel], label)
+			assert.NotEmpty(t, target.Labels[label], "target %s label %s is empty", target.Labels[monitoring.InstanceIDLabel], label)
+		}
+	}
+	// Check all targets are in the prometheus targets
+	for _, target := range targets {
+		assert.Contains(t, instanceLabels, target)
+	}
 }

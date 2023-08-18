@@ -120,6 +120,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusLabels(t, optionReturnerIP+":8080")
 		},
 	)
 	// Run test case
@@ -215,6 +216,7 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
+			checkPrometheusLabels(t, optionReturnerIP+":8080")
 		},
 	)
 	// Run test case
@@ -297,6 +299,7 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 
 			waitForMonitoring()
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
+			checkPrometheusLabels(t, mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
 		},
 	)
 	// Run test case

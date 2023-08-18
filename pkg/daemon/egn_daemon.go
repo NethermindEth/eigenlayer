@@ -308,6 +308,12 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 			return
 		}
 	}
+	// Get Spec version
+	result.SpecVersion, err = pkgHandler.SpecVersion()
+	if err != nil {
+		return
+	}
+	// Get commit hash
 	result.Commit, err = pkgHandler.CurrentCommitHash()
 	if err != nil {
 		return
@@ -406,6 +412,12 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
+	// Get Spec version
+	specVersion, err := pkgHandler.SpecVersion()
+	if err != nil {
+		return instanceID, tID, err
+	}
+	// Get profiles
 	pkgProfiles, err := pkgHandler.Profiles()
 	if err != nil {
 		return instanceID, tID, err
@@ -476,10 +488,12 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	}
 
 	installOptions := InstallOptions{
-		Profile: options.Profile,
-		Tag:     options.Tag,
-		URL:     "http://localhost",
-		Version: "local",
+		Profile:     options.Profile,
+		Tag:         options.Tag,
+		URL:         "http://localhost",
+		Version:     "local",
+		SpecVersion: specVersion,
+		Commit:      "local",
 	}
 	return d.install(options.Name, instanceID, tID, pkgHandler, selectedProfile, env, installOptions)
 }
@@ -587,6 +601,7 @@ func (d *EgnDaemon) install(
 		Name:              instanceName,
 		Profile:           selectedProfile.Name,
 		Version:           options.Version,
+		SpecVersion:       options.SpecVersion,
 		Commit:            options.Commit,
 		URL:               options.URL,
 		Tag:               options.Tag,
@@ -1017,8 +1032,11 @@ func (d *EgnDaemon) addTarget(instanceID string) error {
 		}
 
 		labels := map[string]string{
-			monitoring.InstanceIDLabel: instanceID,
-			monitoring.CommitHashLabel: instance.Commit,
+			monitoring.InstanceIDLabel:  instanceID,
+			monitoring.CommitHashLabel:  instance.Commit,
+			monitoring.AVSNameLabel:     instance.Name,
+			monitoring.AVSVersionLabel:  instance.Version,
+			monitoring.SpecVersionLabel: instance.SpecVersion,
 		}
 		if err = d.monitoringMgr.AddTarget(types.MonitoringTarget{
 			Host: endpoint,

@@ -170,12 +170,13 @@ the user to know which options are available for each profile.
 			}
 
 			instanceId, err := d.Install(daemon.InstallOptions{
-				URL:     url,
-				Version: pullResult.Version,
-				Commit:  pullResult.Commit,
-				Tag:     tag,
-				Profile: profile,
-				Options: profileOptions,
+				URL:         url,
+				Version:     pullResult.Version,
+				SpecVersion: pullResult.SpecVersion,
+				Commit:      pullResult.Commit,
+				Tag:         tag,
+				Profile:     profile,
+				Options:     profileOptions,
 			})
 			if err != nil {
 				return err

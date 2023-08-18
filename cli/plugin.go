@@ -48,6 +48,23 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 
   This will mount the /tmp directory of the host inside the plugin container at 
   /tmp, and the plugin-v volume at /data.
+
+- Using build arguments:
+
+  For the cases that the plugin is build from a relative path inside the package
+  or a remote context, the plugin image is built each time the plugin is executed.
+  To pass build arguments to the plugin image, use the "--build-arg" flag, which
+  is a map of key-value pairs. For example:
+
+    $ eigenlayer plugin \
+       	--build-arg arg1=value1 \
+       	--build-arg arg2=value2 \
+    	mock-avs-default \
+     	--port 8080
+
+  The "--build-arg" flag can be used multiple times to pass multiple build
+  arguments. Should be declared before the instance ID to be recognized as a
+  plugin build argument, and not as a plugin execution argument.
 `,
 
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -10,7 +10,6 @@ import (
 // Manifest represents the manifest file of a package
 type Manifest struct {
 	Version              string               `yaml:"version"`
-	NodeVersion          string               `yaml:"node_version"`
 	Name                 string               `yaml:"name"`
 	Upgrade              string               `yaml:"upgrade"`
 	HardwareRequirements hardwareRequirements `yaml:"hardware_requirements"`
@@ -22,9 +21,6 @@ func (m *Manifest) validate() error {
 	var missingFields []string
 	if m.Version == "" {
 		missingFields = append(missingFields, "version")
-	}
-	if m.NodeVersion == "" {
-		missingFields = append(missingFields, "node_version")
 	}
 	if m.Name == "" {
 		missingFields = append(missingFields, "name")

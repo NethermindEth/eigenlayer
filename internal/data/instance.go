@@ -23,6 +23,7 @@ type Instance struct {
 	Name              string            `json:"name"`
 	URL               string            `json:"url"`
 	Version           string            `json:"version"`
+	SpecVersion       string            `json:"spec_version"`
 	Commit            string            `json:"commit,omitempty"`
 	Profile           string            `json:"profile"`
 	Tag               string            `json:"tag"`

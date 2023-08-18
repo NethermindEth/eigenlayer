@@ -128,6 +128,10 @@ type PullResult struct {
 	// Version is the version of the pulled package.
 	Version string
 
+	// SpecVersion is the version of the Eigenlayer AVS Node Specification the instance
+	// targets. The version must match the regex `^\d+\.\d+\.\d+$`.
+	SpecVersion string
+
 	// Commit hash of the pulled package.
 	Commit string
 
@@ -150,6 +154,10 @@ type InstallOptions struct {
 	// version will be installed. A package version is a git tag that matches the
 	// regex `^v\d+\.\d+\.\d+$`.
 	Version string
+
+	// SpecVersion is the version of the Eigenlayer AVS Node Specification the instance
+	// targets. The version must match the regex `^\d+\.\d+\.\d+$`.
+	SpecVersion string
 
 	// Commit is the commit to install from. It has precedence over Version.
 	Commit string

@@ -40,6 +40,8 @@ func newE2ETestCase(t *testing.T, arranger e2eArranger, act e2eAct, assert e2eAs
 }
 
 func (e *e2eTestCase) run() {
+	// Cleanup environment before and after test
+	e.Cleanup()
 	defer e.Cleanup()
 	if e.arranger != nil {
 		err := e.arranger(e.t, e.EgnPath())

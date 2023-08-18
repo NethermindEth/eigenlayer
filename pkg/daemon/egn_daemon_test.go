@@ -932,10 +932,17 @@ func TestRun(t *testing.T) {
 	afs := afero.NewOsFs()
 
 	instanceID := "mock-avs-default"
-	commit := "d1d4bb7009549c431d7b3317f004a56e2c3b2031"
+	commit := MockAVSLatestVersionCommit
+	avsName := "mock-avs"
+	avsVersion := MockAVSLatestVersion
+	specVersion := "v0.0.1"
+
 	labels := map[string]string{
-		monitoring.InstanceIDLabel: instanceID,
-		monitoring.CommitHashLabel: commit,
+		monitoring.InstanceIDLabel:  instanceID,
+		monitoring.CommitHashLabel:  commit,
+		monitoring.AVSNameLabel:     avsName,
+		monitoring.AVSVersionLabel:  avsVersion,
+		monitoring.SpecVersionLabel: specVersion,
 	}
 
 	tests := []struct {
@@ -976,11 +983,12 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     MockAVSRepo,
-				Version: MockAVSLatestVersion,
-				Profile: "health-checker",
-				Tag:     "default",
-				Commit:  commit,
+				URL:         MockAVSRepo,
+				Version:     MockAVSLatestVersion,
+				SpecVersion: specVersion,
+				Profile:     "health-checker",
+				Tag:         "default",
+				Commit:      commit,
 			},
 		},
 		{
@@ -1014,11 +1022,12 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     MockAVSRepo,
-				Version: MockAVSLatestVersion,
-				Profile: "health-checker",
-				Tag:     "default",
-				Commit:  commit,
+				URL:         MockAVSRepo,
+				Version:     MockAVSLatestVersion,
+				SpecVersion: specVersion,
+				Profile:     "health-checker",
+				Tag:         "default",
+				Commit:      commit,
 			},
 			wantErr: true,
 		},
@@ -1041,11 +1050,12 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     MockAVSRepo,
-				Version: MockAVSLatestVersion,
-				Profile: "health-checker",
-				Tag:     "default",
-				Commit:  commit,
+				URL:         MockAVSRepo,
+				Version:     MockAVSLatestVersion,
+				SpecVersion: specVersion,
+				Profile:     "health-checker",
+				Tag:         "default",
+				Commit:      commit,
 			},
 		},
 		{
@@ -1066,11 +1076,12 @@ func TestRun(t *testing.T) {
 				)
 			},
 			options: &InstallOptions{
-				URL:     MockAVSRepo,
-				Version: MockAVSLatestVersion,
-				Profile: "health-checker",
-				Tag:     "default",
-				Commit:  commit,
+				URL:         MockAVSRepo,
+				Version:     MockAVSLatestVersion,
+				SpecVersion: specVersion,
+				Profile:     "health-checker",
+				Tag:         "default",
+				Commit:      commit,
 			},
 		},
 		{
@@ -1097,11 +1108,12 @@ func TestRun(t *testing.T) {
 				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(errors.New("error"))
 			},
 			options: &InstallOptions{
-				URL:     MockAVSRepo,
-				Version: MockAVSLatestVersion,
-				Profile: "health-checker",
-				Tag:     "default",
-				Commit:  commit,
+				URL:         MockAVSRepo,
+				Version:     MockAVSLatestVersion,
+				SpecVersion: specVersion,
+				Profile:     "health-checker",
+				Tag:         "default",
+				Commit:      commit,
 			},
 			wantErr: true,
 		},

@@ -25,8 +25,6 @@ func TestMonitoringStack_NotInitialized(t *testing.T) {
 		func(t *testing.T) {
 			assert.NoError(t, runErr)
 
-			waitForMonitoring()
-
 			checkMonitoringStackNotInstalled(t)
 			checkMonitoringStackContainersNotRunning(t)
 		},
@@ -53,8 +51,6 @@ func TestMonitoringStack_Init(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr)
-
-			waitForMonitoring()
 
 			checkMonitoringStackDir(t)
 			checkMonitoringStackContainers(t)
@@ -100,8 +96,6 @@ func TestMonitoringStack_NotReinstalled(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, runErr)
-
-			waitForMonitoring()
 
 			checkMonitoringStackDir(t)
 			checkMonitoringStackContainers(t)
@@ -161,8 +155,6 @@ func TestMonitoring_Restart(t *testing.T) {
 
 			mainService2IP, err := getContainerIPByName("main-service-2", "eigenlayer-2")
 			assert.NoError(t, err)
-
-			waitForMonitoring()
 
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080")

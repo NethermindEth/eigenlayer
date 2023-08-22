@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/compose-spec/compose-go v1.18.2
 	github.com/docker/docker v24.0.5+incompatible

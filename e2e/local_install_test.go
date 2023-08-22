@@ -134,7 +134,6 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 
-			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 			checkPrometheusLabels(t, optionReturnerIP+":8080")
@@ -285,7 +284,6 @@ func TestLocalInstallInvalidManifestCleanupWithMonitoring(t *testing.T) {
 			checkContainerNotExisting(t, "option-returner")
 			checkTemporaryPackageNotExisting(t, "mock-avs")
 
-			waitForMonitoring()
 			checkPrometheusTargetsDown(t, "option-returner")
 		},
 	)
@@ -393,7 +391,6 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 
-			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 			checkPrometheusLabels(t, optionReturnerIP+":8080")

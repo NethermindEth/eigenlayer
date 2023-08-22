@@ -124,7 +124,6 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 
-			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 			checkPrometheusLabels(t, optionReturnerIP+":8080")
@@ -228,7 +227,6 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 
-			waitForMonitoring()
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 			checkPrometheusLabels(t, optionReturnerIP+":8080")
@@ -317,7 +315,6 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 			healthCheckerIP, err := getContainerIPByName("health-checker", "eigenlayer")
 			assert.NoError(t, err)
 
-			waitForMonitoring()
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
 			checkPrometheusLabels(t, mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
 		},

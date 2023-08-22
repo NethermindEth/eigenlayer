@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"slices"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
+	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/assert"
@@ -69,41 +71,47 @@ func checkContainerRunning(t *testing.T, containerNames ...string) {
 
 // checkPrometheusTargetsUp checks that the prometheus targets are up
 func checkPrometheusTargetsUp(t *testing.T, targets ...string) {
-	promTargets, err := prometheusTargets(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Check prometheus targets
-	// Check number of targets
-	assert.Len(t, promTargets.Data.ActiveTargets, len(targets))
-	// Check success
-	assert.Equal(t, "success", promTargets.Status)
-
-	var labels []string
-	for _, target := range promTargets.Data.ActiveTargets {
-		assert.Contains(t, target.Labels, "instance")
-		labels = append(labels, target.Labels["instance"])
-	}
-	for _, target := range targets {
-		assert.Contains(t, labels, target)
-	}
-	// Check all targets are up
-	for i := 0; i < len(promTargets.Data.ActiveTargets); i++ {
-		// Try 10 times to get the target health different than unknown
-		for tries := 0; tries < 10; tries++ {
-			if promTargets.Data.ActiveTargets[i].Health == "unknown" {
-				t.Logf("Target %s health is unknown. Waiting 1 sec to try again (%d/10)", promTargets.Data.ActiveTargets[i].Labels["instance"], tries+1)
-				time.Sleep(time.Second)
-				promTargets, err = prometheusTargets(t)
-				if err != nil {
-					t.Fatal(err)
-				}
-			} else {
-				break
+	var (
+		tries       int           = 0
+		timeOut     time.Duration = 30 * time.Second
+		promTargets *PrometheusTargetsResponse
+		err         error
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	b := backoff.WithContext(backoff.NewExponentialBackOff(), ctx)
+	err = backoff.Retry(func() error {
+		tries++
+		logPrefix := fmt.Sprintf("checkPrometheusTargetsUp (%d)", tries)
+		promTargets, err = prometheusTargets(t)
+		if err != nil {
+			return logAndPipeError(t, logPrefix, err)
+		}
+		if promTargets.Status != "success" {
+			return logAndPipeError(t, logPrefix, fmt.Errorf("expected status success, got %s", promTargets.Status))
+		}
+		if len(promTargets.Data.ActiveTargets) != len(targets) {
+			return logAndPipeError(t, logPrefix, fmt.Errorf("expected %d targets, got %d", len(targets), len(promTargets.Data.ActiveTargets)))
+		}
+		for i, target := range promTargets.Data.ActiveTargets {
+			var labels []string
+			for label := range target.Labels {
+				labels = append(labels, label)
+			}
+			if !slices.Contains(labels, "instance") {
+				return logAndPipeError(t, logPrefix, fmt.Errorf("target %d does not have instance label", i))
+			}
+			instanceLabel := target.Labels["instance"]
+			if !slices.Contains(targets, instanceLabel) {
+				return logAndPipeError(t, logPrefix, fmt.Errorf("target %d instance label is not expected", i))
+			}
+			if target.Health == "unknown" {
+				return logAndPipeError(t, logPrefix, fmt.Errorf("target %d health is unknown", i))
 			}
 		}
-		assert.Equal(t, "up", promTargets.Data.ActiveTargets[i].Health, "target %s is not up", promTargets.Data.ActiveTargets[i].Labels["instance"])
-	}
+		return nil
+	}, b)
+	assert.NoError(t, err, `targets "%s" should be up, but after %d tries they are not`, targets, tries)
 }
 
 // checkPrometheusTargetsDown checks that the prometheus targets are up
@@ -112,9 +120,6 @@ func checkPrometheusTargetsDown(t *testing.T, targets ...string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Check prometheus targets
-	// Check number of targets
-	assert.Len(t, promTargets.Data.ActiveTargets, len(targets))
 	// Check success
 	assert.Equal(t, "success", promTargets.Status)
 
@@ -130,15 +135,31 @@ func checkPrometheusTargetsDown(t *testing.T, targets ...string) {
 
 // checkPrometheusHealth checks that the prometheus health is ok
 func checkGrafanaHealth(t *testing.T) {
-	t.Logf("Checking Grafana health")
-	// Check Grafana health
-	gClient, err := gapi.New("http://localhost:3000", gapi.Config{
-		BasicAuth: url.UserPassword("admin", "admin"),
-	})
-	assert.NoError(t, err)
-	healthResponse, err := gClient.Health()
-	assert.NoError(t, err)
-	assert.Equal(t, "ok", healthResponse.Database)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tries := 0
+	b := backoff.WithContext(backoff.NewConstantBackOff(time.Second), ctx)
+	err := backoff.Retry(func() error {
+		logPrefix := fmt.Sprintf("checkGrafanaHealth (%d)", tries+1)
+		tries++
+		// Check Grafana health
+		gClient, err := gapi.New("http://localhost:3000", gapi.Config{
+			BasicAuth: url.UserPassword("admin", "admin"),
+		})
+		if err != nil {
+			return logAndPipeError(t, logPrefix, err)
+		}
+		healthResponse, err := gClient.Health()
+		if err != nil {
+			return logAndPipeError(t, logPrefix, err)
+		}
+		if healthResponse.Database != "ok" {
+			return logAndPipeError(t, logPrefix, fmt.Errorf("expected database ok, got %s", healthResponse.Database))
+		}
+		return nil
+	}, b)
+	assert.NoError(t, err, "Grafana should be ok, but it is not")
 }
 
 // checkMonitoringStackContainersNotRunning checks that the monitoring stack containers are not running

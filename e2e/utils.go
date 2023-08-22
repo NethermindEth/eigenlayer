@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/docker/docker/api/types"
@@ -48,10 +47,6 @@ func repoPath(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return filepath.Dir(wd)
-}
-
-func waitForMonitoring() {
-	time.Sleep(20 * time.Second)
 }
 
 func stopMonitoringStackContainers() error {
@@ -191,4 +186,12 @@ func getInstance(t *testing.T, instanceID string) (*data.Instance, error) {
 	// Get instance state
 	instance, err := readState(stateFilePath)
 	return instance, err
+}
+
+func logAndPipeError(t *testing.T, prefix string, err error) error {
+	t.Helper()
+	if err != nil {
+		t.Log(prefix, err)
+	}
+	return err
 }

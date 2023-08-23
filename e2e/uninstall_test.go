@@ -70,12 +70,9 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 	e2eTest.run()
 }
 
-// Test_Uninstall_NonExistingInstance checks that the uninstall command returns
-// an error when the AVS instance does not exist.
+// Test_Uninstall_NonExistingInstance checks that the uninstall command success
+// if the instance does not exist.
 func Test_Uninstall_NonExistingInstance(t *testing.T) {
-	// TODO: Skip test because ...
-	t.Skipf(`The "uninstall" command isn't failing if the instance is not installed, only a warning is shown.
-	we need to agreed if we want to change this behavior or not.`)
 	// Test context
 	var (
 		uninstallErr error
@@ -86,7 +83,7 @@ func Test_Uninstall_NonExistingInstance(t *testing.T) {
 			uninstallErr = runCommand(t, egnPath, "uninstall", "mock-avs-default")
 		},
 		func(t *testing.T) {
-			require.Error(t, uninstallErr, "uninstall command should return an error")
+			require.NoError(t, uninstallErr, "uninstall command should success")
 		})
 	e2eTest.run()
 }

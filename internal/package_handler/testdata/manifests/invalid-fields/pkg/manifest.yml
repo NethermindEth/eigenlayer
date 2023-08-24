@@ -1,5 +1,4 @@
 version: "v1.0.0"
-node_version: "v0.1.0"
 name: sample-avs
 upgrade: required
 hardware_requirements:

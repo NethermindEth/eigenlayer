@@ -1,5 +1,4 @@
 version: v0.1.0
-node_version: v3.0.0
 name: python-mock-server
 upgrade: recommended
 hardware_requirements:

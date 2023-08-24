@@ -3,8 +3,6 @@ type: object
 properties:
   version:
     type: string
-  node_version:
-    type: string
   name:
     type: string
   upgrade:
@@ -43,7 +41,6 @@ properties:
       type: string
 required:
 - version
-- node_version
 - name
 - profiles
 additionalProperties: false

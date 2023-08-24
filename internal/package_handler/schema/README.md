@@ -3,7 +3,6 @@
 ## Manifest
 
 - **version** (string, required): Version of the object.
-- **node_version** (string, required): Node version.
 - **name** (string, required): Name of the object.
 - **profiles** (array of strings, required): List of profiles.
 - **upgrade** (string): Upgrade status.

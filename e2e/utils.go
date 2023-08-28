@@ -28,6 +28,15 @@ func runCommand(t *testing.T, path string, args ...string) error {
 	return err
 }
 
+func buildMockAvsImages(t *testing.T) error {
+	t.Helper()
+	err := runCommand(t, "docker", "build", "-t", "mock-avs-option-returner:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:option-returner")
+	if err != nil {
+		return err
+	}
+	return runCommand(t, "docker", "build", "-t", "mock-avs-health-checker:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:health-checker")
+}
+
 func repoPath(t *testing.T) string {
 	t.Helper()
 	wd, err := os.Getwd()

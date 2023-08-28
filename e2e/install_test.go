@@ -10,8 +10,8 @@ import (
 
 const (
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
-	latestMockAVSVersion    = "v4.0.0"
-	latestMockAVSCommitHash = "f9a1cbe784c9aa72c1da46aa86c7f910908b1969"
+	latestMockAVSVersion    = "v5.0.0"
+	latestMockAVSCommitHash = "933143894724e0c3867a2c9469b837d49ee6e063"
 )
 
 func TestInstall_WithoutArguments(t *testing.T) {
@@ -47,7 +47,9 @@ func TestInstall_ValidArgument(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
@@ -72,7 +74,9 @@ func TestInstall_FromCommitHash(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", latestMockAVSCommitHash, mockAVSRepo)
@@ -98,6 +102,9 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
@@ -136,7 +143,9 @@ func TestInstall_ValidArgumentNotRun(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
@@ -162,6 +171,9 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Act
@@ -189,6 +201,9 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
@@ -232,7 +247,9 @@ func TestInstall_MultipleAVS(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
@@ -265,6 +282,9 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
@@ -315,7 +335,9 @@ func TestInstall_HighRequirements(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "install", "--profile", "high-requirements", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")

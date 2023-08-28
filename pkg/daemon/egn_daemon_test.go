@@ -38,8 +38,8 @@ import (
 
 const (
 	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs"
-	MockAVSLatestVersion       = "v4.0.0"
-	MockAVSLatestVersionCommit = "f9a1cbe784c9aa72c1da46aa86c7f910908b1969"
+	MockAVSLatestVersion       = "v5.0.0"
+	MockAVSLatestVersionCommit = "933143894724e0c3867a2c9469b837d49ee6e063"
 )
 
 var MockAVSLatestOptions = map[string][]Option{

@@ -27,6 +27,9 @@ func TestPlugin_LocalInstall_RemoteContext(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -70,6 +73,9 @@ func TestPlugin_LocalInstall_RemoteContext_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -127,6 +133,10 @@ func TestPlugin_LocalInstall_LocalContext(t *testing.T) {
 		// Arrange
 		func(t *testing.T, egnPath string) error {
 			var err error
+			err = buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
 			dataDir, err = dataDirPath()
 			if err != nil {
 				return err
@@ -205,6 +215,9 @@ func TestPlugin_LocalInstall_LocalContext_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 				return err
 			}
@@ -290,6 +303,9 @@ func TestPlugin_LocalInstall_LocalContext_Run_InvalidPath(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 				return err
 			}
@@ -357,6 +373,9 @@ func TestPlugin_LocalInstall_RemoteImage(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 				return err
 			}
@@ -426,7 +445,9 @@ func TestPlugin_Install_RemoteContext(t *testing.T) {
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
-		nil,
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			installErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
@@ -458,6 +479,9 @@ func TestPlugin_Install_RemoteContext_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		// Act

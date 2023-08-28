@@ -7,14 +7,16 @@ import (
 )
 
 var (
-	ErrInvalidFilePath = errors.New("invalid file path")
-	ErrInvalidDirPath  = errors.New("invalid directory path")
-	ErrInvalidChecksum = errors.New("invalid checksum")
-	ErrNoVersionsFound = errors.New("no versions found")
-	ErrInvalidVersion  = errors.New("invalid version")
-	ErrVersionNotFound = errors.New("version not found")
-	ErrProfileNotFound = errors.New("profile not found")
-	ErrNoPlugin        = errors.New("no plugin found")
+	ErrInvalidFilePath            = errors.New("invalid file path")
+	ErrInvalidDirPath             = errors.New("invalid directory path")
+	ErrInvalidChecksum            = errors.New("invalid checksum")
+	ErrNoVersionsFound            = errors.New("no versions found")
+	ErrInvalidVersion             = errors.New("invalid version")
+	ErrVersionNotFound            = errors.New("version not found")
+	ErrProfileNotFound            = errors.New("profile not found")
+	ErrNoPlugin                   = errors.New("no plugin found")
+	ErrProfileComposeFileNotFound = errors.New("profile compose file not found")
+	ErrBuildContextNotAllowed     = errors.New("build context not allowed")
 )
 
 // PackageFileNotFoundError is returned when a package file is not found.

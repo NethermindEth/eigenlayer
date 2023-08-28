@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/compose-spec/compose-go/cli"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -304,6 +306,37 @@ func (p *PackageHandler) Profiles() ([]Profile, error) {
 	}
 
 	return profiles, nil
+}
+
+func (p *PackageHandler) CheckComposeProject(profileName string, env map[string]string) error {
+	composeFile := filepath.Join(p.path, pkgDirName, profileName, "docker-compose.yml")
+	composeExists, err := afero.Exists(p.afs, composeFile)
+	if err != nil {
+		return err
+	}
+	if !composeExists {
+		return fmt.Errorf("%w: profile %s", ErrProfileComposeFileNotFound, profileName)
+	}
+
+	projectOptions, err := cli.NewProjectOptions([]string{composeFile})
+	if err != nil {
+		return err
+	}
+	maps.Copy(projectOptions.Environment, env)
+
+	project, err := cli.ProjectFromOptions(projectOptions)
+	if err != nil {
+		return err
+	}
+
+	services := project.AllServices()
+	for _, service := range services {
+		if service.Build != nil {
+			return fmt.Errorf("%w: profile %s, service %s", ErrBuildContextNotAllowed, profileName, service.Name)
+		}
+	}
+
+	return nil
 }
 
 // DotEnv returns the .env file for the given profile.

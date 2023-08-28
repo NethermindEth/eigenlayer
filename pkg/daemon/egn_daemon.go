@@ -17,6 +17,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/maps"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
@@ -472,20 +473,25 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	}
 
 	// Build environment variables
-	env := make(map[string]string, len(options.Options))
+	env, err := pkgHandler.DotEnv(selectedProfile.Name)
+	if err != nil {
+		return instanceID, tID, err
+	}
+	optionsEnv := make(map[string]string, len(options.Options))
 	for _, o := range profileOptions {
 		if v, ok := options.Options[o.Name()]; ok {
 			err := o.Set(v)
 			if err != nil {
 				return instanceID, tID, err
 			}
-			env[o.Target()] = o.Value()
+			optionsEnv[o.Target()] = o.Value()
 		} else if o.Default() != "" {
-			env[o.Target()] = o.Default()
+			optionsEnv[o.Target()] = o.Default()
 		} else {
 			return instanceID, tID, fmt.Errorf("%w: %s", ErrOptionWithoutValue, o.Name())
 		}
 	}
+	maps.Copy(env, optionsEnv)
 
 	installOptions := InstallOptions{
 		Profile:     options.Profile,
@@ -552,10 +558,15 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 	}
 
 	// Build environment variables
-	env := make(map[string]string, len(options.Options))
+	env, err := pkgHandler.DotEnv(selectedProfile.Name)
+	if err != nil {
+		return instanceID, tID, err
+	}
+	optionsEnv := make(map[string]string, len(options.Options))
 	for _, o := range options.Options {
 		env[o.Target()] = o.Value()
 	}
+	maps.Copy(env, optionsEnv)
 
 	return d.install(instanceName, instanceID, tID, pkgHandler, selectedProfile, env, options)
 }
@@ -567,6 +578,11 @@ func (d *EgnDaemon) install(
 	env map[string]string,
 	options InstallOptions,
 ) (string, string, error) {
+	err := pkgHandler.CheckComposeProject(selectedProfile.Name, env)
+	if err != nil {
+		return instanceID, tID, err
+	}
+
 	// Get monitoring targets
 	monitoringTargets := make([]data.MonitoringTarget, 0)
 	for _, target := range selectedProfile.Monitoring.Targets {

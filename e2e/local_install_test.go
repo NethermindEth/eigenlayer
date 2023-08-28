@@ -21,6 +21,9 @@ func TestLocalInstall(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -59,6 +62,9 @@ func TestLocalInstallNotRunning(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -97,6 +103,9 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
@@ -147,6 +156,9 @@ func TestLocalInstallInvalidManifest(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -191,6 +203,9 @@ func TestLocalInstallInvalidManifestCleanup(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -236,6 +251,9 @@ func TestLocalInstallInvalidManifestCleanupWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err
@@ -288,6 +306,9 @@ func TestLocalInstallInvalidComposeCleanup(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := os.MkdirAll(pkgDir, 0o755)
 			if err != nil {
 				return err
@@ -332,6 +353,9 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
 			err := runCommand(t, egnPath, "init-monitoring")
 			if err != nil {
 				return err

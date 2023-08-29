@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"io"
 	"path/filepath"
 	"testing"
@@ -116,7 +115,7 @@ func TestNewInstance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
+			_, err = io.WriteString(stateFile, `{
 				"name":"test_name",
 				"url":"https://github.com/NethermindEth/mock-avs",
 				"version":"v3.1.1",
@@ -124,10 +123,9 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"type": "%s",
-					"src":"nethermind/egn-plugin:latest"
+					"image":"mock-avs-plugin:latest"
 					}
-				}`, PluginTypeRemoteImage))
+				}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -143,154 +141,11 @@ func TestNewInstance(t *testing.T) {
 					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
-						Type: PluginTypeRemoteImage,
-						Src:  "nethermind/egn-plugin:latest",
+						Image: "mock-avs-plugin:latest",
 					},
 					path: testDir,
 				},
 				err: nil,
-			}
-		}(),
-		func() testCase {
-			testDir := t.TempDir()
-			stateFile, err := fs.Create(testDir + "/state.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
-				"name":"test_name",
-				"url":"https://github.com/NethermindEth/mock-avs",
-				"version":"v3.1.1",
-				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-				"profile":"mainnet",
-				"tag":"test_tag",
-				"plugin":{
-					"type": "%s",
-					"src":"https://github.com/NethermindEth/mock-avs.git#main:plugin"
-					}
-				}`, PluginTypeRemoteContext))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			return testCase{
-				name: "with plugin, remote context",
-				path: testDir,
-				instance: &Instance{
-					Name:    "test_name",
-					Tag:     "test_tag",
-					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v3.1.1",
-					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-					Profile: "mainnet",
-					Plugin: &Plugin{
-						Type: PluginTypeRemoteContext,
-						Src:  "https://github.com/NethermindEth/mock-avs.git#main:plugin",
-					},
-					path: testDir,
-				},
-				err: nil,
-			}
-		}(),
-		func() testCase {
-			testDir := t.TempDir()
-			stateFile, err := fs.Create(testDir + "/state.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
-				"name":"test_name",
-				"url":"https://github.com/NethermindEth/mock-avs",
-				"version":"v3.1.1",
-				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-				"profile":"mainnet",
-				"tag":"test_tag",
-				"plugin":{
-					"type": "%s",
-					"src":"eigen-plugin-mock-avs-default"
-					}
-				}`, PluginTypeLocalContext))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			return testCase{
-				name: "with plugin, local context",
-				path: testDir,
-				instance: &Instance{
-					Name:    "test_name",
-					Tag:     "test_tag",
-					URL:     "https://github.com/NethermindEth/mock-avs",
-					Version: "v3.1.1",
-					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-					Profile: "mainnet",
-					Plugin: &Plugin{
-						Type: PluginTypeLocalContext,
-						Src:  "eigen-plugin-mock-avs-default",
-					},
-					path: testDir,
-				},
-				err: nil,
-			}
-		}(),
-		func() testCase {
-			testDir := t.TempDir()
-			stateFile, err := fs.Create(testDir + "/state.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, `{
-				"name":"test_name",
-				"url":"https://github.com/NethermindEth/mock-avs",
-				"version":"v3.1.1",
-				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-				"profile":"mainnet",
-				"tag":"test_tag",
-				"plugin":{
-					"type": "unknown-type",
-					"src":"eigen-plugin-mock-avs-default"
-					}
-				}`)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			return testCase{
-				name: "invalid plugin, unknown type",
-				path: testDir,
-				err:  ErrInvalidInstance,
-			}
-		}(),
-		func() testCase {
-			testDir := t.TempDir()
-			stateFile, err := fs.Create(testDir + "/state.json")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stateFile.Close()
-			_, err = io.WriteString(stateFile, fmt.Sprintf(`{
-				"name":"test_name",
-				"url":"https://github.com/NethermindEth/mock-avs",
-				"version":"v3.1.1",
-				"commit":"d1d4bb7009549c431d7b3317f004a56e2c3b2031",
-				"profile":"mainnet",
-				"tag":"test_tag",
-				"plugin":{
-					"type": "%s",
-					"src":""
-					}
-				}`, PluginTypeLocalContext))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			return testCase{
-				name: "invalid plugin, empty src",
-				path: testDir,
-				err:  ErrInvalidInstance,
 			}
 		}(),
 		func() testCase {

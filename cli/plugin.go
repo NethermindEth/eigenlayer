@@ -18,7 +18,6 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		instanceId     string
 		noDestroyImage bool
 		host           bool
-		buildArgs      map[string]string
 		pluginArgs     []string
 		volumes        []string
 	)
@@ -48,23 +47,6 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 
   This will mount the /tmp directory of the host inside the plugin container at 
   /tmp, and the plugin-v volume at /data.
-
-- Using build arguments:
-
-  For the cases that the plugin is build from a relative path inside the package
-  or a remote context, the plugin image is built each time the plugin is executed.
-  To pass build arguments to the plugin image, use the "--build-arg" flag, which
-  is a map of key-value pairs. For example:
-
-    $ eigenlayer plugin \
-       	--build-arg arg1=value1 \
-       	--build-arg arg2=value2 \
-    	mock-avs-default \
-     	--port 8080
-
-  The "--build-arg" flag can be used multiple times to pass multiple build
-  arguments. Should be declared before the instance ID to be recognized as a
-  plugin build argument, and not as a plugin execution argument.
 `,
 
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -78,19 +60,11 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var bArgs map[string]*string
-			if buildArgs != nil {
-				bArgs = make(map[string]*string)
-				for k, v := range buildArgs {
-					bArgs[k] = stringPtr(v)
-				}
-			}
 			runPluginOptions := daemon.RunPluginOptions{
 				NoDestroyImage: noDestroyImage,
 				HostNetwork:    host,
 				Volumes:        make(map[string]string),
 				Binds:          make(map[string]string),
-				BuildArgs:      bArgs,
 			}
 			for _, v := range volumes {
 				vSplit := strings.Split(v, ":")
@@ -112,11 +86,6 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 	cmd.Flags().BoolVar(&noDestroyImage, "no-rm-image", false, "Do not remove the plugin image after plugin execution")
 	cmd.Flags().BoolVar(&host, "host", false, "Run the plugin on the host network instead of the AVS network")
 	cmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Bind mount a volume. Format: <volume_name>:<path> or <path>:<path>. Can be specified multiple times")
-	cmd.Flags().StringToStringVar(&buildArgs, "build-arg", nil, "arguments to pass to the plugin image build")
 	cmd.Flags().SetInterspersed(false)
 	return &cmd
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

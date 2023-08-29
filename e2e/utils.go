@@ -34,6 +34,10 @@ func buildMockAvsImages(t *testing.T) error {
 	if err != nil {
 		return err
 	}
+	err = runCommand(t, "docker", "build", "-t", "mock-avs-plugin:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:plugin")
+	if err != nil {
+		return err
+	}
 	return runCommand(t, "docker", "build", "-t", "mock-avs-health-checker:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:health-checker")
 }
 

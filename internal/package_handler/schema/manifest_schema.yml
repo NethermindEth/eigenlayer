@@ -32,8 +32,6 @@ properties:
     properties:
       image:
         type: string
-      build_from:
-        type: string
     additionalProperties: false
   profiles:
     type: array

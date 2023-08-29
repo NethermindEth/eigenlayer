@@ -28,7 +28,6 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	mock_locker "github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
-	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon/mocks"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
@@ -38,8 +37,8 @@ import (
 
 const (
 	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs"
-	MockAVSLatestVersion       = "v5.0.0"
-	MockAVSLatestVersionCommit = "933143894724e0c3867a2c9469b837d49ee6e063"
+	MockAVSLatestVersion       = "v5.1.0"
+	MockAVSLatestVersionCommit = "75c0bf6f08bb2bf5a0404061a94e0fe0366c6f4c"
 )
 
 var MockAVSLatestOptions = map[string][]Option{
@@ -2456,10 +2455,6 @@ func TestNodeLogs(t *testing.T) {
 
 func TestRunPlugin(t *testing.T) {
 	afs := afero.NewOsFs()
-	buildArgs := map[string]*string{
-		"agr1": utils.StringPtr("value1"),
-		"arg2": utils.StringPtr("value2"),
-	}
 	type mockerData struct {
 		dataDir           *data.DataDir
 		fs                afero.Fs
@@ -2489,17 +2484,16 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
@@ -2507,8 +2501,7 @@ func TestRunPlugin(t *testing.T) {
 						Format:        "json",
 					}).Return(`[{"ID":"abc123"}]`, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(nil),
-					d.dockerManager.EXPECT().Run("mock-avs-plugin", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run("mock-avs-plugin:latest", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2520,109 +2513,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin").Return(nil),
-				)
-			},
-		},
-		{
-			name:       `run plugin from remote context`,
-			instanceId: "mock-avs-default",
-			args:       []string{"arg1", "arg2"},
-			options: RunPluginOptions{
-				Binds: map[string]string{
-					"/tmp": "/tmp",
-				},
-				Volumes: map[string]string{
-					"volume1": "/tmp/volume1",
-				},
-			},
-			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
-					"name": "mock-avs",
-					"tag": "default",
-					"version": "v3.0.3",
-					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
-					"plugin": {
-						"type": "%s",
-						"src": "https://github.com/NethermindEth/mock-avs.git#main:plugin"
-					}
-				}`, data.PluginTypeRemoteContext))
-				gomock.InOrder(
-					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						FilterRunning: true,
-						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format:        "json",
-					}).Return(`[{"ID":"abc123"}]`, nil),
-					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().BuildImageFromURI("https://github.com/NethermindEth/mock-avs.git#main:plugin", "eigen-plugin-mock-avs-default", nil),
-					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
-						{
-							Type:   docker.VolumeTypeBind,
-							Source: "/tmp",
-							Target: "/tmp",
-						},
-						{
-							Type:   docker.VolumeTypeVolume,
-							Source: "volume1",
-							Target: "/tmp/volume1",
-						},
-					}),
-					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
-				)
-			},
-		},
-		{
-			name:       `run plugin with local context`,
-			instanceId: "mock-avs-default",
-			args:       []string{"arg1", "arg2"},
-			options: RunPluginOptions{
-				Binds: map[string]string{
-					"/tmp": "/tmp",
-				},
-				Volumes: map[string]string{
-					"volume1": "/tmp/volume1",
-				},
-				BuildArgs: buildArgs,
-			},
-			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
-					"name": "mock-avs",
-					"tag": "default",
-					"version": "v3.0.3",
-					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
-					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-default"
-					}
-				}`, data.PluginTypeLocalContext))
-
-				pluginContext := new(bytes.Buffer)
-				err := d.dataDir.SavePluginImageContext("mock-avs-default", io.NopCloser(pluginContext))
-				require.NoError(t, err)
-
-				gomock.InOrder(
-					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						FilterRunning: true,
-						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format:        "json",
-					}).Return(`[{"ID":"abc123"}]`, nil),
-					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().BuildImageFromContext(gomock.Any(), "eigen-plugin-mock-avs-default", buildArgs),
-					d.dockerManager.EXPECT().Run("eigen-plugin-mock-avs-default", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
-						{
-							Type:   docker.VolumeTypeBind,
-							Source: "/tmp",
-							Target: "/tmp",
-						},
-						{
-							Type:   docker.VolumeTypeVolume,
-							Source: "volume1",
-							Target: "/tmp/volume1",
-						},
-					}),
-					d.dockerManager.EXPECT().ImageRemove("eigen-plugin-mock-avs-default").Return(nil),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:latest").Return(nil),
 				)
 			},
 		},
@@ -2640,20 +2531,18 @@ func TestRunPlugin(t *testing.T) {
 				},
 			},
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				gomock.InOrder(
-					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(nil),
-					d.dockerManager.EXPECT().Run("mock-avs-plugin", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run("mock-avs-plugin:latest", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2665,7 +2554,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin").Return(nil),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:latest").Return(nil),
 				)
 			},
 		},
@@ -2693,17 +2582,16 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2716,17 +2604,16 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2739,17 +2626,16 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2763,50 +2649,22 @@ func TestRunPlugin(t *testing.T) {
 			instanceId: "mock-avs-default",
 			wantErr:    true,
 			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
 					"version": "v3.0.3",
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
+						"image": "mock-avs-plugin:latest"
 					}
-				}`, data.PluginTypeRemoteImage))
+				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					FilterRunning: true,
 					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
 					Format:        "json",
 				}).Return(`[{"ID":"abc123"}]`, nil)
 				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{}, nil)
-			},
-		},
-		{
-			name:       `error pulling plugin image`,
-			instanceId: "mock-avs-default",
-			wantErr:    true,
-			mocker: func(t *testing.T, d *mockerData) {
-				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", fmt.Sprintf(`{
-					"name": "mock-avs",
-					"tag": "default",
-					"version": "v3.0.3",
-					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
-					"plugin": {
-						"type": "%s",
-						"src": "mock-avs-plugin"
-					}
-				}`, data.PluginTypeRemoteImage))
-				gomock.InOrder(
-					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-						FilterRunning: true,
-						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-						Format:        "json",
-					}).Return(`[{"ID":"abc123"}]`, nil),
-					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Pull("mock-avs-plugin").Return(assert.AnError),
-				)
 			},
 		},
 	}
@@ -2887,29 +2745,8 @@ func TestGetPluginData(t *testing.T) {
 	require.NoError(t, err, "failed to initialize daemon")
 
 	// Tests
+	// TODO: remove table-driven test schema because it's only one test case
 	tests := []testCase{
-		func(t *testing.T) testCase {
-			name := "plugin with remote context"
-			pkgFolder := t.TempDir()
-			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
-			require.NoError(t, err, "failed to clone mock-avs repo")
-			return testCase{
-				name:   name,
-				daemon: daemon,
-				args: args{
-					dataDir:    dataDir,
-					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
-					instanceID: "mock-avs-remote-context",
-				},
-				want: want{
-					plugin: &data.Plugin{
-						Type: data.PluginTypeRemoteContext,
-						Src:  "https://github.com/NethermindEth/mock-avs.git#main:plugin",
-					},
-					err: nil,
-				},
-			}
-		}(t),
 		func(t *testing.T) testCase {
 			name := "plugin with remote image"
 			pkgFolder := t.TempDir()
@@ -2929,59 +2766,9 @@ func TestGetPluginData(t *testing.T) {
 				},
 				want: want{
 					plugin: &data.Plugin{
-						Type: data.PluginTypeRemoteImage,
-						Src:  "busybox:3.16",
+						Image: "busybox:3.16",
 					},
 					err: nil,
-				},
-			}
-		}(t),
-		func(t *testing.T) testCase {
-			name := "plugin with local context"
-			pkgFolder := t.TempDir()
-			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
-			require.NoError(t, err, "failed to clone mock-avs repo")
-			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
-			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{
-				BuildFrom: "../plugin",
-			})
-			return testCase{
-				name:   name,
-				daemon: daemon,
-				args: args{
-					dataDir:    dataDir,
-					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
-					instanceID: "mock-avs-local-context",
-				},
-				want: want{
-					plugin: &data.Plugin{
-						Type: data.PluginTypeLocalContext,
-						Src:  "mock-avs-local-context",
-					},
-					err: nil,
-				},
-			}
-		}(t),
-		func(t *testing.T) testCase {
-			name := "plugin with local context outside of package folder"
-			pkgFolder := t.TempDir()
-			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSLatestVersion, MockAVSRepo, pkgFolder).Run()
-			require.NoError(t, err, "failed to clone mock-avs repo")
-			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
-			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{
-				BuildFrom: "../../plugin",
-			})
-			return testCase{
-				name:   name,
-				daemon: daemon,
-				args: args{
-					dataDir:    dataDir,
-					pkgHandler: package_handler.NewPackageHandler(pkgFolder),
-					instanceID: "mock-avs-local-context",
-				},
-				want: want{
-					plugin: nil,
-					err:    ErrPluginPathNotInsidePackage,
 				},
 			}
 		}(t),

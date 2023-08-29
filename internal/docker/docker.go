@@ -332,28 +332,29 @@ func (d *DockerManager) NetworkDisconnect(container, network string) error {
 	return d.dockerClient.NetworkDisconnect(context.Background(), network, container, false)
 }
 
+// TODO: [REFACTOR] Remove this function if it's not used.
 // BuildFromURL build an image from a Git repository URI or HTTP/HTTPS context URI.
-func (d *DockerManager) BuildImageFromURI(remote string, tag string, buildArgs map[string]*string) (err error) {
-	log.Debugf("Building image from %s", remote)
-	buildResult, err := d.dockerClient.ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-		RemoteContext: remote,
-		BuildArgs:     buildArgs,
-		Tags:          []string{tag},
-		Remove:        true,
-		ForceRemove:   true,
-	})
-	if err != nil {
-		return err
-	}
-	defer buildResult.Body.Close()
+// func (d *DockerManager) BuildImageFromURI(remote string, tag string, buildArgs map[string]*string) (err error) {
+// 	log.Debugf("Building image from %s", remote)
+// 	buildResult, err := d.dockerClient.ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+// 		RemoteContext: remote,
+// 		BuildArgs:     buildArgs,
+// 		Tags:          []string{tag},
+// 		Remove:        true,
+// 		ForceRemove:   true,
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer buildResult.Body.Close()
 
-	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
-	if err != nil {
-		return err
-	}
-	defer loadResult.Body.Close()
-	return nil
-}
+// 	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer loadResult.Body.Close()
+// 	return nil
+// }
 
 // LoadImageContext loads an image context from a local path.
 func (d *DockerManager) LoadImageContext(path string) (io.ReadCloser, error) {
@@ -364,28 +365,29 @@ func (d *DockerManager) LoadImageContext(path string) (io.ReadCloser, error) {
 	return archive.TarWithOptions(path, &archive.TarOptions{})
 }
 
+// TODO: [REFACTOR] Remove this function if it's not used.
 // BuildFromLocalPath build a docker image from a local path.
-func (d *DockerManager) BuildImageFromContext(ctx io.ReadCloser, tag string, buildArgs map[string]*string) (err error) {
-	log.Debugf("Building image from context")
-	// Build plugin image
-	buildResult, err := d.dockerClient.ImageBuild(context.Background(), ctx, types.ImageBuildOptions{
-		BuildArgs:   buildArgs,
-		Tags:        []string{tag},
-		Remove:      true,
-		ForceRemove: true,
-	})
-	if err != nil {
-		return err
-	}
-	defer buildResult.Body.Close()
-	// Save image
-	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
-	if err != nil {
-		return err
-	}
-	defer loadResult.Body.Close()
-	return nil
-}
+// func (d *DockerManager) BuildImageFromContext(ctx io.ReadCloser, tag string, buildArgs map[string]*string) (err error) {
+// 	log.Debugf("Building image from context")
+// 	// Build plugin image
+// 	buildResult, err := d.dockerClient.ImageBuild(context.Background(), ctx, types.ImageBuildOptions{
+// 		BuildArgs:   buildArgs,
+// 		Tags:        []string{tag},
+// 		Remove:      true,
+// 		ForceRemove: true,
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer buildResult.Body.Close()
+// 	// Save image
+// 	loadResult, err := d.dockerClient.ImageLoad(context.Background(), buildResult.Body, true)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer loadResult.Body.Close()
+// 	return nil
+// }
 
 type VolumeType string
 

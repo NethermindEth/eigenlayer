@@ -11,9 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -657,40 +655,8 @@ func (d *EgnDaemon) getPluginData(dataDir *data.DataDir, pkgHandler *package_han
 	if err != nil {
 		return nil, err
 	}
-	// Remote image
-	if pkgPlugin.Image != "" {
-		return &data.Plugin{
-			Type: data.PluginTypeRemoteImage,
-			Src:  pkgPlugin.Image,
-		}, nil
-	}
-	// Remote context
-	if strings.HasPrefix(pkgPlugin.BuildFrom, "http://") || strings.HasPrefix(pkgPlugin.BuildFrom, "https://") {
-		pluginURL, err := url.Parse(pkgPlugin.BuildFrom)
-		if err != nil {
-			return nil, err
-		}
-		return &data.Plugin{
-			Type: data.PluginTypeRemoteContext,
-			Src:  pluginURL.String(),
-		}, nil
-	}
-	// Local context
-	pluginPath := filepath.Join(filepath.Dir(filepath.Join(pkgHandler.ManifestFilePath())), pkgPlugin.BuildFrom)
-	if !strings.HasPrefix(pluginPath, pkgHandler.Path()) {
-		return nil, fmt.Errorf("%w: %s", ErrPluginPathNotInsidePackage, pluginPath)
-	}
-	pluginContext, err := d.docker.LoadImageContext(pluginPath)
-	if err != nil {
-		return nil, err
-	}
-	err = dataDir.SavePluginImageContext(instanceID, pluginContext)
-	if err != nil {
-		return nil, err
-	}
 	return &data.Plugin{
-		Type: data.PluginTypeLocalContext,
-		Src:  instanceID,
+		Image: pkgPlugin.Image,
 	}, nil
 }
 
@@ -844,42 +810,19 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		}
 		network = networks[0]
 	}
-	// Create plugin container
-	var image string
-	switch instance.Plugin.Type {
-	case data.PluginTypeRemoteImage:
-		err := d.docker.Pull(instance.Plugin.Src)
-		if err != nil {
-			return err
-		}
-		image = instance.Plugin.Src
-	case data.PluginTypeRemoteContext:
-		image = "eigen-plugin-" + instanceId
-		err := d.docker.BuildImageFromURI(instance.Plugin.Src, image, options.BuildArgs)
-		if err != nil {
-			return err
-		}
-	case data.PluginTypeLocalContext:
-		image = "eigen-plugin-" + instanceId
-		pluginContext, err := d.dataDir.GetPluginContext(instanceId)
-		if err != nil {
-			return err
-		}
-		err = d.docker.BuildImageFromContext(pluginContext, image, options.BuildArgs)
-		if err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("%w: %s", ErrUnknownPluginType, instance.Plugin.Type)
-	}
+	// XXX: Pull is removed to support local images that are already pulled
+	// err = d.docker.Pull(instance.Plugin.Image)
+	// if err != nil {
+	// 	return err
+	// }
 	if !options.NoDestroyImage {
 		defer func() {
-			if err := d.docker.ImageRemove(image); err != nil {
-				log.Errorf("Failed to destroy plugin image %s: %v", image, err)
+			if err := d.docker.ImageRemove(instance.Plugin.Image); err != nil {
+				log.Errorf("Failed to destroy plugin image %s: %v", instance.Plugin.Image, err)
 			}
 		}()
 	}
-	log.Infof("Running plugin with image %s on network %s", image, network)
+	log.Infof("Running plugin with image %s on network %s", instance.Plugin.Image, network)
 	mounts := make([]docker.Mount, 0, len(options.Binds)+len(options.Volumes))
 	for src, dst := range options.Binds {
 		mounts = append(mounts, docker.Mount{
@@ -895,7 +838,7 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 			Target: dst,
 		})
 	}
-	return d.docker.Run(image, network, pluginArgs, mounts)
+	return d.docker.Run(instance.Plugin.Image, network, pluginArgs, mounts)
 }
 
 // NodeLogs implements Daemon.NodeLogs.

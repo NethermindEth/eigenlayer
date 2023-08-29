@@ -74,7 +74,6 @@ type PullTarget struct {
 }
 
 type RunPluginOptions struct {
-	BuildArgs      map[string]*string
 	NoDestroyImage bool
 	HostNetwork    bool
 	Binds          map[string]string

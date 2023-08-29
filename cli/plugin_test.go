@@ -166,32 +166,6 @@ func TestPluginCmd(t *testing.T) {
 				)
 			},
 		},
-		func(t *testing.T) testCase {
-			return testCase{
-				name: "--build-arg flag",
-				args: []string{"--build-arg", "arg1=value1", "--build-arg", "arg2=value2", "instance1", "arg1"},
-				err:  nil,
-				daemonMock: func(d *daemonMock.MockDaemon) {
-					gomock.InOrder(
-						d.EXPECT().HasInstance("instance1").Return(true),
-						d.EXPECT().RunPlugin("instance1", []string{"arg1"}, gomock.Any()).DoAndReturn(func(instanceId string, args []string, options daemon.RunPluginOptions) error {
-							assert.Len(t, options.BuildArgs, 2)
-							for k, v := range options.BuildArgs {
-								switch k {
-								case "arg1":
-									assert.Equal(t, "value1", *v)
-								case "arg2":
-									assert.Equal(t, "value2", *v)
-								default:
-									assert.Fail(t, "unexpected build arg")
-								}
-							}
-							return nil
-						}),
-					)
-				},
-			}
-		}(t),
 	}
 
 	for _, tc := range ts {

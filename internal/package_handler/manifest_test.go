@@ -31,7 +31,7 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Invalid Fields Manifest",
 			filePath:  "invalid-fields/pkg/manifest.yml",
-			wantError: "Invalid manifest file: Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value): Invalid plugin -> invalid fields: plugin.build_from -> (invalid build from), plugin.image -> (invalid docker image)",
+			wantError: "Invalid manifest file: Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value): Invalid plugin -> invalid fields: plugin.image -> (invalid docker image)",
 		},
 		{
 			name:      "Minimal Manifest",

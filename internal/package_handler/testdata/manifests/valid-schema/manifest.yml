@@ -7,7 +7,7 @@ hardware_requirements:
   min_free_space: 5120  # ~= 5 Gb
   stop_if_requirements_are_not_met: true
 plugin:
-  build_from: https://github.com/NethermindEth/mock-avs.git#main:plugin
+  image: mock-avs-plugin:latest
 profiles:
   - "high-requirements"
   - "option-returner"

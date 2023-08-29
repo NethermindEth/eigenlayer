@@ -13,7 +13,6 @@
   - **stop_if_requirements_are_not_met** (boolean, required): Flag to stop if requirements aren't met.
 - **plugin** (object): Plugin details, including:
   - **image** (string): Plugin image.
-  - **build_from** (string): Source of the plugin build.
 - _No additional properties are allowed_
 
 ## Profile
@@ -31,7 +30,6 @@
   - **stop_if_requirements_are_not_met** (boolean, required): Flag to stop if requirements aren't met.
 - **plugin_overrides** (object): Overrides of the Manifest's plugin details, including:
   - **image** (string, required): Pre-built docker image name ready to be pulled.
-  - **build_from** (string, required): URL to build the image from source. Can refer to Git repositories.
 - **options** (array of objects): List of options, each with:
   - **name** (string, required): Option name.
   - **target** (string, required): Option target.

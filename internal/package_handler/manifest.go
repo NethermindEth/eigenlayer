@@ -3,7 +3,6 @@ package package_handler
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
 )
 
@@ -96,25 +95,19 @@ func (h *hardwareRequirements) validate() error {
 }
 
 type Plugin struct {
-	Image     string `yaml:"image"`
-	BuildFrom string `yaml:"build_from"`
+	Image string `yaml:"image"`
 }
 
 func (p *Plugin) validate() error {
 	var invalidFields []string
-	// Validate plugin git field is a valid git url
-	if p.BuildFrom != "" {
-		_, errURI := url.ParseRequestURI(p.BuildFrom)
-		if !pathRe.MatchString(p.BuildFrom) && errURI != nil {
-			invalidFields = append(invalidFields, "plugin.build_from -> (invalid build from)")
-		}
-	}
 	// Validate plugin image field is a valid docker image
 	if p.Image != "" {
 		re := regexp.MustCompile(`^([\w-]+\/)?([\w-]+)(:[\w-\.]+)?$`)
 		if !re.MatchString(p.Image) {
 			invalidFields = append(invalidFields, "plugin.image -> (invalid docker image)")
 		}
+	} else {
+		invalidFields = append(invalidFields, "plugin.image -> (empty)")
 	}
 	if len(invalidFields) > 0 {
 		return InvalidConfError{

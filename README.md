@@ -256,20 +256,6 @@ This command will run the plugin container inside the AVS Docker network and rem
 
 The `--host` flag can be used to run the plugin container in the `host` network if the AVS Node Software is not running. To mount directories, files, and Docker volumes to the plugin container, use the `--volume` flag. All `plugin` command flags should be declared before the instance ID. To learn more about these options, run the `eigenlayer plugin --help` command.
 
-### Plugin build args
-
-If the plugin is built from a relative path inside the package or a remote context, the plugin image is built each time the plugin is executed. To pass build arguments to the plugin image build process, use the `--build-arg` flag, which is a map of key-value pairs. For example:
-
-```bash
-eigenlayer plugin \
- --build-arg arg1=value1 \
- --build-arg arg2=value2 \
- mock-avs-default \
- --port 8080
-```
-
-The `--build-arg` flag can be used multiple times to pass multiple build arguments. Should be declared before the instance ID to be recognized as a plugin build argument, and not as a plugin execution argument.
-
 ### Passing arguments to the plugin
 
 To pass arguments to the plugin container ENTRYPOINT, append them after the AVS instance ID, as follows:

@@ -8,6 +8,5 @@ hardware_requirements:
   stop_if_requirements_are_not_met: false
 plugin:
   image: "http://your-organization/plugin-service"
-  build_from: "github.com NethermindEth/el-node-spec"
 profiles:
   - "profile1"

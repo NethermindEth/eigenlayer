@@ -308,6 +308,7 @@ func (p *PackageHandler) Profiles() ([]Profile, error) {
 	return profiles, nil
 }
 
+// CheckComposeProject checks if the compose project for the given profile is valid.
 func (p *PackageHandler) CheckComposeProject(profileName string, env map[string]string) error {
 	composeFile := filepath.Join(p.path, pkgDirName, profileName, "docker-compose.yml")
 	composeExists, err := afero.Exists(p.afs, composeFile)

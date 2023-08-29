@@ -158,7 +158,7 @@ func setupPackage(t *testing.T) string {
 	pkgFolder := t.TempDir()
 
 	mockTapRepo := "https://github.com/NethermindEth/mock-avs.git"
-	tag := "v5.0.0"
+	tag := "v5.1.0"
 
 	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, tag, pkgFolder)
 

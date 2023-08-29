@@ -17,12 +17,6 @@ type DockerManager interface {
 	// Pull pulls the given image.
 	Pull(image string) error
 
-	// Build builds the given image from the given remote and sets the given tag.
-	BuildImageFromURI(remote string, tag string, buildArgs map[string]*string) error
-
-	// BuildImageFromContext builds the given image from the given context and sets the given tag.
-	BuildImageFromContext(ctx io.ReadCloser, tag string, buildArgs map[string]*string) error
-
 	// LoadImageContext loads the given context.
 	LoadImageContext(path string) (io.ReadCloser, error)
 

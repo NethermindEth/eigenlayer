@@ -17,7 +17,11 @@ func Test_Stop(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}

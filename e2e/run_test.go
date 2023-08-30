@@ -17,7 +17,11 @@ func Test_Run(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 		},
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "run", "mock-avs-default")
@@ -38,7 +42,15 @@ func Test_Run_StoppedInstance(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			if err != nil {
+				return err
+			}
+			return runCommand(t, egnPath, "stop", "mock-avs-default")
 		},
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "run", "mock-avs-default")
@@ -59,7 +71,11 @@ func Test_Run_AlreadyRunningInstance(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}

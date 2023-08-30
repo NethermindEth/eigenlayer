@@ -17,8 +17,12 @@ func Test_Uninstall(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
 			// Install the mock-avs option-returner profile
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}
@@ -38,7 +42,7 @@ func Test_Uninstall(t *testing.T) {
 
 // Test_Uninstall_After_Stop checks that the uninstall command removes all the
 // container of the mock-avs option-returner profile without error when the
-// AVS instance is topped.
+// AVS instance is stopped.
 func Test_Uninstall_After_Stop(t *testing.T) {
 	// Test context
 	var (
@@ -46,8 +50,12 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
+			err := buildMockAvsImages(t)
+			if err != nil {
+				return err
+			}
 			// Install the mock-avs option-returner profile
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
 			if err != nil {
 				return err
 			}
@@ -70,7 +78,7 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 	e2eTest.run()
 }
 
-// Test_Uninstall_NonExistingInstance checks that the uninstall command success
+// Test_Uninstall_NonExistingInstance checks that the uninstall command succeeds.
 // if the instance does not exist.
 func Test_Uninstall_NonExistingInstance(t *testing.T) {
 	// Test context

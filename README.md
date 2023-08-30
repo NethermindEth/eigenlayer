@@ -48,7 +48,11 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eig
 
 ## Install an AVS
 
-AVS Node software can be installed from a Git repository, such as GitHub, or from a local directory, as long as the package adheres to the packaging specification. Further details on how to proceed in each case are provided below.
+AVS Node software can be installed from a Git repository, such as GitHub, or from a local directory, as long as the package adheres to the packaging specification.
+
+> Each AVS profiles defines a set of services using Docker Compose. For security reasons, building Docker images is not supported, and profiles cannot use the `build` option in their `docker-compose.yml` files. Only the `image` option is supported. This applies to the plugin as well. In the `manifest.yml` file, the `plugin` option only supports the `image` field, which should contain a Docker image name as its value, rather than a reference to a Dockerfile.
+
+Further details on how to proceed in each case are provided below.
 
 ### From GitHub
 

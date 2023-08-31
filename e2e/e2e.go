@@ -67,7 +67,7 @@ func (e *e2eTestCase) Cleanup() {
 	if err != nil {
 		e.t.Log(err)
 	}
-	err = exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down").Run()
+	err = exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "monitoring", "docker-compose.yml"), "down", "--volumes").Run()
 	if err != nil {
 		e.t.Logf("error removing monitoring stack. It is possible that the monitoring stack wasn't installed and this is intentional: %v", err)
 	}
@@ -86,7 +86,7 @@ func (e *e2eTestCase) Cleanup() {
 		for _, entry := range dirEntries {
 			if entry.IsDir() {
 				e.t.Logf("Removing node %s", entry.Name())
-				err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "nodes", entry.Name(), "docker-compose.yml"), "down").Run()
+				err := exec.Command("docker", "compose", "-f", filepath.Join(dataDir, "nodes", entry.Name(), "docker-compose.yml"), "down", "--volumes").Run()
 				if err != nil {
 					e.t.Logf("error removing node %s: %v", entry.Name(), err)
 				}

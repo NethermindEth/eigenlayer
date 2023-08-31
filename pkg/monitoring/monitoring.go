@@ -218,7 +218,7 @@ func (m *MonitoringManager) Run() error {
 
 	// Save container IPs of monitoring services
 	if err := m.saveServiceIP(); err != nil {
-		return fmt.Errorf("%w: %w", ErrInitializingMonitoringMngr, err)
+		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
 	}
 
 	return nil

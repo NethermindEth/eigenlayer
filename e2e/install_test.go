@@ -59,6 +59,9 @@ func TestInstall_ValidArgument(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
 			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -86,6 +89,9 @@ func TestInstall_FromCommitHash(t *testing.T) {
 			assert.NoError(t, runErr, "install command should succeed")
 			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -123,6 +129,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
@@ -184,6 +191,9 @@ func TestInstall_DuplicatedID(t *testing.T) {
 			assert.Error(t, runErr, "install command should fail with duplicated ID")
 			checkInstanceInstalled(t, "mock-avs-integration")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -226,6 +236,7 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
@@ -264,6 +275,13 @@ func TestInstall_MultipleAVS(t *testing.T) {
 			checkInstanceInstalled(t, "mock-avs-option-returner-2")
 			checkContainerRunning(t, "main-service-1", "main-service-2")
 			checkContainerNotRunning(t, "health-checker")
+
+			mainService1IP, err := getContainerIPByName("main-service-1", "eigenlayer")
+			require.NoError(t, err, "failed to get main-service-1 container IP")
+			mainService2IP, err := getContainerIPByName("main-service-2", "eigenlayer")
+			require.NoError(t, err, "failed to get main-service-2 container IP")
+			checkAVSHealth(t, mainService1IP, "8080", 200)
+			checkAVSHealth(t, mainService2IP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -314,6 +332,9 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 			assert.NoError(t, err)
 			healthCheckerIP, err := getContainerIPByName("health-checker", "eigenlayer")
 			assert.NoError(t, err)
+			checkAVSHealth(t, mainService1IP, "8080", 200)
+			checkAVSHealth(t, mainService2IP, "8080", 200)
+			checkAVSHealth(t, healthCheckerIP, "8090", 200)
 
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")
 			checkPrometheusLabels(t, mainService1IP+":8080", mainService2IP+":8080", healthCheckerIP+":8090")

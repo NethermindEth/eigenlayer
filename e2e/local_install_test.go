@@ -44,6 +44,9 @@ func TestLocalInstall(t *testing.T) {
 			assert.NoError(t, runErr, "local-install command should succeed")
 			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -133,6 +136,7 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 			checkContainerRunning(t, "option-returner")
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
@@ -390,6 +394,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")

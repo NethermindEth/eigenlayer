@@ -29,6 +29,9 @@ func Test_Run(t *testing.T) {
 		func(t *testing.T) {
 			require.NoError(t, runErr, "run command should succeed")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		})
 	e2eTest.run()
 }
@@ -58,6 +61,9 @@ func Test_Run_StoppedInstance(t *testing.T) {
 		func(t *testing.T) {
 			require.NoError(t, runErr, "run command should succeed")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		})
 	e2eTest.run()
 }
@@ -88,6 +94,9 @@ func Test_Run_AlreadyRunningInstance(t *testing.T) {
 		func(t *testing.T) {
 			require.NoError(t, runErr, "run command should succeed")
 			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		})
 	e2eTest.run()
 }

@@ -307,3 +307,27 @@ func checkPrometheusLabels(t *testing.T, targets ...string) {
 		assert.Contains(t, instanceLabels, target)
 	}
 }
+
+func checkAVSHealth(t *testing.T, ip string, port string, wantCode int) {
+	t.Logf("Checking AVS health")
+	var (
+		timeOut      time.Duration = 30 * time.Second
+		responseCode               = -1
+		err          error
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	b := backoff.WithContext(backoff.NewExponentialBackOff(), ctx)
+	err = backoff.Retry(func() error {
+		responseCode, err = getAVSHealth(t, fmt.Sprintf("http://%s:%s%s", ip, port, "/eigen/node/health"))
+		if err != nil {
+			return err
+		}
+		if responseCode != wantCode {
+			return fmt.Errorf("expected response code %d, got %d", wantCode, responseCode)
+		}
+		return nil
+	}, b)
+	assert.NoError(t, err, "AVS health should be ok, but it is not")
+	assert.Equal(t, wantCode, responseCode, "AVS health should be %d, but it is %d", wantCode, responseCode)
+}

@@ -195,3 +195,12 @@ func logAndPipeError(t *testing.T, prefix string, err error) error {
 	}
 	return err
 }
+
+func getAVSHealth(t *testing.T, url string) (int, error) {
+	t.Helper()
+	response, err := http.Get(url)
+	if err != nil {
+		return -1, err
+	}
+	return response.StatusCode, nil
+}

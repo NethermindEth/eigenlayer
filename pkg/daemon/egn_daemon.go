@@ -742,7 +742,8 @@ func (d *EgnDaemon) uninstall(instanceID string, down bool) error {
 		composePath := path.Join(instancePath, "docker-compose.yml")
 		// docker compose down
 		if err = d.dockerCompose.Down(compose.DockerComposeDownOptions{
-			Path: composePath,
+			Path:    composePath,
+			Volumes: true,
 		}); err != nil {
 			return err
 		}

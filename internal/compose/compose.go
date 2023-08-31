@@ -156,6 +156,10 @@ func (cm *ComposeManager) Stop(opts DockerComposeStopOptions) error {
 func (cm *ComposeManager) Down(opts DockerComposeDownOptions) error {
 	downCmd := fmt.Sprintf("docker compose -f %s down", opts.Path)
 
+	if opts.Volumes {
+		downCmd += " --volumes"
+	}
+
 	if out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: downCmd, GetOutput: true}); err != nil || exitCode != 0 {
 		return fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "down"}, err, out)
 	}

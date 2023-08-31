@@ -274,7 +274,7 @@ func (m *MonitoringManager) InstallationStatus() (common.Status, error) {
 func (m *MonitoringManager) Cleanup(force bool) error {
 	if !force {
 		log.Info("Shutting down monitoring stack...")
-		if err := m.composeManager.Down(compose.DockerComposeDownOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
+		if err := m.composeManager.Down(compose.DockerComposeDownOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml"), Volumes: true}); err != nil {
 			return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
 		}
 	}

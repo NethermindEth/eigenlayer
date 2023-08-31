@@ -1539,7 +1539,7 @@ func TestCleanup(t *testing.T) {
 			name: "ok, force false",
 			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
 				composeManager := mocks.NewMockComposeManager(ctrl)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath, Volumes: true}).Return(nil)
 
 				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
@@ -1574,7 +1574,7 @@ func TestCleanup(t *testing.T) {
 			name: "down error",
 			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
 				composeManager := mocks.NewMockComposeManager(ctrl)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(errors.New("error"))
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath, Volumes: true}).Return(errors.New("error"))
 
 				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(
@@ -1592,7 +1592,7 @@ func TestCleanup(t *testing.T) {
 			name: "ok, force false, no install",
 			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
 				composeManager := mocks.NewMockComposeManager(ctrl)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath, Volumes: true}).Return(nil)
 
 				locker := mock_locker.NewMockLocker(ctrl)
 				locker.EXPECT().New(filepath.Join(userDataHome, ".eigen", "monitoring", ".lock")).Return(locker)
@@ -1606,7 +1606,7 @@ func TestCleanup(t *testing.T) {
 			name: "stack cleanup error, lock error",
 			mocker: func(t *testing.T, ctrl *gomock.Controller) (*mocks.MockComposeManager, *mock_locker.MockLocker) {
 				composeManager := mocks.NewMockComposeManager(ctrl)
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil)
+				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath, Volumes: true}).Return(nil)
 
 				locker := mock_locker.NewMockLocker(ctrl)
 				gomock.InOrder(

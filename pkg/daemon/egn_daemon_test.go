@@ -1315,7 +1315,7 @@ func TestUninstall(t *testing.T) {
 					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
 					monitoringManager.EXPECT().Status().Return(common.Running, nil),
 					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path, Volumes: true}).Return(nil),
 				)
 			},
 			options: &InstallOptions{
@@ -1340,7 +1340,7 @@ func TestUninstall(t *testing.T) {
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
 					// Uninstall
 					monitoringManager.EXPECT().InstallationStatus().Return(common.NotInstalled, nil),
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path, Volumes: true}).Return(nil),
 				)
 			},
 			options: &InstallOptions{
@@ -1366,7 +1366,7 @@ func TestUninstall(t *testing.T) {
 					// Uninstall
 					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
 					monitoringManager.EXPECT().Status().Return(common.Unknown, nil),
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(nil),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path, Volumes: true}).Return(nil),
 				)
 			},
 			options: &InstallOptions{
@@ -1399,7 +1399,7 @@ func TestUninstall(t *testing.T) {
 					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
 					monitoringManager.EXPECT().Status().Return(common.Running, nil),
 					monitoringManager.EXPECT().RemoveTarget("mock-avs-default").Return(nil),
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path}).Return(errors.New("error")),
+					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: path, Volumes: true}).Return(errors.New("error")),
 				)
 			},
 			options: &InstallOptions{

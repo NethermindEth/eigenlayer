@@ -75,4 +75,6 @@ type DockerComposeStopOptions struct {
 type DockerComposeDownOptions struct {
 	// Path specifies the location of the docker-compose.yaml file.
 	Path string
+	// Remove named volumes declared in the "volumes" section of the Compose file and anonymous volumes attached to containers.
+	Volumes bool
 }

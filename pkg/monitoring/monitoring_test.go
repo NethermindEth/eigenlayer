@@ -1110,10 +1110,7 @@ func TestRun(t *testing.T) {
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				// Expect the compose manager to be triggered
-				gomock.InOrder(
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(nil),
-				)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(nil)
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("node1").Return("168.0.2.1", nil)
@@ -1125,24 +1122,11 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			name: "down error",
-			mocker: func(t *testing.T, ctrl *gomock.Controller) ([]ServiceAPI, *mocks.MockComposeManager, *mocks.MockDockerManager) {
-				composeManager := mocks.NewMockComposeManager(ctrl)
-				// Expect the compose manager to be triggered
-				composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(errors.New("error"))
-				return []ServiceAPI{mocks.NewMockServiceAPI(ctrl)}, composeManager, mocks.NewMockDockerManager(ctrl)
-			},
-			wantErr: true,
-		},
-		{
 			name: "up error",
 			mocker: func(t *testing.T, ctrl *gomock.Controller) ([]ServiceAPI, *mocks.MockComposeManager, *mocks.MockDockerManager) {
 				composeManager := mocks.NewMockComposeManager(ctrl)
 				// Expect the compose manager to be triggered
-				gomock.InOrder(
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(errors.New("error")),
-				)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(errors.New("error"))
 				return []ServiceAPI{mocks.NewMockServiceAPI(ctrl)}, composeManager, mocks.NewMockDockerManager(ctrl)
 			},
 			wantErr: true,
@@ -1154,10 +1138,7 @@ func TestRun(t *testing.T) {
 				servicer.EXPECT().ContainerName().Return("node")
 
 				composeManager := mocks.NewMockComposeManager(ctrl)
-				gomock.InOrder(
-					composeManager.EXPECT().Down(compose.DockerComposeDownOptions{Path: composePath}).Return(nil),
-					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(nil),
-				)
+				composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: composePath}).Return(nil)
 
 				dockerManager := mocks.NewMockDockerManager(ctrl)
 				dockerManager.EXPECT().ContainerIP("node").Return("", errors.New("error"))

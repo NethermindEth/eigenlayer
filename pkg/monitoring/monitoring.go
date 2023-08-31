@@ -206,11 +206,6 @@ func (m *MonitoringManager) RemoveTarget(instanceID string) error {
 
 // Run starts the monitoring stack by shutting down any existing stack and starting a new one.
 func (m *MonitoringManager) Run() error {
-	log.Info("Cleaning monitoring stack...")
-	if err := m.composeManager.Down(compose.DockerComposeDownOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
-		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)
-	}
-
 	log.Info("Starting monitoring stack...")
 	if err := m.composeManager.Up(compose.DockerComposeUpOptions{Path: filepath.Join(m.stack.Path(), "docker-compose.yml")}); err != nil {
 		return fmt.Errorf("%w: %w", ErrRunningMonitoringStack, err)

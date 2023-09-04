@@ -348,8 +348,6 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 				options[i] = NewOptionSelect(o)
 			case "port":
 				options[i], err = NewOptionPort(o)
-			case "id":
-				options[i] = NewOptionID(o)
 			default:
 				err = errors.New("unknown option type: " + o.Type)
 				return
@@ -459,8 +457,6 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 			profileOptions[o.Name] = NewOptionSelect(o)
 		case "port":
 			profileOptions[o.Name], err = NewOptionPort(o)
-		case "id":
-			profileOptions[o.Name] = NewOptionID(o)
 		default:
 			err = errors.New("unknown option type: " + o.Type)
 			return instanceID, tID, err

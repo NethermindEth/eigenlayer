@@ -1,8 +1,0 @@
-name: invalid-id
-target: ID
-type: id
-default: invalid id
-help: "invalid type id"
-validate: 
-  min_value: 1
-  max_value: 10000

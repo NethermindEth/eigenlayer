@@ -37,19 +37,21 @@ import (
 
 const (
 	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs"
-	MockAVSLatestVersion       = "v5.1.0"
-	MockAVSLatestVersionCommit = "75c0bf6f08bb2bf5a0404061a94e0fe0366c6f4c"
+	MockAVSLatestVersion       = "v5.2.0"
+	MockAVSLatestVersionCommit = "a7ca2dca2cc9a91cdab8f30c2daf86a5f2dc4c55"
 )
 
 var MockAVSLatestOptions = map[string][]Option{
 	"option-returner": {
-		&OptionID{
+		&OptionString{
 			option: option{
 				name:   "main-container-name",
 				target: "MAIN_SERVICE_NAME",
 				help:   "Main service container name",
 			},
 			defValue: "option-returner",
+			validate: true,
+			Re2Regex: "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
 		},
 		&OptionPort{
 			option: option{
@@ -145,13 +147,15 @@ var MockAVSLatestOptions = map[string][]Option{
 		},
 	},
 	"health-checker": {
-		&OptionID{
+		&OptionString{
 			option: option{
 				name:   "main-container-name",
 				target: "MAIN_SERVICE_NAME",
 				help:   "Main service container name",
 			},
 			defValue: "health-checker",
+			validate: true,
+			Re2Regex: "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
 		},
 		&OptionPort{
 			option: option{

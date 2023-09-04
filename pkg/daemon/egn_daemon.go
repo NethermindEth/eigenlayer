@@ -10,7 +10,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -822,6 +824,17 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 	log.Infof("Running plugin with image %s on network %s", instance.Plugin.Image, network)
 	mounts := make([]docker.Mount, 0, len(options.Binds)+len(options.Volumes))
 	for src, dst := range options.Binds {
+		_, err := os.Stat(src)
+		if os.IsNotExist(err) {
+			if filepath.Ext(src) != "" {
+				return fmt.Errorf("bound file %s does not exist", src)
+			}
+			if err := os.MkdirAll(src, 0o755); err != nil {
+				return fmt.Errorf("failed to create bound directory %s: %v", src, err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("failed to stat bound source %s: %v", src, err)
+		}
 		mounts = append(mounts, docker.Mount{
 			Type:   docker.VolumeTypeBind,
 			Source: src,

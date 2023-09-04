@@ -186,19 +186,6 @@ func TestOptionValidate(t *testing.T) {
 			want:     nil,
 		},
 		{
-			name:     "Check invalid type id",
-			filePath: "check-invalid-id/pkg/option.yml",
-			want: InvalidConfError{
-				message:       message,
-				invalidFields: []string{"options.default"},
-			},
-		},
-		{
-			name:     "Check valid type id",
-			filePath: "check-valid-id/pkg/option.yml",
-			want:     nil,
-		},
-		{
 			name:     "Check invalid type uri",
 			filePath: "check-invalid-uri/pkg/option.yml",
 			want: InvalidConfError{

@@ -158,8 +158,6 @@ func (o *Option) validate(idx int) error {
 			} else {
 				invalidDefault = !utils.Contains(o.ValidateDef.Options, o.Default)
 			}
-		case "id":
-			invalidDefault = len(strings.Split(o.Default, " ")) != 1
 		default:
 			invalidDefault = true
 		}

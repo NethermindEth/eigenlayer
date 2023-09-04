@@ -158,7 +158,7 @@ func setupPackage(t *testing.T) string {
 	pkgFolder := t.TempDir()
 
 	mockTapRepo := "https://github.com/NethermindEth/mock-avs.git"
-	tag := "v5.1.0"
+	tag := "v5.2.0"
 
 	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, tag, pkgFolder)
 
@@ -296,7 +296,7 @@ func TestProfiles(t *testing.T) {
 						{
 							Name:   "graffiti",
 							Target: "GRAFFITI",
-							Type:   "id",
+							Type:   "str",
 							Help:   "Graffiti code of Donatello tattoo in DevCon restroom while hanging out with a Bored Ape",
 						},
 					},

@@ -13,18 +13,25 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
 
 func runCommand(t *testing.T, path string, args ...string) error {
+	_, err := runCommandOutput(t, path, args...)
+	return err
+}
+
+func runCommandOutput(t *testing.T, path string, args ...string) ([]byte, error) {
 	t.Helper()
 	t.Logf("Running command: %s %s", path, strings.Join(args, " "))
 	out, err := exec.Command(path, args...).CombinedOutput()
 	t.Logf("===== OUTPUT =====\n%s\n==================", out)
-	return err
+	return out, err
 }
 
 func buildMockAvsImages(t *testing.T) error {
@@ -203,4 +210,43 @@ func getAVSHealth(t *testing.T, url string) (int, error) {
 		return -1, err
 	}
 	return response.StatusCode, nil
+}
+
+func waitHealthy(t *testing.T, containerID string, port int, networkName string, timeout time.Duration) error {
+	containerIP, err := getContainerIPByName(containerID, networkName)
+	if err != nil {
+		return err
+	}
+	var (
+		timeOut      time.Duration = 30 * time.Second
+		responseCode               = -1
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	b := backoff.WithContext(backoff.NewExponentialBackOff(), ctx)
+	return backoff.Retry(func() error {
+		responseCode, err = getAVSHealth(t, fmt.Sprintf("http://%s:%d%s", containerIP, port, "/eigen/node/health"))
+		if err != nil {
+			return err
+		}
+		if responseCode != 200 {
+			return fmt.Errorf("expected response code %d, got %d", 200, responseCode)
+		}
+		return nil
+	}, b)
+}
+
+func changeHealthStatus(t *testing.T, containerID string, port int, networkName string, healthStatus int) error {
+	containerIP, err := getContainerIPByName(containerID, networkName)
+	if err != nil {
+		return err
+	}
+	response, err := http.Post(fmt.Sprintf("http://%s:%d/health/%d", containerIP, port, healthStatus), "", nil)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode != 200 {
+		return fmt.Errorf("expected response code %d, got %d", 200, response.StatusCode)
+	}
+	return nil
 }

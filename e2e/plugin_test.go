@@ -302,7 +302,6 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			time.Sleep(3 * time.Second)
 			eventsSince = time.Now()
 			runPluginErr = runCommand(t, egnPath, "plugin", "-v", pathsFilePath+":/tmp/paths.json", "--volume", boundDirPath+":/tmp/bound-dir", "mock-avs-default", "--check-paths", "/tmp/paths.json")
 			eventsUntil = time.Now()
@@ -364,6 +363,70 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 
 			events.CheckInOrder(t,
 				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerDies(&pluginContainerID),
+				docker.NewContainerDestroy(&pluginContainerID),
+			)
+		},
+	)
+	e2eTest.run()
+}
+
+func TestPlugin_ExitsWithError(t *testing.T) {
+	// Test context
+	var (
+		runPluginErr  error
+		eventsSince   time.Time
+		eventsUntil   time.Time
+		testDir       = t.TempDir()
+		boundFilePath string
+	)
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			if err != nil {
+				return err
+			}
+			pathsList, err := json.Marshal([]string{
+				"/tmp/file-not-found.json",
+			})
+			if err != nil {
+				return err
+			}
+			boundFilePath = filepath.Join(testDir, "paths.json")
+			pathsF, err := os.Create(boundFilePath)
+			if err != nil {
+				return err
+			}
+			defer pathsF.Close()
+			_, err = pathsF.Write(pathsList)
+			return err
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			eventsSince = time.Now()
+			runPluginErr = runCommand(t, egnPath, "plugin", "-v", boundFilePath+":/tmp/paths.json", "mock-avs-default", "--check-paths", "/tmp/paths.json")
+			eventsUntil = time.Now()
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runPluginErr, "plugin command should fail")
+
+			// Check docker events
+			pluginContainerID := ""
+			networkID, err := getNetworkIDByName("eigenlayer")
+			require.NoError(t, err, "getNetworkIDByName should succeed")
+			events, err := docker.EventsRange(context.Background(), eventsSince, eventsUntil)
+			require.NoError(t, err, "docker events should succeed")
+
+			events.CheckInOrder(t,
+				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewNetworkConnect(&pluginContainerID, &networkID),
+				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
 				docker.NewContainerDestroy(&pluginContainerID),
 			)

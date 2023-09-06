@@ -123,7 +123,7 @@ func TestPlugin_Install_Run(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -187,7 +187,7 @@ func TestPlugin_Volume_File(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -254,7 +254,7 @@ func TestPlugin_Volume_Existing_Dir(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -319,7 +319,7 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -362,7 +362,7 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewContainerDies(&pluginContainerID),
 				docker.NewContainerDestroy(&pluginContainerID),
 			)
@@ -424,7 +424,7 @@ func TestPlugin_ExitsWithError(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),

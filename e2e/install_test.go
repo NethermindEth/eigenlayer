@@ -10,8 +10,8 @@ import (
 
 const (
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
-	latestMockAVSVersion    = "v5.2.0"
-	latestMockAVSCommitHash = "a7ca2dca2cc9a91cdab8f30c2daf86a5f2dc4c55"
+	latestMockAVSVersion    = "v5.3.0"
+	latestMockAVSCommitHash = "e271052bc61b7b2784a790efcc5d61519beb9e8b"
 )
 
 func TestInstall_WithoutArguments(t *testing.T) {

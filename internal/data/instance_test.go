@@ -123,7 +123,7 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"image":"mock-avs-plugin:latest"
+					"image":"mock-avs-plugin:v0.1.0"
 					}
 				}`)
 			if err != nil {
@@ -141,7 +141,7 @@ func TestNewInstance(t *testing.T) {
 					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
-						Image: "mock-avs-plugin:latest",
+						Image: "mock-avs-plugin:v0.1.0",
 					},
 					path: testDir,
 				},

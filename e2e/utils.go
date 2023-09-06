@@ -21,6 +21,13 @@ import (
 	"github.com/docker/docker/client"
 )
 
+const (
+	mockAvsSrcVersion   = "v0.1.0"
+	optionReturnerImage = "mock-avs-option-returner:" + mockAvsSrcVersion
+	healthCheckerImage  = "mock-avs-health-checker:" + mockAvsSrcVersion
+	pluginImage         = "mock-avs-plugin:" + mockAvsSrcVersion
+)
+
 func runCommand(t *testing.T, path string, args ...string) error {
 	_, err := runCommandOutput(t, path, args...)
 	return err
@@ -36,15 +43,15 @@ func runCommandOutput(t *testing.T, path string, args ...string) ([]byte, error)
 
 func buildMockAvsImages(t *testing.T) error {
 	t.Helper()
-	err := runCommand(t, "docker", "build", "-t", "mock-avs-option-returner:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:option-returner")
+	err := runCommand(t, "docker", "build", "-t", optionReturnerImage, fmt.Sprintf("https://github.com/NethermindEth/mock-avs-src.git#%s:option-returner", mockAvsSrcVersion))
 	if err != nil {
 		return err
 	}
-	err = runCommand(t, "docker", "build", "-t", "mock-avs-plugin:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:plugin")
+	err = runCommand(t, "docker", "build", "-t", pluginImage, fmt.Sprintf("https://github.com/NethermindEth/mock-avs-src.git#%s:plugin", mockAvsSrcVersion))
 	if err != nil {
 		return err
 	}
-	return runCommand(t, "docker", "build", "-t", "mock-avs-health-checker:latest", "https://github.com/NethermindEth/mock-avs-src.git#main:health-checker")
+	return runCommand(t, "docker", "build", "-t", healthCheckerImage, fmt.Sprintf("https://github.com/NethermindEth/mock-avs-src.git#%s:health-checker", mockAvsSrcVersion))
 }
 
 func repoPath(t *testing.T) string {

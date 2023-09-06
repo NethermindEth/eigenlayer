@@ -37,8 +37,8 @@ import (
 
 const (
 	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs"
-	MockAVSLatestVersion       = "v5.2.0"
-	MockAVSLatestVersionCommit = "a7ca2dca2cc9a91cdab8f30c2daf86a5f2dc4c55"
+	MockAVSLatestVersion       = "v5.3.0"
+	MockAVSLatestVersionCommit = "e271052bc61b7b2784a790efcc5d61519beb9e8b"
 )
 
 var MockAVSLatestOptions = map[string][]Option{
@@ -2620,7 +2620,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				gomock.InOrder(
@@ -2634,7 +2634,7 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Run("mock-avs-plugin:latest", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run("mock-avs-plugin:v0.1.0", "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2646,7 +2646,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:latest").Return(nil),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:v0.1.0").Return(nil),
 				)
 			},
 		},
@@ -2671,11 +2671,11 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				gomock.InOrder(
-					d.dockerManager.EXPECT().Run("mock-avs-plugin:latest", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run("mock-avs-plugin:v0.1.0", docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2687,7 +2687,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:latest").Return(nil),
+					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:v0.1.0").Return(nil),
 				)
 			},
 		},
@@ -2722,7 +2722,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2744,7 +2744,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2766,7 +2766,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2793,7 +2793,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+MockAVSRepo+`",
 					"plugin": {
-						"image": "mock-avs-plugin:latest"
+						"image": "mock-avs-plugin:v0.1.0"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{

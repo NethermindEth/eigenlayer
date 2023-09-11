@@ -33,8 +33,11 @@ properties:
       image:
         type: string
     additionalProperties: false
+    required:
+    - image
   profiles:
     type: array
+    minItems: 1
     items:
       type: string
 required:

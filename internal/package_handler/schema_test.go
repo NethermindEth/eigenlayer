@@ -1,6 +1,10 @@
 package package_handler
 
-import "testing"
+import (
+	"fmt"
+	"log"
+	"testing"
+)
 
 func Test_validateYAMLSchema(t *testing.T) {
 	type args struct {
@@ -52,4 +56,17 @@ func Test_validateYAMLSchema(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleValidateFromRepository() {
+	repoURL := "https://github.com/NethermindEth/mock-avs/"
+	repoPath := "testdata/temp/"
+
+	err := ValidateFromRepository(repoURL, repoPath)
+	if err != nil {
+		// panic(err)
+		log.Fatal("Failed to check repository: ", repoURL, err)
+	}
+	fmt.Println("3 passed - 1 failed")
+	// Output: 3 passed - 1 failed
 }

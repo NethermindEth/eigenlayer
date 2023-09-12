@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -172,16 +171,12 @@ func (d *EgnDaemon) instanceRunning(instanceId string) (bool, error) {
 		return false, err
 	}
 	composePath := instance.ComposePath()
-	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+	psServices, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 		Path:          composePath,
 		Format:        "json",
 		FilterRunning: true,
 	})
 	if err != nil {
-		return false, err
-	}
-	var psServices []psServiceJSON
-	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
 		return false, err
 	}
 	return len(psServices) > 0, nil
@@ -203,8 +198,7 @@ func (d *EgnDaemon) instanceHealth(instanceId string) (out ListInstanceItem) {
 		return
 	}
 
-	var psOut []composePsItem
-	psOutRaw, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+	psServices, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 		ServiceName: instance.APITarget.Service,
 		Path:        instance.ComposePath(),
 		Format:      "json",
@@ -214,20 +208,15 @@ func (d *EgnDaemon) instanceHealth(instanceId string) (out ListInstanceItem) {
 		out.Comment = fmt.Sprintf("Failed to get API container status: %v", err)
 		return
 	}
-	err = json.Unmarshal([]byte(psOutRaw), &psOut)
-	if err != nil {
-		out.Comment = fmt.Sprintf("Failed to get API container status: %v", err)
-		return
-	}
-	if len(psOut) == 0 {
+	if len(psServices) == 0 {
 		out.Comment = "No API container found"
 		return
 	}
-	if psOut[0].State != "running" {
-		out.Comment = "API container is " + psOut[0].State
+	if psServices[0].State != "running" {
+		out.Comment = "API container is " + psServices[0].State
 		return
 	}
-	apiCtIP, err := d.docker.ContainerIP(psOut[0].Id)
+	apiCtIP, err := d.docker.ContainerIP(psServices[0].Id)
 	if err != nil {
 		out.Comment = fmt.Sprintf("Failed to get API container IP: %v", err)
 	}
@@ -765,12 +754,6 @@ func (d *EgnDaemon) CheckHardwareRequirements(req HardwareRequirements) (bool, e
 	return metrics.Meets(requirements), nil
 }
 
-type composePsItem struct {
-	Id    string `json:"ID"`
-	Name  string `json:"Name"`
-	State string `json:"State"`
-}
-
 // RunPlugin implements Daemon.RunPlugin.
 func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options RunPluginOptions) error {
 	instance, err := d.dataDir.Instance(instanceId)
@@ -783,7 +766,7 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 	network := docker.NetworkHost
 	if !options.HostNetwork {
 		composePath := instance.ComposePath()
-		psOutputJSON, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+		psServices, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 			FilterRunning: true,
 			Path:          composePath,
 			Format:        "json",
@@ -791,15 +774,10 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		if err != nil {
 			return err
 		}
-		var psOutput []composePsItem
-		err = json.Unmarshal([]byte(psOutputJSON), &psOutput)
-		if err != nil {
-			return err
-		}
-		if len(psOutput) == 0 {
+		if len(psServices) == 0 {
 			return fmt.Errorf("%w: %s", ErrInstanceNotRunning, instanceId)
 		}
-		ct := psOutput[0]
+		ct := psServices[0]
 		networks, err := d.docker.ContainerNetworks(ct.Id)
 		if err != nil {
 			return err
@@ -857,7 +835,7 @@ func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string
 	if err != nil {
 		return err
 	}
-	psRaw, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+	psServices, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 		Path:   i.ComposePath(),
 		Format: "json",
 		All:    true,
@@ -865,13 +843,8 @@ func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string
 	if err != nil {
 		return err
 	}
-	var ps []composePsItem
-	err = json.Unmarshal([]byte(psRaw), &ps)
-	if err != nil {
-		return err
-	}
-	services := make(map[string]string, len(ps))
-	for _, p := range ps {
+	services := make(map[string]string, len(psServices))
+	for _, p := range psServices {
 		services[p.Name] = p.Id
 	}
 
@@ -897,13 +870,8 @@ func tempID(url string) string {
 	return hex.EncodeToString(tempHash[:])
 }
 
-type psServiceJSON struct {
-	ID      string `json:"ID"`
-	Service string `json:"Service"`
-}
-
 func (d *EgnDaemon) monitoringTargetsEndpoints(serviceNames []string, composePath string) (map[string]string, error) {
-	psOut, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
+	psServices, err := d.dockerCompose.PS(compose.DockerComposePsOptions{
 		Path:   composePath,
 		Format: "json",
 		All:    true,
@@ -912,18 +880,12 @@ func (d *EgnDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 		return nil, err
 	}
 
-	// Unmarshal docker-compose ps output
-	var psServices []psServiceJSON
-	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal docker-compose ps output: %v. Output: %s", err, psOut)
-	}
-
 	// Get containerID of monitoring targets
 	monitoringTargets := make(map[string]string)
 	for _, serviceName := range serviceNames {
 		for _, psService := range psServices {
 			if psService.Service == serviceName {
-				monitoringTargets[serviceName] = psService.ID
+				monitoringTargets[serviceName] = psService.Id
 			}
 		}
 	}

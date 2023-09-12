@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -89,8 +90,9 @@ func (cm *ComposeManager) Build(opts DockerComposeBuildOptions) error {
 	return nil
 }
 
-// PS runs the Docker Compose 'ps' command for the specified options and returns the output.
-func (cm *ComposeManager) PS(opts DockerComposePsOptions) (string, error) {
+// PS runs the Docker Compose 'ps' command for the specified options and returns
+// the list of services.
+func (c *ComposeManager) PS(opts DockerComposePsOptions) ([]ComposeService, error) {
 	var psCmd string
 	if opts.Path != "" {
 		psCmd = fmt.Sprintf("docker compose -f %s ps", opts.Path)
@@ -116,11 +118,40 @@ func (cm *ComposeManager) PS(opts DockerComposePsOptions) (string, error) {
 		psCmd += " " + opts.ServiceName
 	}
 
-	out, exitCode, err := cm.cmdRunner.RunCMD(commands.Command{Cmd: psCmd, GetOutput: true})
+	out, exitCode, err := c.cmdRunner.RunCMD(commands.Command{Cmd: psCmd, GetOutput: true})
 	if err != nil || exitCode != 0 {
-		return "", fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
+		return nil, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
 	}
-	return out, nil
+	outList := make([]ComposeService, 0)
+	if len(out) == 0 {
+		return outList, nil
+	}
+	// Following `if` cases are necessary to handle the different output formats
+	// of the `docker compose ps` command. Some times it returns a list of
+	// services, other times it returns a single service for the edge case of
+	// only one service being present. Depending on the docker compose version.
+	if out[0] == '[' {
+		// Multiple services
+		err = json.Unmarshal([]byte(out), &outList)
+		if err != nil {
+			return outList, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
+		}
+	} else if out[0] == '{' {
+		// Single service
+		var s ComposeService
+		err = json.Unmarshal([]byte(out), &s)
+		if err != nil {
+			return outList, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
+		}
+		outList = append(outList, s)
+	} else if strings.HasPrefix(out, "null") {
+		// No services
+		return outList, nil
+	} else {
+		// Unexpected output
+		return outList, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, "unknown output format", out)
+	}
+	return outList, nil
 }
 
 // Logs runs the Docker Compose 'logs' command for the specified options.

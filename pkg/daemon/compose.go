@@ -15,8 +15,8 @@ type ComposeManager interface {
 	// Down stops and removes the Docker Compose services defined in the Docker Compose file specified in the options.
 	Down(opts compose.DockerComposeDownOptions) error
 
-	// PS lists the Docker Compose services defined in the Docker Compose file specified in the options.
-	PS(opts compose.DockerComposePsOptions) (string, error)
+	// PS runs the Docker Compose 'ps' command for the specified options and returns the list of services.
+	PS(opts compose.DockerComposePsOptions) ([]compose.ComposeService, error)
 
 	// Create creates the Docker Compose services defined in the Docker Compose file specified in the options, but does not start them.
 	Create(opts compose.DockerComposeCreateOptions) error

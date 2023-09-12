@@ -90,13 +90,6 @@ func (cm *ComposeManager) Build(opts DockerComposeBuildOptions) error {
 	return nil
 }
 
-type ComposeService struct {
-	Id      string `json:"ID"`
-	Service string `json:"Service"`
-	Name    string `json:"Name"`
-	State   string `json:"State"`
-}
-
 // PS runs the Docker Compose 'ps' command for the specified options and returns
 // the list of services.
 func (c *ComposeManager) PS(opts DockerComposePsOptions) ([]ComposeService, error) {
@@ -133,12 +126,18 @@ func (c *ComposeManager) PS(opts DockerComposePsOptions) ([]ComposeService, erro
 	if len(out) == 0 {
 		return outList, nil
 	}
+	// Following `if` cases are necessary to handle the different output formats
+	// of the `docker compose ps` command. Some times it returns a list of
+	// services, other times it returns a single service for the edge case of
+	// only one service being present. Depending on the docker compose version.
 	if out[0] == '[' {
+		// Multiple services
 		err = json.Unmarshal([]byte(out), &outList)
 		if err != nil {
 			return outList, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, err, out)
 		}
 	} else if out[0] == '{' {
+		// Single service
 		var s ComposeService
 		err = json.Unmarshal([]byte(out), &s)
 		if err != nil {
@@ -146,8 +145,10 @@ func (c *ComposeManager) PS(opts DockerComposePsOptions) ([]ComposeService, erro
 		}
 		outList = append(outList, s)
 	} else if strings.HasPrefix(out, "null") {
+		// No services
 		return outList, nil
 	} else {
+		// Unexpected output
 		return outList, fmt.Errorf("%w: %s. Output: %s", DockerComposeCmdError{cmd: "ps"}, "unknown output format", out)
 	}
 	return outList, nil

@@ -915,7 +915,7 @@ func (d *EgnDaemon) monitoringTargetsEndpoints(serviceNames []string, composePat
 	// Unmarshal docker-compose ps output
 	var psServices []psServiceJSON
 	if err = json.Unmarshal([]byte(psOut), &psServices); err != nil {
-		return nil, fmt.Errorf("it seems the output ")
+		return nil, fmt.Errorf("failed to unmarshal docker-compose ps output: %v. Output: %s", err, psOut)
 	}
 
 	// Get containerID of monitoring targets

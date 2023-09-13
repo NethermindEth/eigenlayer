@@ -3,6 +3,7 @@ package keys
 import (
 	"bufio"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -55,11 +56,24 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 					return err
 				}
 
-				err = WriteEncryptedECDSAPrivateKeyToPath(keyFileName, privateKey, "")
+				password, err := p.Password("Enter password to encrypt the ecdsa private key:", "",
+					func(password string) error {
+						return nil
+					},
+				)
 				if err != nil {
 					return err
 				}
 
+				err = WriteEncryptedECDSAPrivateKeyToPath(keyFileName, privateKey, password)
+				if err != nil {
+					return err
+				}
+
+				privateKeyHex := hex.EncodeToString(privateKey.D.Bytes())
+				fmt.Println("ECDSA Private Key (Hex): ", privateKeyHex)
+				fmt.Println("Please backup the above private key hex in safe place.")
+				fmt.Println()
 				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
 				publicKey := privateKey.Public()
 				publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
@@ -77,15 +91,22 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				if checkIfKeyExists(keyFileName) {
 					return errors.New("key name already exists. Please choose a different name")
 				}
+				password, err := p.Password("Enter password to encrypt the bls private key:", "",
+					func(password string) error {
+						return nil
+					},
+				)
+				if err != nil {
+					return err
+				}
 				blsKeyPair, err := bls.GenRandomBlsKeys()
 				if err != nil {
 					return err
 				}
-				err = blsKeyPair.SaveToFile(OperatorKeyFolder + "/" + keyFileName)
+				err = blsKeyPair.SaveToFile(OperatorKeyFolder+"/"+keyFileName, password)
 				if err != nil {
 					return err
 				}
-				fmt.Println("currently these keys are stored in plaintext. Do NOT use it for production")
 				fmt.Println("BLS Pub key: " + blsKeyPair.PubKey.String())
 				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
 			default:

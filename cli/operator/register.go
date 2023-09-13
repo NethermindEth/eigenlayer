@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	eigensdkWriter "github.com/Layr-Labs/eigensdk-go/chainio/writers"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signer"
 	eigensdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
@@ -61,6 +62,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
 			llog, err := eigensdkLogger.NewZapLogger(eigensdkLogger.Development)
 			if err != nil {
 				return err
@@ -71,11 +73,28 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			elWriter, err := eigensdkWriter.NewEigenLayerWriter(operatorCfg.EthRPCUrl, common.HexToAddress(operatorCfg.ELSlasherAddress), localSigner, llog)
+			elWriter, err := eigensdkWriter.NewEigenLayerWriter(
+				operatorCfg.EthRPCUrl,
+				common.HexToAddress(operatorCfg.ELSlasherAddress),
+				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
+				localSigner,
+				llog,
+			)
 			if err != nil {
 				return err
 			}
-			err = elWriter.RegisterAsOperator(context.Background(), operatorCfg.Operator)
+
+			err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
+			if err != nil {
+				return err
+			}
+
+			keyPair, err := bls.ReadPrivateKeyFromFile(operatorCfg.BlsPrivateKeyStorePath, "")
+			if err != nil {
+				return err
+			}
+
+			err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
@@ -119,6 +138,7 @@ func getSignerType(signerType string, operatorCfg types.OperatorConfig) (string,
 
 func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex string, operatorCfg types.OperatorConfig) (signer.Signer, error) {
 	var localSigner signer.Signer
+	chainId := big.NewInt(31337)
 	switch signerType {
 	case types.PrivateKeySigner:
 		fmt.Println("Using private key signer")
@@ -134,7 +154,7 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 			return nil, err
 		}
 		// TODO: Get chain ID from config
-		localSigner, err = signer.NewPrivateKeySigner(privateKey, big.NewInt(5))
+		localSigner, err = signer.NewPrivateKeySigner(privateKey, chainId)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +162,7 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 	case types.LocalKeystoreSigner:
 		fmt.Println("Using local keystore signer")
 		// TODO: Get chain ID from config
-		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, "", big.NewInt(5))
+		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, "", chainId)
 		if err != nil {
 			return nil, err
 		}

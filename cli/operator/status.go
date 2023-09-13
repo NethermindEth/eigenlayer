@@ -53,8 +53,12 @@ func StatusCmd() *cobra.Command {
 				return err
 			}
 
-			reader, err := eigensdkReader.NewEigenlayerReader(common.HexToAddress(operatorCfg.ELSlasherAddress), operatorCfg.EthRPCUrl, llog)
-			// reader, err := eigensdkReader.NewEigenlayerReader(common.HexToAddress(operatorCfg.ELSlasherAddress), operatorCfg.EthRPCUrl, llog)
+			reader, err := eigensdkReader.NewEigenlayerReader(
+				common.HexToAddress(operatorCfg.ELSlasherAddress),
+				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
+				operatorCfg.EthRPCUrl,
+				llog,
+			)
 			if err != nil {
 				return err
 			}

@@ -2,15 +2,13 @@ package keys
 
 import (
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -32,27 +30,20 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 				switch keyType {
 				case KeyTypeECDSA:
 					fmt.Println("Key Type: ECDSA")
-					privateKey, err := GetECDSAPrivateKey(OperatorKeyFolder+"/"+file.Name(), "")
-					publicKey := privateKey.Public()
-					publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-					if !ok {
+					address, err := GetAddress(OperatorKeyFolder + "/" + file.Name())
+					if err != nil {
 						return err
 					}
-					publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-					fmt.Println("Public Key: " + hexutil.Encode(publicKeyBytes)[4:])
-					address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
-					fmt.Println("Address: " + address)
-					// privateKeyHex := hex.EncodeToString(privateKey.D.Bytes())
-					// fmt.Println("ECDSA Private Key (Hex):", privateKeyHex)
+					fmt.Println("Address: 0x" + address)
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				case KeyTypeBLS:
 					fmt.Println("Key Type: BLS")
-					keyPair, err := bls.ReadPrivateKeyFromFile(OperatorKeyFolder + "/" + file.Name())
+					pubKey, err := GetPubKey(OperatorKeyFolder + "/" + file.Name())
 					if err != nil {
 						return err
 					}
-					fmt.Println("Public Key: " + keyPair.PubKey.String())
+					fmt.Println("Public Key: " + pubKey)
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				}
@@ -65,6 +56,43 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 
 	return &cmd
 }
+
+func GetPubKey(keyStoreFile string) (string, error) {
+	keyJson, err := os.ReadFile(keyStoreFile)
+	if err != nil {
+		return "", err
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(keyJson, &m); err != nil {
+		return "", err
+	}
+
+	if pubKey, ok := m["pubKey"].(string); !ok {
+		return "", fmt.Errorf("pubKey not found in key file")
+	} else {
+		return pubKey, nil
+	}
+}
+
+func GetAddress(keyStoreFile string) (string, error) {
+	keyJson, err := os.ReadFile(keyStoreFile)
+	if err != nil {
+		return "", err
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(keyJson, &m); err != nil {
+		return "", err
+	}
+
+	if address, ok := m["address"].(string); !ok {
+		return "", fmt.Errorf("address not found in key file")
+	} else {
+		return address, nil
+	}
+}
+
 func GetECDSAPrivateKey(keyStoreFile string, password string) (*ecdsa.PrivateKey, error) {
 	keyStoreContents, err := os.ReadFile(keyStoreFile)
 	if err != nil {

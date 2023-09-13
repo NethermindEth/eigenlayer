@@ -68,7 +68,13 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			elWriter, err := eigensdkWriter.NewEigenLayerWriter(operatorCfg.EthRPCUrl, common.HexToAddress(operatorCfg.ELSlasherAddress), localSigner, llog)
+			elWriter, err := eigensdkWriter.NewEigenLayerWriter(
+				operatorCfg.EthRPCUrl,
+				common.HexToAddress(operatorCfg.ELSlasherAddress),
+				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
+				localSigner,
+				llog,
+			)
 			if err != nil {
 				return err
 			}

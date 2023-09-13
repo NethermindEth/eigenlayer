@@ -54,17 +54,17 @@ Further details on how to proceed in each case are provided below.
 
 ### From GitHub
 
-We have created a mock-avs repository to understand the structure of an AVS Node Software package and to test all the features of the `eigenlayer` CLI tool. The following command shows how to install `mock-avs` using the `eigenlayer` tool:
+We have created a mock-avs-pkg repository to understand the structure of an AVS Node Software package and to test all the features of the `eigenlayer` CLI tool. The following command shows how to install `mock-avs-pkg` using the `eigenlayer` tool:
 
 ```bash
-eigenlayer install https://github.com/NethermindEth/mock-avs
+eigenlayer install https://github.com/NethermindEth/mock-avs-pkg
 ```
 
 Executing this command triggers an interactive installation process. During this process, the user can manually select the desired profile and all necessary options. Below is the final output after options have been selected.
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v3.1.0
+INFO[0000] Using version v5.3.0
 ? Select a profile option-returner
 ? main-container-name option-returner
 ? main-port 8080
@@ -89,14 +89,14 @@ To skip the interactive installation, the user can use the available flags of th
 $ eigenlayer install \
  --profile option-returner \
  --no-prompt \
- https://github.com/NethermindEth/mock-avs
+ https://github.com/NethermindEth/mock-avs-pkg
 ```
 
 Output:
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v3.1.0
+INFO[0000] Using version v5.3.0
 INFO[0002] Installed successfully with instance id: mock-avs-default
 INFO[0002] The installed node software has a plugin.
 ```
@@ -113,14 +113,14 @@ $ eigenlayer install \
  --profile option-returner \
  --no-prompt \
  --option.main-port 8081 \
- https://github.com/NethermindEth/mock-avs
+ https://github.com/NethermindEth/mock-avs-pkg
 ```
 
 Output:
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v3.1.0
+INFO[0000] Using version v5.3.0
 INFO[0002] Installed successfully with instance id: mock-avs-default
 INFO[0002] The installed node software has a plugin.
 ```
@@ -131,20 +131,20 @@ In this case, the `main-port` has a value of 8081 instead of the default value o
 
 > THIS INSTALLATION METHOD IS INSECURE
 
-Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs` to a local directory, and use it as a local package.
+Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs-pkg` to a local directory, and use it as a local package.
 
-First, clone the `mock-avs` package:
+First, clone the `mock-avs-pkg` package:
 
 > If you already have a local package, you can skip this step
 
 ```bash
-git clone --branch v3.1.0 https://github.com/NethermindEth/mock-avs
+git clone --branch v5.3.0 https://github.com/NethermindEth/mock-avs-pkg
 ```
 
-Now we can install the package from the `mock-avs` directory with the following command:
+Now we can install the package from the `mock-avs-pkg` directory with the following command:
 
 ```bash
-eigenlayer local-install ./mock-avs --profile option-returner
+eigenlayer local-install ./mock-avs-pkg --profile option-returner
 ```
 
 Output:

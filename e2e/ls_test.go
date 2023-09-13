@@ -44,7 +44,7 @@ func TestLs_NotRunning(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 		},
 		func(t *testing.T, eigenlayerPath string) {
 			out, lsErr = runCommandOutput(t, eigenlayerPath, "ls")
@@ -71,7 +71,7 @@ func TestLs_RunningHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}
@@ -102,7 +102,7 @@ func TestLs_RunningPartiallyHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}
@@ -137,7 +137,7 @@ func TestLs_RunningUnhealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}
@@ -173,7 +173,7 @@ func TestLs_Comment(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}

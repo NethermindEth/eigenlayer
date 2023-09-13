@@ -66,7 +66,7 @@ Executing this command triggers an interactive installation process. During this
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v5.3.0
+INFO[0000] Using version v5.4.0
 ? Select a profile option-returner
 ? main-container-name option-returner
 ? main-port 8080
@@ -98,7 +98,7 @@ Output:
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v5.3.0
+INFO[0000] Using version v5.4.0
 INFO[0002] Installed successfully with instance id: mock-avs-default
 INFO[0002] The installed node software has a plugin.
 ```
@@ -122,7 +122,7 @@ Output:
 
 ```bash
 INFO[0000] Version not specified, using latest.
-INFO[0000] Using version v5.3.0
+INFO[0000] Using version v5.4.0
 INFO[0002] Installed successfully with instance id: mock-avs-default
 INFO[0002] The installed node software has a plugin.
 ```
@@ -141,7 +141,7 @@ First, clone the `mock-avs-pkg` package:
 > If you already have a local package, you can skip this step
 
 ```bash
-git clone --branch v5.3.0 https://github.com/NethermindEth/mock-avs-pkg
+git clone --branch v5.4.0 https://github.com/NethermindEth/mock-avs-pkg
 ```
 
 Now we can install the package from the `mock-avs-pkg` directory with the following command:

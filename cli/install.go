@@ -170,6 +170,7 @@ the user to know which options are available for each profile.
 			}
 
 			instanceId, err := d.Install(daemon.InstallOptions{
+				Name:        pullResult.Name,
 				URL:         url,
 				Version:     pullResult.Version,
 				SpecVersion: pullResult.SpecVersion,

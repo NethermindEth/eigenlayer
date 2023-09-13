@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	latestMockAVSVersion = "v0.1.0"
+)
+
 func TestNewInstance(t *testing.T) {
 	fs := afero.NewOsFs()
 
@@ -123,7 +127,7 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"image":"mock-avs-plugin:latest"
+					"image":"mock-avs-plugin:`+latestMockAVSVersion+`"
 					}
 				}`)
 			if err != nil {
@@ -141,7 +145,7 @@ func TestNewInstance(t *testing.T) {
 					Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					Profile: "mainnet",
 					Plugin: &Plugin{
-						Image: "mock-avs-plugin:latest",
+						Image: "mock-avs-plugin:" + latestMockAVSVersion,
 					},
 					path: testDir,
 				},

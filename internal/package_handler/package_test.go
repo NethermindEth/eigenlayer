@@ -32,7 +32,7 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 			return testCase{
 				name: "valid package",
 				path: path,
-				url:  "https://github.com/NethermindEth/mock-avs",
+				url:  "https://github.com/NethermindEth/mock-avs-pkg",
 				pkgHandler: &PackageHandler{
 					path: path,
 				},
@@ -157,8 +157,8 @@ func setupPackage(t *testing.T) string {
 	t.Helper()
 	pkgFolder := t.TempDir()
 
-	mockTapRepo := "https://github.com/NethermindEth/mock-avs.git"
-	tag := "v5.2.0"
+	mockTapRepo := "https://github.com/NethermindEth/mock-avs-pkg.git"
+	tag := "v5.3.0"
 
 	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, tag, pkgFolder)
 

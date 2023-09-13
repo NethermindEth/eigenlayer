@@ -1175,7 +1175,7 @@ func TestNetworkDisconnect(t *testing.T) {
 // 	tests := []testCase{
 // 		{
 // 			name:   "success",
-// 			remote: "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 			tag:    "mock-avs-plugin",
 // 			setup: func(dockerClient *mocks.MockAPIClient) {
 // 				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
@@ -1187,7 +1187,7 @@ func TestNetworkDisconnect(t *testing.T) {
 // 					Body: loadBody,
 // 				}
 // 				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 					RemoteContext: "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 					Tags:          []string{"mock-avs-plugin"},
 // 					Remove:        true,
 // 					ForceRemove:   true,
@@ -1203,7 +1203,7 @@ func TestNetworkDisconnect(t *testing.T) {
 // 			}
 // 			return testCase{
 // 				name:      "success, with build args",
-// 				remote:    "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 				remote:    "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 				tag:       "mock-avs-plugin",
 // 				buildArgs: buildArgs,
 // 				setup: func(dockerClient *mocks.MockAPIClient) {
@@ -1216,7 +1216,7 @@ func TestNetworkDisconnect(t *testing.T) {
 // 						Body: loadBody,
 // 					}
 // 					dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 						RemoteContext: "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 						RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 						Tags:          []string{"mock-avs-plugin"},
 // 						Remove:        true,
 // 						ForceRemove:   true,
@@ -1229,11 +1229,11 @@ func TestNetworkDisconnect(t *testing.T) {
 // 		}(t),
 // 		{
 // 			name:   "build error",
-// 			remote: "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 			tag:    "mock-avs-plugin",
 // 			setup: func(dockerClient *mocks.MockAPIClient) {
 // 				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 					RemoteContext: "https://github.com/NethermindEth/mock-avs#main:plugin",
+// 					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
 // 					Tags:          []string{"mock-avs-plugin"},
 // 					Remove:        true,
 // 					ForceRemove:   true,

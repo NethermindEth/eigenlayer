@@ -20,28 +20,28 @@ func TestValidateURL(t *testing.T) {
 		},
 		{
 			name: "HTTP URL",
-			url:  "http://github.com/NethermidEth/mock-avs.git",
+			url:  "http://github.com/NethermidEth/mock-avs-pkg.git",
 			err:  nil,
 		},
 		{
 			name: "HTTPS URL",
-			url:  "https://github.com/NethermidEth/mock-avs.git",
+			url:  "https://github.com/NethermidEth/mock-avs-pkg.git",
 			err:  nil,
 		},
 		{
 			name: "non HTTP or HTTPS URL",
-			url:  "ftp://github.com/NethermidEth/mock-avs.git",
+			url:  "ftp://github.com/NethermidEth/mock-avs-pkg.git",
 			err:  fmt.Errorf("%w: URL must be HTTP or HTTPS", ErrInvalidURL),
 		},
 		{
 			name: "URL with IP instead of domain",
-			url:  "https://80.58.61.250/NethermidEth/mock-avs.git",
+			url:  "https://80.58.61.250/NethermidEth/mock-avs-pkg.git",
 			err:  nil,
 		},
 		{
 			name: "non absolute URL",
-			url:  "github.com/NethermidEth/mock-avs.git",
-			err:  fmt.Errorf("%w: parse \"github.com/NethermidEth/mock-avs.git\": invalid URI for request", ErrInvalidURL),
+			url:  "github.com/NethermidEth/mock-avs-pkg.git",
+			err:  fmt.Errorf("%w: parse \"github.com/NethermidEth/mock-avs-pkg.git\": invalid URI for request", ErrInvalidURL),
 		},
 	}
 	for _, tc := range ts {

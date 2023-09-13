@@ -22,7 +22,7 @@ func Test_Uninstall(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}
@@ -55,7 +55,7 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs")
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
 			if err != nil {
 				return err
 			}

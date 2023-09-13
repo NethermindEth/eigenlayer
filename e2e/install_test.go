@@ -10,7 +10,7 @@ import (
 
 const (
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs-pkg"
-	latestMockAVSVersion    = "v5.3.0"
+	latestMockAVSVersion    = "v5.4.0"
 	latestMockAVSCommitHash = "a7ca2dca2cc9a91cdab8f30c2daf86a5f2dc4c55"
 )
 

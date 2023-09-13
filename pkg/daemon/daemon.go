@@ -124,6 +124,9 @@ type NodeLogsOptions struct {
 // PullResult is the result of a Pull operation, containing all the necessary
 // information from the package.
 type PullResult struct {
+	// Name is the name of the AVS represented by the pulled package.
+	Name string
+
 	// Version is the version of the pulled package.
 	Version string
 
@@ -146,6 +149,9 @@ type PullResult struct {
 
 // InstallOptions is a set of options for installing a node software package.
 type InstallOptions struct {
+	// Name is the name of the AVS represented by the package.
+	Name string
+
 	// URL is the URL of the git repository containing the node software package.
 	URL string
 

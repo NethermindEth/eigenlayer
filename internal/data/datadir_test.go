@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	mockAVSLatestVersion = "v5.3.0"
+	mockAVSLatestVersion = "v5.4.0"
 )
 
 func TestNewDataDir(t *testing.T) {
@@ -98,7 +98,7 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = stateFile.WriteString(`{"name":"mock-avs","url":"https://github.com/NethermindEth/mock-avs-pkg","version":mockAVSLatestVersion,"profile":"option-returner","tag":"default"}`)
+			_, err = stateFile.WriteString(`{"name":"mock-avs","url":"https://github.com/NethermindEth/mock-avs-pkg","version":"` + mockAVSLatestVersion + `","profile":"option-returner","tag":"default"}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -130,7 +130,7 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = stateFile.WriteString(`{"url":"https://github.com/NethermindEth/mock-avs-pkg","version":` + mockAVSLatestVersion + `,"profile":"option-returner","tag":"default"}`)
+			_, err = stateFile.WriteString(`{"url":"https://github.com/NethermindEth/mock-avs-pkg","version":"` + mockAVSLatestVersion + `","profile":"option-returner","tag":"default"}`)
 			if err != nil {
 				t.Fatal(err)
 			}

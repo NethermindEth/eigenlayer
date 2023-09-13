@@ -27,22 +27,22 @@ func TestList(t *testing.T) {
 						Running: true,
 						Health:  daemon.NodeHealthy,
 						Comment: "comment1",
-						Version: "v5.3.0",
+						Version: "v5.4.0",
 						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					}, {
 						ID:      "id2",
 						Running: false,
 						Health:  daemon.NodeHealthUnknown,
 						Comment: "comment2",
-						Version: "v5.3.0",
+						Version: "v5.4.0",
 						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					},
 				}, nil)
 			},
 			stdOut: []byte(
 				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
-					"id1                true       healthy    v5.3.0     d1d4bb700954    comment1    \n" +
-					"id2                false      unknown    v5.3.0     d1d4bb700954    comment2    \n",
+					"id1                true       healthy    v5.4.0     d1d4bb700954    comment1    \n" +
+					"id2                false      unknown    v5.4.0     d1d4bb700954    comment2    \n",
 			),
 		},
 		{
@@ -54,22 +54,22 @@ func TestList(t *testing.T) {
 						Running: true,
 						Health:  daemon.NodeHealthy,
 						Comment: "comment1",
-						Version: "v5.3.0",
+						Version: "v5.4.0",
 						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 					}, {
 						ID:      "id2",
 						Running: false,
 						Health:  daemon.NodeHealthUnknown,
 						Comment: "comment2",
-						Version: "v5.3.0",
+						Version: "v5.4.0",
 						Commit:  "d1d4bb7",
 					},
 				}, nil)
 			},
 			stdOut: []byte(
 				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
-					"id1                true       healthy    v5.3.0     d1d4bb700954    comment1    \n" +
-					"id2                false      unknown    v5.3.0     d1d4bb7         comment2    \n",
+					"id1                true       healthy    v5.4.0     d1d4bb700954    comment1    \n" +
+					"id2                false      unknown    v5.4.0     d1d4bb7         comment2    \n",
 			),
 		},
 		{

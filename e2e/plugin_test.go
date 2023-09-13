@@ -33,7 +33,7 @@ func TestPlugin_LocalInstall(t *testing.T) {
 			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 				return err
 			}
-			err := runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err := runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -103,7 +103,7 @@ func TestPlugin_Install_Run(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -123,7 +123,7 @@ func TestPlugin_Install_Run(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -150,7 +150,7 @@ func TestPlugin_Volume_File(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 			if err != nil {
 				return err
 			}
@@ -187,7 +187,7 @@ func TestPlugin_Volume_File(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -215,7 +215,7 @@ func TestPlugin_Volume_Existing_Dir(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 			if err != nil {
 				return err
 			}
@@ -254,7 +254,7 @@ func TestPlugin_Volume_Existing_Dir(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -282,7 +282,7 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 			if err != nil {
 				return err
 			}
@@ -319,7 +319,7 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),
@@ -344,7 +344,7 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -362,7 +362,7 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewContainerDies(&pluginContainerID),
 				docker.NewContainerDestroy(&pluginContainerID),
 			)
@@ -387,7 +387,7 @@ func TestPlugin_ExitsWithError(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSVersion, "https://github.com/NethermindEth/mock-avs-pkg")
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
 			if err != nil {
 				return err
 			}
@@ -424,7 +424,7 @@ func TestPlugin_ExitsWithError(t *testing.T) {
 			require.NoError(t, err, "docker events should succeed")
 
 			events.CheckInOrder(t,
-				docker.NewContainerCreated("mock-avs-plugin:latest", &pluginContainerID),
+				docker.NewContainerCreated(pluginImage, &pluginContainerID),
 				docker.NewNetworkConnect(&pluginContainerID, &networkID),
 				docker.NewNetworkDisconnect(&pluginContainerID, &networkID),
 				docker.NewContainerDies(&pluginContainerID),

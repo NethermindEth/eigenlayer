@@ -28,7 +28,7 @@ func TestLocalInstall(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -72,7 +72,7 @@ func TestLocalInstallNotRunning(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -117,7 +117,7 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -166,7 +166,7 @@ func TestLocalInstallInvalidManifest(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -213,7 +213,7 @@ func TestLocalInstallInvalidManifestCleanup(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -265,7 +265,7 @@ func TestLocalInstallInvalidManifestCleanupWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -315,7 +315,7 @@ func TestLocalInstallInvalidComposeCleanup(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}
@@ -366,7 +366,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSVersion, mockAVSRepo, pkgDir)
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", latestMockAVSPkgVersion, mockAVSPkgRepo, pkgDir)
 			if err != nil {
 				return err
 			}

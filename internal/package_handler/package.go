@@ -533,3 +533,16 @@ func (p *PackageHandler) SpecVersion() (string, error) {
 
 	return manifest.Version, nil
 }
+
+func (p *PackageHandler) Name() (string, error) {
+	manifest, err := p.parseManifest()
+	if err != nil {
+		return "", err
+	}
+
+	if err := manifest.validate(); err != nil {
+		return "", err
+	}
+
+	return manifest.Name, nil
+}

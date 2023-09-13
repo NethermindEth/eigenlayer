@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -298,6 +297,11 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 			return
 		}
 	}
+	// Get AVS name
+	result.Name, err = pkgHandler.Name()
+	if err != nil {
+		return
+	}
 	// Get Spec version
 	result.SpecVersion, err = pkgHandler.SpecVersion()
 	if err != nil {
@@ -382,24 +386,33 @@ func (d *EgnDaemon) LocalInstall(pkgTar io.Reader, options LocalInstallOptions) 
 }
 
 func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) (string, string, error) {
-	instanceID := data.InstanceId(options.Name, options.Tag)
-	// Check if instance already exists
-	if d.dataDir.HasInstance(instanceID) {
-		return instanceID, "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
-	}
 	// Decompress package to temp folder
 	tID := tempID(options.Name)
 	tempPath, err := d.dataDir.InitTemp(tID)
 	if err != nil {
-		return instanceID, tID, err
+		return "", tID, err
 	}
 	err = utils.DecompressTarGz(pkgTar, tempPath)
 	if err != nil {
-		return instanceID, tID, err
+		return "", tID, err
 	}
 
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
+
+	// Get Name
+	name, err := pkgHandler.Name()
+	if err != nil {
+		return "", tID, err
+	}
+
+	// Get Instance ID
+	instanceID := data.InstanceId(name, options.Tag)
+	// Check if instance already exists
+	if d.dataDir.HasInstance(instanceID) {
+		return instanceID, "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
+	}
+
 	// Get Spec version
 	specVersion, err := pkgHandler.SpecVersion()
 	if err != nil {
@@ -497,11 +510,7 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 		return "", tID, err
 	}
 
-	instanceName, err := instanceNameFromURL(options.URL)
-	if err != nil {
-		return instanceName, tID, err
-	}
-	instanceID := data.InstanceId(instanceName, options.Tag)
+	instanceID := data.InstanceId(options.Name, options.Tag)
 
 	if d.dataDir.HasInstance(instanceID) {
 		return instanceID, tID, fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)
@@ -553,7 +562,7 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 	}
 	maps.Copy(env, optionsEnv)
 
-	return d.install(instanceName, instanceID, tID, pkgHandler, selectedProfile, env, options)
+	return d.install(options.Name, instanceID, tID, pkgHandler, selectedProfile, env, options)
 }
 
 func (d *EgnDaemon) install(
@@ -855,14 +864,6 @@ func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string
 		Timestamps: opts.Timestamps,
 		Tail:       opts.Tail,
 	})
-}
-
-func instanceNameFromURL(u string) (string, error) {
-	parsedURL, err := url.ParseRequestURI(u)
-	if err != nil {
-		return "", err
-	}
-	return path.Base(parsedURL.Path), nil
 }
 
 func tempID(url string) string {

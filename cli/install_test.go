@@ -49,7 +49,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -74,7 +74,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -98,7 +98,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -127,7 +127,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -142,7 +142,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -166,7 +166,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -181,7 +181,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -204,7 +204,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -219,7 +219,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -242,7 +242,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -257,7 +257,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -280,7 +280,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -296,11 +296,11 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "pull error",
-			args: []string{"-v", "v5.3.0", "https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{"-v", "v5.4.0", "https://github.com/NethermindEth/mock-avs-pkg"},
 			err:  errors.New("pull error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				d.EXPECT().
-					Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{Version: "v5.3.0"}, true).
+					Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{Version: "v5.4.0"}, true).
 					Return(daemon.PullResult{}, errors.New("pull error"))
 			},
 		},
@@ -313,7 +313,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -331,7 +331,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -354,7 +354,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -367,7 +367,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -384,7 +384,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -416,7 +416,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -453,7 +453,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"}, true).
 						Return(daemon.PullResult{
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
@@ -479,7 +479,7 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().
 						Install(daemon.InstallOptions{
 							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.3.0",
+							Version: "v5.4.0",
 							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
 							Profile: "profile1",
 							Options: []daemon.Option{option},

@@ -361,20 +361,8 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 		if err != nil {
 			return PullUpdateResult{}, err
 		}
-		ok, err := pkgHandler.CommitPrecedence(instance.Commit, ref.Commit)
-		if err != nil {
-			return PullUpdateResult{}, err
-		}
-		if !ok {
-			return PullUpdateResult{}, fmt.Errorf("%w: current commit %s is not previous to the update commit %s", ErrInvalidUpdateCommit, instance.Commit, ref.Commit)
-		}
-		err = pkgHandler.CheckoutCommit(ref.Commit)
-		if err != nil {
-			return PullUpdateResult{}, err
-		}
 	} else {
-		var latestVersion string
-		latestVersion, err = pkgHandler.LatestVersion()
+		latestVersion, err := pkgHandler.LatestVersion()
 		if err != nil {
 			return PullUpdateResult{}, err
 		}
@@ -385,6 +373,24 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 		if err != nil {
 			return PullUpdateResult{}, err
 		}
+	}
+	// Get new commit hash
+	newCommit, err := pkgHandler.CurrentCommitHash()
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	// Check commit precedence
+	ok, err := pkgHandler.CommitPrecedence(instance.Commit, newCommit)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	if !ok {
+		return PullUpdateResult{}, fmt.Errorf("%w: current commit %s is not previous to the update commit %s", ErrInvalidUpdateCommit, instance.Commit, ref.Commit)
+	}
+	// Get new version
+	newVersion, err := pkgHandler.CurrentVersion()
+	if err != nil {
+		return PullUpdateResult{}, err
 	}
 
 	// Get new options
@@ -426,7 +432,10 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 	}
 
 	return PullUpdateResult{
-		Version:       ref.Version,
+		OldVersion:    instance.Version,
+		NewVersion:    newVersion,
+		OldCommit:     instance.Commit,
+		NewCommit:     newCommit,
 		OldOptions:    optionsOld,
 		NewOptions:    optionsNew,
 		MergedOptions: mergedOptions,

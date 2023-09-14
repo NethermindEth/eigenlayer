@@ -7,17 +7,6 @@ import (
 	"testing"
 )
 
-const (
-	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
-	mockAVSPkgRepo          = "https://github.com/NethermindEth/mock-avs-pkg"
-	latestMockAVSVersion    = "v0.1.0"
-	latestMockAVSPkgVersion = "v5.4.0"
-	latestMockAVSCommitHash = "b64c50c15e53ae7afebbdbe210b834d1ee471043"
-	optionReturnerImage     = "mock-avs-option-returner:" + latestMockAVSVersion
-	healthCheckerImage      = "mock-avs-health-checker:" + latestMockAVSVersion
-	pluginImage             = "mock-avs-plugin:" + latestMockAVSVersion
-)
-
 type (
 	e2eArranger func(t *testing.T, eigenlayerPath string) error
 	e2eAct      func(t *testing.T, eigenlayerPath string)

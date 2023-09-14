@@ -36,11 +36,7 @@ import (
 )
 
 const (
-	MockAVSRepo                = "https://github.com/NethermindEth/mock-avs-pkg"
-	MockAVSPkgLatestVersion    = "v5.4.0"
-	MockAVSLatestVersion       = "v0.1.0"
-	MockAVSLatestVersionCommit = "b64c50c15e53ae7afebbdbe210b834d1ee471043"
-	MockAVSName                = "mock-avs"
+	MockAVSName = "mock-avs"
 )
 
 var MockAVSLatestOptions = map[string][]Option{
@@ -508,14 +504,14 @@ func TestPull(t *testing.T) {
 	}{
 		{
 			name: "pull -> success",
-			url:  MockAVSRepo,
+			url:  common.MockAvsPkg.Repo(),
 			want: PullResult{
 				Name:    MockAVSName,
-				Version: MockAVSPkgLatestVersion,
-				Commit:  MockAVSLatestVersionCommit,
+				Version: common.MockAvsPkg.Version(),
+				Commit:  common.MockAvsPkg.CommitHash(),
 				Options: MockAVSLatestOptions,
 			},
-			ref: PullTarget{Version: MockAVSPkgLatestVersion},
+			ref: PullTarget{Version: common.MockAvsPkg.Version()},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -526,12 +522,12 @@ func TestPull(t *testing.T) {
 		},
 		{
 			name: "pull -> success, fixed version",
-			url:  MockAVSRepo,
-			ref:  PullTarget{Version: MockAVSPkgLatestVersion},
+			url:  common.MockAvsPkg.Repo(),
+			ref:  PullTarget{Version: common.MockAvsPkg.Version()},
 			want: PullResult{
 				Name:    MockAVSName,
-				Version: MockAVSPkgLatestVersion,
-				Commit:  MockAVSLatestVersionCommit,
+				Version: common.MockAvsPkg.Version(),
+				Commit:  common.MockAvsPkg.CommitHash(),
 				Options: MockAVSLatestOptions,
 			},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
@@ -544,34 +540,34 @@ func TestPull(t *testing.T) {
 		},
 		{
 			name:  "pull -> success, force",
-			url:   MockAVSRepo,
+			url:   common.MockAvsPkg.Repo(),
 			force: true,
 			want: PullResult{
 				Name:    MockAVSName,
-				Version: MockAVSPkgLatestVersion,
-				Commit:  MockAVSLatestVersionCommit,
+				Version: common.MockAvsPkg.Version(),
+				Commit:  common.MockAvsPkg.CommitHash(),
 				Options: MockAVSLatestOptions,
 			},
-			ref: PullTarget{Version: MockAVSPkgLatestVersion},
+			ref: PullTarget{Version: common.MockAvsPkg.Version()},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
 				dataDir, err := data.NewDataDir(tmp, afs, locker)
 				require.NoError(t, err)
-				afs.MkdirAll(filepath.Join(tmp, "temp", tempID(MockAVSRepo)), 0o755)
+				afs.MkdirAll(filepath.Join(tmp, "temp", tempID(common.MockAvsPkg.Repo())), 0o755)
 				return dataDir
 			},
 		},
 		{
 			name:  "pull -> success, fixed commit hash",
-			url:   MockAVSRepo,
+			url:   common.MockAvsPkg.Repo(),
 			force: true,
 			want: PullResult{
 				Name:    MockAVSName,
-				Commit:  MockAVSLatestVersionCommit,
+				Commit:  common.MockAvsPkg.CommitHash(),
 				Options: MockAVSLatestOptions,
 			},
-			ref: PullTarget{Commit: MockAVSLatestVersionCommit},
+			ref: PullTarget{Commit: common.MockAvsPkg.CommitHash()},
 			mocker: func(t *testing.T, locker *mock_locker.MockLocker) *data.DataDir {
 				tmp, err := afero.TempDir(afs, "", "egn-pull")
 				require.NoError(t, err)
@@ -635,8 +631,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> success, default tag",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -666,8 +662,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> success, specific tag, option-returner",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "option-returner",
 				Tag:     "specific",
 			},
@@ -697,8 +693,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> failure, bad tap version, got empty instanceID -> no install cleanup",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "invalid-profile",
 				Tag:     "default",
 			},
@@ -720,8 +716,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> failure, compose create error -> install cleanup with monitoring target removal",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -756,8 +752,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> failure, compose create error -> install cleanup with monitoring target removal failed",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -791,8 +787,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> failure, compose create error -> install cleanup with monitoring not installed",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -825,8 +821,8 @@ func TestInstall(t *testing.T) {
 			name: "install -> failure, compose create error -> install cleanup with monitoring installed but not running",
 			options: InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -948,9 +944,9 @@ func TestRun(t *testing.T) {
 	afs := afero.NewOsFs()
 
 	instanceID := "mock-avs-default"
-	commit := MockAVSLatestVersionCommit
+	commit := common.MockAvsPkg.CommitHash()
 	avsName := "mock-avs"
-	avsVersion := MockAVSPkgLatestVersion
+	avsVersion := common.MockAvsPkg.Version()
 	specVersion := "v0.0.1"
 
 	labels := map[string]string{
@@ -1005,8 +1001,8 @@ func TestRun(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:        MockAVSName,
-				URL:         MockAVSRepo,
-				Version:     MockAVSPkgLatestVersion,
+				URL:         common.MockAvsPkg.Repo(),
+				Version:     common.MockAvsPkg.Version(),
 				SpecVersion: specVersion,
 				Profile:     "health-checker",
 				Tag:         "default",
@@ -1050,8 +1046,8 @@ func TestRun(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:        MockAVSName,
-				URL:         MockAVSRepo,
-				Version:     MockAVSPkgLatestVersion,
+				URL:         common.MockAvsPkg.Repo(),
+				Version:     common.MockAvsPkg.Version(),
 				SpecVersion: specVersion,
 				Profile:     "health-checker",
 				Tag:         "default",
@@ -1079,8 +1075,8 @@ func TestRun(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:        MockAVSName,
-				URL:         MockAVSRepo,
-				Version:     MockAVSPkgLatestVersion,
+				URL:         common.MockAvsPkg.Repo(),
+				Version:     common.MockAvsPkg.Version(),
 				SpecVersion: specVersion,
 				Profile:     "health-checker",
 				Tag:         "default",
@@ -1106,8 +1102,8 @@ func TestRun(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:        MockAVSName,
-				URL:         MockAVSRepo,
-				Version:     MockAVSPkgLatestVersion,
+				URL:         common.MockAvsPkg.Repo(),
+				Version:     common.MockAvsPkg.Version(),
 				SpecVersion: specVersion,
 				Profile:     "health-checker",
 				Tag:         "default",
@@ -1139,8 +1135,8 @@ func TestRun(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:        MockAVSName,
-				URL:         MockAVSRepo,
-				Version:     MockAVSPkgLatestVersion,
+				URL:         common.MockAvsPkg.Repo(),
+				Version:     common.MockAvsPkg.Version(),
 				SpecVersion: specVersion,
 				Profile:     "health-checker",
 				Tag:         "default",
@@ -1230,8 +1226,8 @@ func TestStop(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1262,8 +1258,8 @@ func TestStop(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1354,8 +1350,8 @@ func TestUninstall(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1380,8 +1376,8 @@ func TestUninstall(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1407,8 +1403,8 @@ func TestUninstall(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1441,8 +1437,8 @@ func TestUninstall(t *testing.T) {
 			},
 			options: &InstallOptions{
 				Name:    MockAVSName,
-				URL:     MockAVSRepo,
-				Version: MockAVSPkgLatestVersion,
+				URL:     common.MockAvsPkg.Repo(),
+				Version: common.MockAvsPkg.Version(),
 				Profile: "health-checker",
 				Tag:     "default",
 			},
@@ -1538,10 +1534,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -1580,8 +1576,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -1603,10 +1599,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "0",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1623,10 +1619,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "1",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1643,10 +1639,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "2",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1693,24 +1689,24 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 				{
 					ID:      "mock-avs-1",
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 				{
 					ID:      "mock-avs-2",
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -1732,10 +1728,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "0",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1775,10 +1771,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "1",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1808,16 +1804,16 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 				{
 					ID:      "mock-avs-1",
 					Health:  NodeHealthUnknown,
 					Running: false,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -1839,10 +1835,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "0",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1879,10 +1875,10 @@ func TestListInstances(t *testing.T) {
 						stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "1",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `"
+							"url": "` + common.MockAvsPkg.Repo() + `"
 						}`,
 						mocks: []*gomock.Call{
 							d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -1912,16 +1908,16 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 				{
 					ID:      "mock-avs-1",
 					Health:  NodeHealthUnknown,
 					Running: true,
 					Comment: "Instance's package does not specifies an API target for the AVS Specification Metrics's API",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -1942,10 +1938,10 @@ func TestListInstances(t *testing.T) {
 							stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "0",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `",
+							"url": "` + common.MockAvsPkg.Repo() + `",
 							"api": {
 								"service": "main-service",
 								"port": "` + apiServerURL.Port() + `"
@@ -1958,10 +1954,10 @@ func TestListInstances(t *testing.T) {
 						stateJSON: `{
 							"name": "` + MockAVSName + `",
 							"tag": "1",
-							"version": "` + MockAVSPkgLatestVersion + `",
-							"commit": "` + MockAVSLatestVersionCommit + `",
+							"version": "` + common.MockAvsPkg.Version() + `",
+							"commit": "` + common.MockAvsPkg.CommitHash() + `",
 							"profile": "option-returner",
-							"url": "` + MockAVSRepo + `"
+							"url": "` + common.MockAvsPkg.Repo() + `"
 						}`,
 					},
 				}
@@ -1983,16 +1979,16 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: false,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 				{
 					ID:      "mock-avs-1",
 					Health:  NodeHealthUnknown,
 					Running: false,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 		},
@@ -2005,10 +2001,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 				"name": "`+MockAVSName+`",
 				"tag": "default",
-				"version": "`+MockAVSPkgLatestVersion+`",
-				"commit": "`+MockAVSLatestVersionCommit+`",
+				"version": "`+common.MockAvsPkg.Version()+`",
+				"commit": "`+common.MockAvsPkg.CommitHash()+`",
 				"profile": "option-returner",
-				"url": "`+MockAVSRepo+`",
+				"url": "`+common.MockAvsPkg.Repo()+`",
 				"api": {
 					"service": "main-service",
 					"port": "`+apiServerURL.Port()+`"
@@ -2046,8 +2042,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: true,
 					Comment: "API container is exited",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2061,10 +2057,10 @@ func TestListInstances(t *testing.T) {
 					initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 						"name": "`+MockAVSName+`",
 						"tag": "default",
-						"version": "`+MockAVSPkgLatestVersion+`",
-						"commit": "`+MockAVSLatestVersionCommit+`",
+						"version": "`+common.MockAvsPkg.Version()+`",
+						"commit": "`+common.MockAvsPkg.CommitHash()+`",
 						"profile": "option-returner",
-						"url": "`+MockAVSRepo+`",
+						"url": "`+common.MockAvsPkg.Repo()+`",
 						"api": {
 							"service": "main-service",
 							"port": "`+apiServerURL.Port()+`"
@@ -2107,8 +2103,8 @@ func TestListInstances(t *testing.T) {
 						Health:  NodeHealthUnknown,
 						Running: true,
 						Comment: fmt.Sprintf(`API container is running but health check failed: Get "http://%s/eigen/node/health": dial tcp %s: connect: connection refused`, apiServerURL.Host, apiServerURL.Host),
-						Version: MockAVSPkgLatestVersion,
-						Commit:  MockAVSLatestVersionCommit,
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash(),
 					},
 				},
 				err: nil,
@@ -2123,10 +2119,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 				"name": "`+MockAVSName+`",
 				"tag": "default",
-				"version": "`+MockAVSPkgLatestVersion+`",
-				"commit": "`+MockAVSLatestVersionCommit+`",
+				"version": "`+common.MockAvsPkg.Version()+`",
+				"commit": "`+common.MockAvsPkg.CommitHash()+`",
 				"profile": "option-returner",
-				"url": "`+MockAVSRepo+`",
+				"url": "`+common.MockAvsPkg.Repo()+`",
 				"api": {
 					"service": "main-service",
 					"port": "`+apiServerURL.Port()+`"
@@ -2148,8 +2144,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: false,
 					Comment: fmt.Sprintf("Failed to get instance status: %v", assert.AnError),
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2162,10 +2158,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2204,8 +2200,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeUnhealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2218,10 +2214,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2260,8 +2256,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodePartiallyHealthy,
 					Running: true,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2274,10 +2270,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2316,8 +2312,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: true,
 					Comment: fmt.Sprintf("API container is running but health check failed: unexpected status code: %d", http.StatusFound),
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2330,10 +2326,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2355,8 +2351,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: false,
 					Comment: "",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2369,10 +2365,10 @@ func TestListInstances(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
-					"commit": "`+MockAVSLatestVersionCommit+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"commit": "`+common.MockAvsPkg.CommitHash()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"api": {
 						"service": "main-service",
 						"port": "`+apiServerURL.Port()+`"
@@ -2410,8 +2406,8 @@ func TestListInstances(t *testing.T) {
 					Health:  NodeHealthUnknown,
 					Running: true,
 					Comment: "API container is restarting",
-					Version: MockAVSPkgLatestVersion,
-					Commit:  MockAVSLatestVersionCommit,
+					Version: common.MockAvsPkg.Version(),
+					Commit:  common.MockAvsPkg.CommitHash(),
 				},
 			},
 			err: nil,
@@ -2519,9 +2515,9 @@ func TestNodeLogs(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`"
+					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2552,9 +2548,9 @@ func TestNodeLogs(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDirPath, "mock-avs-default", `{
 					"name": "`+MockAVSName+`",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`"
+					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2640,11 +2636,11 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				gomock.InOrder(
@@ -2658,7 +2654,7 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Run("mock-avs-plugin:"+MockAVSLatestVersion, "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run(common.PluginImage.Image(), "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2670,7 +2666,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:"+MockAVSLatestVersion).Return(nil),
+					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.Image()).Return(nil),
 				)
 			},
 		},
@@ -2691,15 +2687,15 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				gomock.InOrder(
-					d.dockerManager.EXPECT().Run("mock-avs-plugin:"+MockAVSLatestVersion, docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run(common.PluginImage.Image(), docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2711,7 +2707,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove("mock-avs-plugin:"+MockAVSLatestVersion).Return(nil),
+					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.Image()).Return(nil),
 				)
 			},
 		},
@@ -2728,9 +2724,9 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`"
+					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
 			},
 		},
@@ -2742,11 +2738,11 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2764,11 +2760,11 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2786,11 +2782,11 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2813,11 +2809,11 @@ func TestRunPlugin(t *testing.T) {
 				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
 					"name": "mock-avs",
 					"tag": "default",
-					"version": "`+MockAVSPkgLatestVersion+`",
+					"version": "`+common.MockAvsPkg.Version()+`",
 					"profile": "option-returner",
-					"url": "`+MockAVSRepo+`",
+					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "mock-avs-plugin:`+MockAVSLatestVersion+`"
+						"image": "`+common.PluginImage.Image()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2915,7 +2911,7 @@ func TestGetPluginData(t *testing.T) {
 		func(t *testing.T) testCase {
 			name := "plugin with remote image"
 			pkgFolder := t.TempDir()
-			err := exec.Command("git", "clone", "--single-branch", "-b", MockAVSPkgLatestVersion, MockAVSRepo, pkgFolder).Run()
+			err := exec.Command("git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo(), pkgFolder).Run()
 			require.NoError(t, err, "failed to clone mock-avs repo")
 			pkgHandler := package_handler.NewPackageHandler(pkgFolder)
 			changeManifestPluginBuildFrom(t, fs, pkgHandler.ManifestFilePath(), package_handler.Plugin{

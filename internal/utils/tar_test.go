@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-const mockAVSRepo = "https://github.com/NethermindEth/mock-avs-pkg"
 
 func TestCompressToTarGz(t *testing.T) {
 	testDir := t.TempDir()
@@ -20,7 +19,7 @@ func TestCompressToTarGz(t *testing.T) {
 
 	err := os.MkdirAll(pkgDir, 0o755)
 	require.NoError(t, err, "failed to create mock-avs dir")
-	err = exec.Command("git", "clone", "--single-branch", "-b", "v5.4.0", mockAVSRepo, pkgDir).Run()
+	err = exec.Command("git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo(), pkgDir).Run()
 	require.NoError(t, err, "failed to clone mock-avs repo")
 
 	outTar, err := os.OpenFile(outTarPath, os.O_CREATE|os.O_RDWR, 0o755)
@@ -45,7 +44,7 @@ func TestDecompressTarGz(t *testing.T) {
 
 	err := os.MkdirAll(pkgDir, 0o755)
 	require.NoError(t, err, "failed to create mock-avs dir")
-	err = exec.Command("git", "clone", "--single-branch", "-b", "v5.4.0", mockAVSRepo, pkgDir).Run()
+	err = exec.Command("git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo(), pkgDir).Run()
 	require.NoError(t, err, "failed to clone mock-avs repo")
 
 	err = exec.Command("tar", "-czf", tarPath, "-C", pkgDir, ".").Run()

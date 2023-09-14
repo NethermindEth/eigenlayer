@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/api/types"
@@ -36,15 +37,15 @@ func runCommandOutput(t *testing.T, path string, args ...string) ([]byte, error)
 
 func buildMockAvsImages(t *testing.T) error {
 	t.Helper()
-	err := runCommand(t, "docker", "build", "-t", optionReturnerImage, "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
 	if err != nil {
 		return err
 	}
-	err = runCommand(t, "docker", "build", "-t", pluginImage, "https://github.com/NethermindEth/mock-avs.git#main:plugin")
+	err = runCommand(t, "docker", "build", "-t", common.PluginImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:plugin")
 	if err != nil {
 		return err
 	}
-	return runCommand(t, "docker", "build", "-t", healthCheckerImage, "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
 }
 
 func repoPath(t *testing.T) string {

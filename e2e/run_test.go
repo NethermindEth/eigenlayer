@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/eigenlayer/e2e/docker"
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +22,7 @@ func Test_Run(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 		},
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "run", "mock-avs-default")
@@ -49,7 +50,7 @@ func Test_Run_StoppedInstance(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -81,7 +82,7 @@ func Test_Run_AlreadyRunningInstance(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

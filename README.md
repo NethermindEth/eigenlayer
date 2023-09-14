@@ -2,12 +2,13 @@
 
 Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine.
 
-
 - [Eigenlayer CLI](#eigenlayer-cli)
-  - [Install `eigenlayer` CLI](#install-eigenlayer-cli)
+  - [Dependencies](#dependencies)
+  - [Install `eigenlayer` CLI using Go](#install-eigenlayer-cli-using-go)
+  - [Install `eigenlayer` CLI from source](#install-eigenlayer-cli-from-source)
+  - [Install `eigenlayer` CLI using a binary](#install-eigenlayer-cli-using-a-binary)
     - [Linux/amd64](#linuxamd64)
     - [Linux/arm64](#linuxarm64)
-    - [Dependencies](#dependencies)
   - [Install an AVS](#install-an-avs)
     - [From GitHub](#from-github)
     - [Non-interactive installation](#non-interactive-installation)
@@ -22,7 +23,67 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
   - [Running a Plugin](#running-a-plugin)
     - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
 
-## Install `eigenlayer` CLI
+
+## Dependencies
+
+This tool depends on [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) in order to manage the installation and running of EigenLayer nodes. Please make sure that you have both Docker and Docker Compose installed and configured properly before using this tool.
+
+## Install `eigenlayer` CLI using Go
+
+First, install the Go programming language following the [official instructions](https://go.dev/doc/install). You need at least the `1.21` version.
+
+> If you want to install Eigenlayer on an M1 mac, then you need the `darwin-arm64` package. You can find it by clicking on [other downloads](https://go.dev/dl/) from the Go install page.
+
+This command will install the `eigenlayer` executable along with the library and its dependencies in your system:
+
+```
+go install github.com/NethermindEth/eigenlayer/cmd/eigenlayer@latest
+```
+
+The executable will be in your `$GOBIN` (`$GOPATH/bin`).
+
+To check if the `GOBIN` is not in your PATH, you can execute `echo $GOBIN` from the Terminal. If it doesn't print anything, then it is not in your PATH. To add `GOBIN` to your PATH, add the following lines to your `$HOME/.profile`:
+
+```bash
+export GOBIN=$GOPATH/bin
+export PATH=$GOBIN:$PATH
+```
+
+> Changes made to a profile file may not apply until the next time you log into your computer. To apply the changes immediately, run the shell commands directly or execute them from the profile using a command such as `source $HOME/.profile`.
+
+## Install `eigenlayer` CLI from source
+
+With this method, you generate the binary manually (need Go installed), downloading and compiling the source code:
+
+```bash
+git clone https://github.com/NethermindEth/eigenlayer.git
+cd eigenlayer
+mkdir -p build
+go build -o build/eigenlayer cmd/eigenlayer/main.go
+```
+
+or if you have `make` installed:
+
+```
+git clone https://github.com/NethermindEth/eigenlayer.git
+cd eigenlayer
+make build
+```
+
+The executable will be in the `build` folder.
+
+---
+In case you want the binary in your PATH (or if you used the [Using Go](#using-go) method and you don't have `$GOBIN` in your PATH), please copy the binary to `/usr/local/bin`:
+
+```
+# Using Go
+sudo cp $GOPATH/bin/eigenlayer /usr/local/bin/
+
+# Build from source
+sudo cp eigenlayer/build/eigenlayer /usr/local/bin/
+```
+
+## Install `eigenlayer` CLI using a binary
 
 The `eigenlayer` CLI tool versions are managed with GitHub releases. To install it, you can download the binary directly from the release assets manually, or by using the following command replacing the `<VERSION>` and `<ARCH>` with the proper values:
 
@@ -41,10 +102,6 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eig
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-arm64 --output eigenlayer
 ```
-
-### Dependencies
-
-**Note:** This tool depends on [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) in order to manage the installation and running of EigenLayer nodes. Please make sure that you have both Docker and Docker Compose installed and configured properly before using this tool.
 
 ## Install an AVS
 

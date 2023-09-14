@@ -10,6 +10,7 @@ import (
 
 	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
 	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 )
 
@@ -37,7 +38,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, run confirmed",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  nil,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -47,9 +48,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -73,8 +74,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -86,7 +87,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, run confirmed, init monitoring error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  assert.AnError,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -96,9 +97,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -115,7 +116,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, run confirmed and failed",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  assert.AnError,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -125,9 +126,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -141,8 +142,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -154,7 +155,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, run confirm error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  assert.AnError,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -164,9 +165,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -180,8 +181,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -192,7 +193,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, with --yes",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg", "--yes"},
+			args: []string{common.MockAvsPkg.Repo(), "--yes"},
 			err:  nil,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -202,9 +203,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -218,8 +219,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -230,7 +231,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "valid arguments, with --yes, run error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg", "--yes"},
+			args: []string{common.MockAvsPkg.Repo(), "--yes"},
 			err:  assert.AnError,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -240,9 +241,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -256,8 +257,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -268,7 +269,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "input string error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("input string error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -278,9 +279,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -296,24 +297,24 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "pull error",
-			args: []string{"-v", "v5.4.0", "https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{"-v", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo()},
 			err:  errors.New("pull error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				d.EXPECT().
-					Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{Version: "v5.4.0"}, true).
+					Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{Version: common.MockAvsPkg.Version()}, true).
 					Return(daemon.PullResult{}, errors.New("pull error"))
 			},
 		},
 		{
 			name: "select profile error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("select profile error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -324,14 +325,14 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "invalid profile",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("profile invalid-profile not found"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -342,7 +343,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "install error",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("install error"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -352,9 +353,9 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -366,8 +367,8 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",
@@ -377,14 +378,14 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "hardware requirements not met",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("hardware requirements not met"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -409,14 +410,14 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "hardware not met and stop",
-			args: []string{"https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{common.MockAvsPkg.Repo()},
 			err:  errors.New("profile profile1 does not meet the hardware requirements"),
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
+							Version: common.MockAvsPkg.Version(),
 							Options: map[string][]daemon.Option{
 								"profile1": {},
 							},
@@ -441,7 +442,7 @@ func TestInstall(t *testing.T) {
 		},
 		{
 			name: "commit specified",
-			args: []string{"--commit", "d1d4bb7009549c431d7b3317f004a56e2c3b2031", "https://github.com/NethermindEth/mock-avs-pkg"},
+			args: []string{"--commit", common.MockAvsPkg.CommitHash(), common.MockAvsPkg.Repo()},
 			err:  nil,
 			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
 				option := daemonMock.NewMockOption(gomock.NewController(t))
@@ -451,10 +452,10 @@ func TestInstall(t *testing.T) {
 
 				gomock.InOrder(
 					d.EXPECT().
-						Pull("https://github.com/NethermindEth/mock-avs-pkg", daemon.PullTarget{Commit: "d1d4bb7009549c431d7b3317f004a56e2c3b2031"}, true).
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{Commit: common.MockAvsPkg.CommitHash()}, true).
 						Return(daemon.PullResult{
-							Version: "v5.4.0",
-							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+							Version: common.MockAvsPkg.Version(),
+							Commit:  common.MockAvsPkg.CommitHash(),
 							Options: map[string][]daemon.Option{
 								"profile1": {option},
 							},
@@ -478,9 +479,9 @@ func TestInstall(t *testing.T) {
 					d.EXPECT().InitMonitoring(false, false).Return(nil),
 					d.EXPECT().
 						Install(daemon.InstallOptions{
-							URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-							Version: "v5.4.0",
-							Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
+							Commit:  common.MockAvsPkg.CommitHash(),
 							Profile: "profile1",
 							Options: []daemon.Option{option},
 							Tag:     "default",

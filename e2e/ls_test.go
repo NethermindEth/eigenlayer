@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,7 +45,7 @@ func TestLs_NotRunning(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 		},
 		func(t *testing.T, eigenlayerPath string) {
 			out, lsErr = runCommandOutput(t, eigenlayerPath, "ls")
@@ -53,7 +54,7 @@ func TestLs_NotRunning(t *testing.T) {
 			assert.NoError(t, lsErr, "ls command should not return an error")
 			assert.Equal(t, out, []byte(
 				"AVS Instance ID     RUNNING    HEALTH     VERSION    COMMIT          COMMENT    \n"+
-					"mock-avs-default    false      unknown    "+latestMockAVSPkgVersion+"     "+latestMockAVSCommitHash[:12]+"               \n",
+					"mock-avs-default    false      unknown    "+common.MockAvsPkg.Version()+"     "+common.MockAvsPkg.CommitHash()[:12]+"               \n",
 			))
 		})
 	e2eTest.run()
@@ -71,7 +72,7 @@ func TestLs_RunningHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -84,7 +85,7 @@ func TestLs_RunningHealthy(t *testing.T) {
 			assert.NoError(t, lsErr, "ls command should not return an error")
 			assert.Equal(t, out, []byte(
 				"AVS Instance ID     RUNNING    HEALTH     VERSION    COMMIT          COMMENT    \n"+
-					"mock-avs-default    true       healthy    "+latestMockAVSPkgVersion+"     "+latestMockAVSCommitHash[:12]+"               \n",
+					"mock-avs-default    true       healthy    "+common.MockAvsPkg.Version()+"     "+common.MockAvsPkg.CommitHash()[:12]+"               \n",
 			))
 		})
 	e2eTest.run()
@@ -102,7 +103,7 @@ func TestLs_RunningPartiallyHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -119,7 +120,7 @@ func TestLs_RunningPartiallyHealthy(t *testing.T) {
 			assert.NoError(t, lsErr, "ls command should not return an error")
 			assert.Equal(t, out, []byte(
 				"AVS Instance ID     RUNNING    HEALTH               VERSION    COMMIT          COMMENT    \n"+
-					"mock-avs-default    true       partially healthy    "+latestMockAVSPkgVersion+"     "+latestMockAVSCommitHash[:12]+"               \n",
+					"mock-avs-default    true       partially healthy    "+common.MockAvsPkg.Version()+"     "+common.MockAvsPkg.CommitHash()[:12]+"               \n",
 			))
 		})
 	e2eTest.run()
@@ -137,7 +138,7 @@ func TestLs_RunningUnhealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -154,7 +155,7 @@ func TestLs_RunningUnhealthy(t *testing.T) {
 			assert.NoError(t, lsErr, "ls command should not return an error")
 			assert.Equal(t, out, []byte(
 				"AVS Instance ID     RUNNING    HEALTH       VERSION    COMMIT          COMMENT    \n"+
-					"mock-avs-default    true       unhealthy    "+latestMockAVSPkgVersion+"     "+latestMockAVSCommitHash[:12]+"               \n",
+					"mock-avs-default    true       unhealthy    "+common.MockAvsPkg.Version()+"     "+common.MockAvsPkg.CommitHash()[:12]+"               \n",
 			))
 		})
 	e2eTest.run()
@@ -173,7 +174,7 @@ func TestLs_Comment(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -202,7 +203,7 @@ func TestLs_Comment(t *testing.T) {
 			}
 			assert.Equal(t, []byte(
 				"AVS Instance ID     RUNNING    HEALTH     VERSION    COMMIT          COMMENT"+ds+"                                                                                                                                \n"+
-					"mock-avs-default    true       unknown    "+latestMockAVSPkgVersion+"     "+latestMockAVSCommitHash[:12]+"    API container is running but health check failed: Get \"http://"+containerIP+":8081/eigen/node/health\": dial tcp "+containerIP+":8081: connect: connection refused    \n",
+					"mock-avs-default    true       unknown    "+common.MockAvsPkg.Version()+"     "+common.MockAvsPkg.CommitHash()[:12]+"    API container is running but health check failed: Get \"http://"+containerIP+":8081/eigen/node/health\": dial tcp "+containerIP+":8081: connect: connection refused    \n",
 			), out)
 		})
 	e2eTest.run()

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ func TestNewPackageHandlerFromURL(t *testing.T) {
 			return testCase{
 				name: "valid package",
 				path: path,
-				url:  "https://github.com/NethermindEth/mock-avs-pkg",
+				url:  common.MockAvsPkg.Repo(),
 				pkgHandler: &PackageHandler{
 					path: path,
 				},
@@ -157,12 +158,11 @@ func setupPackage(t *testing.T) string {
 	t.Helper()
 	pkgFolder := t.TempDir()
 
-	mockTapRepo := "https://github.com/NethermindEth/mock-avs-pkg.git"
-	tag := "v5.4.0"
+	mockTapRepo := common.MockAvsPkg.Repo() + ".git"
 
-	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, tag, pkgFolder)
+	t.Logf("Cloning mock tap repo %s and tag %s into %s", mockTapRepo, common.MockAvsPkg.Version(), pkgFolder)
 
-	if err := exec.Command("git", "clone", "--single-branch", "-b", tag, mockTapRepo, pkgFolder).Run(); err != nil {
+	if err := exec.Command("git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), mockTapRepo, pkgFolder).Run(); err != nil {
 		t.Fatal("error cloning the mock tap repo: " + err.Error())
 	}
 	return pkgFolder

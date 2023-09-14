@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,12 @@ func TestValidateURL(t *testing.T) {
 		},
 		{
 			name: "HTTP URL",
-			url:  "http://github.com/NethermidEth/mock-avs-pkg.git",
+			url:  "http://github.com/NethermindEth/mock-avs-pkg.git",
 			err:  nil,
 		},
 		{
 			name: "HTTPS URL",
-			url:  "https://github.com/NethermidEth/mock-avs-pkg.git",
+			url:  common.MockAvsPkg.Repo() + ".git",
 			err:  nil,
 		},
 		{

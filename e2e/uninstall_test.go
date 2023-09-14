@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/eigenlayer/e2e/docker"
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +23,7 @@ func Test_Uninstall(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -55,7 +56,7 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

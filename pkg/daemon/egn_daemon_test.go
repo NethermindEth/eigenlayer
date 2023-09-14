@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -20,6 +21,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
@@ -613,6 +615,187 @@ func TestPull(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_MergeOptions(t *testing.T) {
+	tc := []struct {
+		name          string
+		oldOptions    []Option
+		newOptions    []Option
+		mergedOptions []Option
+		wantErr       bool
+	}{
+		{
+			name:       "new option",
+			oldOptions: []Option{},
+			newOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+			mergedOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+		},
+		{
+			name: "same option, valid auto-update",
+			oldOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					value:    intP(5),
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+			newOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+			mergedOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					value:    intP(5),
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+		},
+		{
+			name: "same option, invalid auto-update due to validation",
+			oldOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					value:    intP(5),
+					defValue: 10,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 100,
+				},
+			},
+			newOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					defValue: 1,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 3,
+				},
+			},
+			mergedOptions: []Option{
+				&OptionInt{
+					option:   option{name: "int-option", target: "INT_OPTION"},
+					defValue: 1,
+					validate: true,
+					MinValue: 0,
+					MaxValue: 3,
+				},
+			},
+		},
+		{
+			name: "same option, valid auto-update with different type",
+			oldOptions: []Option{
+				&OptionString{
+					option: option{name: "path-option", target: "PATH_OPTION"},
+					value:  stringP("/tmp"),
+				},
+			},
+			newOptions: []Option{
+				&OptionPathDir{
+					option:   option{name: "path-option", target: "PATH_OPTION"},
+					defValue: "/tmp",
+				},
+			},
+			mergedOptions: []Option{
+				&OptionPathDir{
+					option:   option{name: "path-option", target: "PATH_OPTION"},
+					value:    stringP("/tmp"),
+					defValue: "/tmp",
+				},
+			},
+		},
+		{
+			name: "same option, invalid auto-update with different type",
+			oldOptions: []Option{
+				&OptionString{
+					option: option{name: "option-name", target: "OPTION"},
+					value:  stringP("/tmp"),
+				},
+			},
+			newOptions: []Option{
+				&OptionInt{
+					option:   option{name: "option-name", target: "OPTION"},
+					defValue: 10,
+				},
+			},
+			mergedOptions: []Option{
+				&OptionInt{
+					option:   option{name: "option-name", target: "OPTION"},
+					defValue: 10,
+				},
+			},
+		},
+		{
+			name: "error, old option without value",
+			oldOptions: []Option{
+				&OptionString{
+					option: option{name: "option-name", target: "OPTION"},
+				},
+			},
+			newOptions: []Option{
+				&OptionString{
+					option: option{name: "option-name", target: "OPTION"},
+				},
+			},
+			mergedOptions: []Option{
+				&OptionString{
+					option: option{name: "option-name", target: "OPTION"},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tc {
+		mergedOptions, err := mergeOptions(tt.oldOptions, tt.newOptions)
+		if tt.wantErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+			slices.SortFunc(mergedOptions, func(a, b Option) int {
+				return strings.Compare(a.Name(), b.Name())
+			})
+			slices.SortFunc(tt.mergedOptions, func(a, b Option) int {
+				return strings.Compare(a.Name(), b.Name())
+			})
+			assert.Equal(t, tt.mergedOptions, mergedOptions)
+		}
+	}
+}
+
+func intP(i int) *int {
+	return &i
+}
+
+func stringP(s string) *string {
+	return &s
 }
 
 func TestInstall(t *testing.T) {

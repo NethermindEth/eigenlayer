@@ -190,7 +190,7 @@ func (p *PackageHandler) LatestVersion() (string, error) {
 	return versions[len(versions)-1], nil
 }
 
-func (p *PackageHandler) CommitPrecedence(currentCommitHash, newCommitHash string) (bool, error) {
+func (p *PackageHandler) CommitPrecedence(oldCommitHash, newCommitHash string) (bool, error) {
 	err := p.CheckoutCommit(newCommitHash)
 	if err != nil {
 		return false, err
@@ -205,6 +205,13 @@ func (p *PackageHandler) CommitPrecedence(currentCommitHash, newCommitHash strin
 	if err != nil {
 		return false, err
 	}
+	_, err = commitIter.Next()
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return false, nil
+		}
+		return false, err
+	}
 	for {
 		c, err := commitIter.Next()
 		if err != nil {
@@ -213,7 +220,7 @@ func (p *PackageHandler) CommitPrecedence(currentCommitHash, newCommitHash strin
 			}
 			return false, err
 		}
-		if c.Hash.String() == currentCommitHash {
+		if c.Hash.String() == oldCommitHash {
 			return true, nil
 		}
 	}

@@ -15,11 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	mockAvsPkgLatestVersion = "v5.4.0"
-	mockAvsPkgRepo          = "https://github.com/NethermindEth/mock-avs-pkg.git"
-)
-
 func TestNewPackageHandlerFromURL(t *testing.T) {
 	type testCase struct {
 		name       string
@@ -633,7 +628,7 @@ func TestLatestVersion(t *testing.T) {
 
 func TestCommitPrecedence(t *testing.T) {
 	repoDir := t.TempDir()
-	err := exec.Command("git", "clone", "--single-branch", "-b", mockAvsPkgLatestVersion, mockAvsPkgRepo, repoDir).Run()
+	err := exec.Command("git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo(), repoDir).Run()
 	require.NoError(t, err, "error cloning the mock tap repo")
 
 	ts := []struct {

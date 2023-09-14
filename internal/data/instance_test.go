@@ -1,7 +1,9 @@
 package data
 
 import (
+	"fmt"
 	"io"
+	"maps"
 	"path/filepath"
 	"testing"
 
@@ -326,4 +328,70 @@ func TestInstance_Setup(t *testing.T) {
 	envData, err := io.ReadAll(envFile)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("VAR_1=value-1\n"), envData)
+}
+
+func TestInstance_Env(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	tc := []struct {
+		name    string
+		env     string
+		wantEnv map[string]string
+		wantErr bool
+	}{
+		{
+			name:    "empty env",
+			env:     "empty-env",
+			wantEnv: map[string]string{},
+			wantErr: false,
+		},
+		{
+			name: "with values",
+			env:  "with-values",
+			wantEnv: map[string]string{
+				"MAIN_SERVICE_NAME": "main-service",
+				"MAIN_PORT":         "8080",
+				"NETWORK_NAME":      "eigenlayer",
+			},
+			wantErr: false,
+		},
+	}
+	for i, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			instancePath, err := afero.TempDir(fs, "", fmt.Sprintf("instance-%d", i))
+			require.NoError(t, err, "failed to create instance directory")
+
+			envFile, err := fs.Create(filepath.Join(instancePath, ".env"))
+			require.NoError(t, err, "failed to create .env file")
+
+			envData := testdata.GetEnv(t, tt.env)
+			_, err = io.Copy(envFile, envData)
+			require.NoError(t, err, "failed to copy env data")
+
+			err = envFile.Close()
+			require.NoError(t, err, "failed to close env file")
+
+			ctrl := gomock.NewController(t)
+			l := mocks.NewMockLocker(ctrl)
+			defer ctrl.Finish()
+			gomock.InOrder(
+				l.EXPECT().Lock().Return(nil),
+				l.EXPECT().Locked().Return(true),
+				l.EXPECT().Unlock().Return(nil),
+			)
+
+			i := Instance{
+				path:   instancePath,
+				fs:     fs,
+				locker: l,
+			}
+
+			e, err := i.Env()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, maps.Equal(tt.wantEnv, e), "envs are not equal")
+			}
+		})
+	}
 }

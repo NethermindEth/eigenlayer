@@ -15,6 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	mockAvsPkgLatestVersion = "v5.4.0"
+	mockAvsPkgRepo          = "https://github.com/NethermindEth/mock-avs-pkg.git"
+)
+
 func TestNewPackageHandlerFromURL(t *testing.T) {
 	type testCase struct {
 		name       string
@@ -343,6 +348,84 @@ func TestProfiles(t *testing.T) {
 	}
 }
 
+func TestProfile(t *testing.T) {
+	afs := afero.NewOsFs()
+	testDir, err := afero.TempDir(afs, "", "test")
+	require.NoError(t, err)
+	testdata.SetupDir(t, "packages", testDir, afs)
+
+	ts := []struct {
+		name    string
+		pkgPath string
+		profile string
+		want    *profile.Profile
+		err     error
+	}{
+		{
+			name:    "good profiles",
+			pkgPath: "good-profiles",
+			profile: "ok",
+			want: &profile.Profile{
+				Name: "ok",
+				Options: []profile.Option{
+					{
+						Name:    "el-port",
+						Target:  "PORT",
+						Type:    "port",
+						Default: "8080",
+						Help:    "Port of the harbor bay crocodile in the horse window within upside Coca Cola",
+					},
+					{
+						Name:   "graffiti",
+						Target: "GRAFFITI",
+						Type:   "str",
+						Help:   "Graffiti code of Donatello tattoo in DevCon restroom while hanging out with a Bored Ape",
+					},
+				},
+				Monitoring: profile.Monitoring{
+					Targets: []profile.MonitoringTarget{
+						{
+							Service: "main-service",
+							Port:    intP(9090),
+							Path:    "/metrics",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "profile not found",
+			pkgPath: "good-profiles",
+			profile: "not-found",
+			want:    nil,
+			err:     ErrProfileNotFound,
+		},
+		{
+			name:    "invalid profile",
+			pkgPath: "bad-profiles",
+			profile: "invalid-yml",
+			want:    nil,
+			err: ParsingProfileError{
+				profileName: "invalid-yml",
+			},
+		},
+	}
+
+	for _, tc := range ts {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(filepath.Join(testDir, "packages", tc.pkgPath))
+			profile, err := pkgHandler.Profile(tc.profile)
+			if tc.err != nil {
+				assert.ErrorContains(t, err, tc.err.Error())
+			} else {
+				assert.NoError(t, err)
+				require.NotNil(t, profile)
+				assert.Equal(t, *tc.want, *profile)
+			}
+		})
+	}
+}
+
 func TestDotEnv(t *testing.T) {
 	afs := afero.NewOsFs()
 	testDir, err := afero.TempDir(afs, "", "test")
@@ -543,6 +626,68 @@ func TestLatestVersion(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.latestVersion, latestVersion)
+			}
+		})
+	}
+}
+
+func TestCommitPrecedence(t *testing.T) {
+	repoDir := t.TempDir()
+	err := exec.Command("git", "clone", "--single-branch", "-b", mockAvsPkgLatestVersion, mockAvsPkgRepo, repoDir).Run()
+	require.NoError(t, err, "error cloning the mock tap repo")
+
+	ts := []struct {
+		name          string
+		oldCommitHash string
+		newCommitHash string
+		ok            bool
+		wantErr       bool
+	}{
+		{
+			name:          "new commit is descendant of old commit",
+			oldCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			newCommitHash: "b64c50c15e53ae7afebbdbe210b834d1ee471043",
+			ok:            true,
+			wantErr:       false,
+		},
+		{
+			name:          "new commit is not descendant of old commit",
+			oldCommitHash: "b64c50c15e53ae7afebbdbe210b834d1ee471043",
+			newCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			ok:            false,
+			wantErr:       false,
+		},
+		{
+			name:          "old commit is the same as new commit",
+			oldCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			newCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			ok:            false,
+			wantErr:       false,
+		},
+		{
+			name:          "old commit doesn't exist",
+			oldCommitHash: "0000052bc61b7b2784a790efcc5d61519beb9e8b",
+			newCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			ok:            false,
+			wantErr:       false,
+		},
+		{
+			name:          "new commit doesn't exist",
+			oldCommitHash: "e271052bc61b7b2784a790efcc5d61519beb9e8b",
+			newCommitHash: "0000052bc61b7b2784a790efcc5d61519beb9e8b",
+			ok:            false,
+			wantErr:       true,
+		},
+	}
+	for _, tt := range ts {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgHandler := NewPackageHandler(repoDir)
+			ok, err := pkgHandler.CommitPrecedence(tt.oldCommitHash, tt.newCommitHash)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.ok, ok)
 			}
 		})
 	}
@@ -818,4 +963,8 @@ func TestCurrentVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func intP(i int) *int {
+	return &i
 }

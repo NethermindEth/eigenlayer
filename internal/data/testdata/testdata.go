@@ -56,3 +56,10 @@ func SetupProfileFS(t *testing.T, instanceName string, afs afero.Fs) string {
 
 	return tempPath
 }
+
+func GetEnv(t *testing.T, envName string) io.ReadCloser {
+	t.Helper()
+	file, err := TestData.Open("env/" + envName)
+	require.NoError(t, err, "failed to open env file %s", envName)
+	return file
+}

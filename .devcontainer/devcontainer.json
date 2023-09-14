@@ -49,7 +49,8 @@
 				"golang.go",
 				"redhat.vscode-yaml",
 				"GitHub.copilot",
-				"GitHub.vscode-pull-request-github"
+				"GitHub.vscode-pull-request-github",
+				"yzhang.markdown-all-in-one"
 			]
 		}
 	},

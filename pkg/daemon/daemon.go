@@ -15,6 +15,8 @@ type Daemon interface {
 	// calling Pull all is ready to call Install.
 	Pull(url string, ref PullTarget, force bool) (PullResult, error)
 
+	// PullUpdate downloads a node software package from the given URL and returns
+	// the result of merging both packages configs.
 	PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error)
 
 	// Install downloads and installs a node software package using the provided options,
@@ -150,23 +152,30 @@ type PullResult struct {
 }
 
 type PullUpdateResult struct {
-	// Version is the version of the pulled package.
-	Version string
+	// OldVersion is the version of the old package.
+	OldVersion string
 
-	// SpecVersion is the version of the Eigenlayer AVS Node Specification the instance
-	// targets. The version must match the regex `^\d+\.\d+\.\d+$`.
-	SpecVersion string
+	// NweVersion is the version of the new package.
+	NewVersion string
 
-	// Commit hash of the pulled package.
-	Commit string
+	// OldCommit is the commit hash of the old package.
+	OldCommit string
+
+	// NewCommit is the commit hash of the new package.
+	NewCommit string
 
 	// HasPlugin is true if the package has a plugin.
 	HasPlugin bool
 
+	// OldOptions is the list of options of the old package.
 	OldOptions []Option
 
+	// NewOptions is the list of options of the new package.
 	NewOptions []Option
 
+	// MergedOptions is the list of options of the new package merged with the
+	// old package. These options the ones that will be used for the new instance
+	// and should be filled by the user.
 	MergedOptions []Option
 
 	// HardwareRequirements is the hardware requirements specified in the package manifest.

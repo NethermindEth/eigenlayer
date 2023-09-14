@@ -3,6 +3,7 @@ package e2e
 import (
 	"testing"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -135,7 +136,7 @@ func TestMonitoring_Restart(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-1", "--option.main-container-name", "main-service-1", mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-1", "--option.main-container-name", "main-service-1", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -147,7 +148,7 @@ func TestMonitoring_Restart(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-2", "--option.main-container-name", "main-service-2", "--option.network-name", "eigenlayer-2", "--option.main-port", "8081", mockAVSPkgRepo)
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--tag", "tag-2", "--option.main-container-name", "main-service-2", "--option.network-name", "eigenlayer-2", "--option.main-port", "8081", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {

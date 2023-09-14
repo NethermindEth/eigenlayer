@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/NethermindEth/eigenlayer/e2e/docker"
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +22,7 @@ func Test_Stop(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", latestMockAVSPkgVersion, mockAVSPkgRepo)
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

@@ -7,15 +7,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
-
-const (
-	mockAVSLatestVersion = "v5.4.0"
 )
 
 func TestNewDataDir(t *testing.T) {
@@ -98,7 +95,7 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = stateFile.WriteString(`{"name":"mock-avs","url":"https://github.com/NethermindEth/mock-avs-pkg","version":"` + mockAVSLatestVersion + `","profile":"option-returner","tag":"default"}`)
+			_, err = stateFile.WriteString(`{"name":"mock-avs","url":"` + common.MockAvsPkg.Repo() + `","version":"` + common.MockAvsPkg.Version() + `","profile":"option-returner","tag":"default"}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -108,8 +105,8 @@ func TestDataDir_Instance(t *testing.T) {
 				path:       path,
 				instance: &Instance{
 					Name:    "mock-avs",
-					URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-					Version: mockAVSLatestVersion,
+					URL:     common.MockAvsPkg.Repo(),
+					Version: common.MockAvsPkg.Version(),
 					Tag:     "default",
 					Profile: "option-returner",
 					path:    filepath.Join(path, nodesDirName, "mock-avs-default"),
@@ -130,7 +127,7 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = stateFile.WriteString(`{"url":"https://github.com/NethermindEth/mock-avs-pkg","version":"` + mockAVSLatestVersion + `","profile":"option-returner","tag":"default"}`)
+			_, err = stateFile.WriteString(`{"url":"` + common.MockAvsPkg.Repo() + `","version":"` + common.MockAvsPkg.Version() + `","profile":"option-returner","tag":"default"}`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -210,8 +207,8 @@ func TestDataDir_InitInstance(t *testing.T) {
 				instance: &Instance{
 					Name:    "mock-avs",
 					Tag:     "default",
-					URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-					Version: mockAVSLatestVersion,
+					URL:     common.MockAvsPkg.Repo(),
+					Version: common.MockAvsPkg.Version(),
 					Profile: "option-returner",
 					fs:      fs,
 					locker:  locker,
@@ -228,7 +225,7 @@ func TestDataDir_InitInstance(t *testing.T) {
 				instance: &Instance{
 					Name:    "mock-avs",
 					Tag:     "default",
-					Version: mockAVSLatestVersion,
+					Version: common.MockAvsPkg.Version(),
 					Profile: "option-returner",
 					fs:      fs,
 				},
@@ -251,8 +248,8 @@ func TestDataDir_InitInstance(t *testing.T) {
 				instance: &Instance{
 					Name:    "mock-avs",
 					Tag:     "default",
-					URL:     "https://github.com/NethermindEth/mock-avs-pkg",
-					Version: mockAVSLatestVersion,
+					URL:     common.MockAvsPkg.Repo(),
+					Version: common.MockAvsPkg.Version(),
 					Profile: "option-returner",
 					fs:      fs,
 					locker:  locker,

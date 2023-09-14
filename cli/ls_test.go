@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -27,22 +28,22 @@ func TestList(t *testing.T) {
 						Running: true,
 						Health:  daemon.NodeHealthy,
 						Comment: "comment1",
-						Version: "v5.4.0",
-						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash(),
 					}, {
 						ID:      "id2",
 						Running: false,
 						Health:  daemon.NodeHealthUnknown,
 						Comment: "comment2",
-						Version: "v5.4.0",
-						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash(),
 					},
 				}, nil)
 			},
 			stdOut: []byte(
 				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
-					"id1                true       healthy    v5.4.0     d1d4bb700954    comment1    \n" +
-					"id2                false      unknown    v5.4.0     d1d4bb700954    comment2    \n",
+					"id1                true       healthy    " + common.MockAvsPkg.Version() + "     " + common.MockAvsPkg.CommitHash()[:12] + "    comment1    \n" +
+					"id2                false      unknown    " + common.MockAvsPkg.Version() + "     " + common.MockAvsPkg.CommitHash()[:12] + "    comment2    \n",
 			),
 		},
 		{
@@ -54,22 +55,22 @@ func TestList(t *testing.T) {
 						Running: true,
 						Health:  daemon.NodeHealthy,
 						Comment: "comment1",
-						Version: "v5.4.0",
-						Commit:  "d1d4bb7009549c431d7b3317f004a56e2c3b2031",
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash(),
 					}, {
 						ID:      "id2",
 						Running: false,
 						Health:  daemon.NodeHealthUnknown,
 						Comment: "comment2",
-						Version: "v5.4.0",
-						Commit:  "d1d4bb7",
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash()[:7],
 					},
 				}, nil)
 			},
 			stdOut: []byte(
 				"AVS Instance ID    RUNNING    HEALTH     VERSION    COMMIT          COMMENT     \n" +
-					"id1                true       healthy    v5.4.0     d1d4bb700954    comment1    \n" +
-					"id2                false      unknown    v5.4.0     d1d4bb7         comment2    \n",
+					"id1                true       healthy    " + common.MockAvsPkg.Version() + "     " + common.MockAvsPkg.CommitHash()[:12] + "    comment1    \n" +
+					"id2                false      unknown    " + common.MockAvsPkg.Version() + "     " + common.MockAvsPkg.CommitHash()[:7] + "         comment2    \n",
 			),
 		},
 		{

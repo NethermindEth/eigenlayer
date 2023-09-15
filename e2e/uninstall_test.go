@@ -23,7 +23,7 @@ func Test_Uninstall(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 				return err
 			}
 			// Install the mock-avs option-returner profile
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

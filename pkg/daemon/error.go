@@ -12,6 +12,9 @@ var (
 	ErrVersionOrCommitNotSet      = errors.New("version or commit not set")
 	ErrPluginPathNotInsidePackage = errors.New("plugin path is not inside package")
 	ErrUnknownPluginType          = errors.New("unknown plugin type")
+	ErrInvalidUpdateVersion       = errors.New("invalid update version")
+	ErrInvalidUpdateCommit        = errors.New("invalid update commit")
+	ErrOptionNotSet               = errors.New("option not set")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

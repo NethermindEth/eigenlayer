@@ -23,6 +23,7 @@ func RootCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		LogsCmd(d),
 		InitMonitoringCmd(d),
 		CleanMonitoringCmd(d),
+		UpdateCmd(d, p),
 	)
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	return &cmd

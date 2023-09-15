@@ -47,7 +47,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestInstall_FromCommitHash(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", common.MockAvsPkg.CommitHash(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--commit", common.MockAvsPkg.CommitHash(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestInstall_ValidArgumentNotRun(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -175,11 +175,11 @@ func TestInstall_DuplicatedID(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -212,13 +212,13 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
 			// Uses different tag, but docker compose create will fail because of duplicated container name
 			// The install should fail but the monitoring stack should be running and the instance should be cleaned up
-			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Assert
 		func(t *testing.T) {
@@ -256,8 +256,8 @@ func TestInstall_MultipleAVS(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
-			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
+			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345679", "--option.test-option-enum-hidden", "option2", common.MockAvsPkg.Repo())
 			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--tag", "health-checker", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 		},
 		// Assert
@@ -304,9 +304,9 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr[0] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-1", "--option.main-container-name", "main-service-1", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option1", common.MockAvsPkg.Repo())
 			time.Sleep(5 * time.Second)
-			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			runErr[1] = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--tag", "option-returner-2", "--option.main-container-name", "main-service-2", "--option.main-port", "8081", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "123456789", "--option.test-option-enum-hidden", "option2", common.MockAvsPkg.Repo())
 			time.Sleep(5 * time.Second)
 			runErr[2] = runCommand(t, egnPath, "install", "--profile", "health-checker", "--no-prompt", "--yes", "--tag", "health-checker", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
 		},
@@ -358,6 +358,35 @@ func TestInstall_HighRequirements(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.Error(t, runErr, "install command should fail")
+			checkInstanceNotInstalled(t, "mock-avs-default")
+			checkContainerNotExisting(t, "high-requirements")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestInstall_ProfileWithHiddenOptionsNotSet(t *testing.T) {
+	// Test context
+	var (
+		runErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			return buildMockAvsImages(t)
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "install command should fail")
+			checkInstanceNotInstalled(t, "mock-avs-default")
+			checkContainerNotExisting(t, "option-returner")
 		},
 	)
 	// Run test case

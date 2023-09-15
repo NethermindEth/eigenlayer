@@ -9,6 +9,7 @@ type Prompter interface {
 	Select(prompt string, options []string) (string, error)
 	InputString(prompt, defValue, help string, validator func(string) error) (string, error)
 	Confirm(prompt string) (bool, error)
+	InputHiddenString(prompt, help string, validator func(string) error) (string, error)
 }
 
 type prompter struct{}
@@ -54,5 +55,24 @@ func (p *prompter) Confirm(prompt string) (bool, error) {
 		Message: prompt,
 	}
 	err := survey.AskOne(c, &result)
+	return result, err
+}
+
+// InputHiddenString prompts the user to input a string. The input is hidden from the user.
+// The validator is used to validate the input. The help text is displayed to the user when they ask for help.
+// There is no default value.
+func (p *prompter) InputHiddenString(prompt, help string, validator func(string) error) (string, error) {
+	var result string
+	i := &survey.Password{
+		Message: prompt,
+		Help:    help,
+	}
+
+	err := survey.AskOne(i, &result, survey.WithValidator(func(ans interface{}) error {
+		if err := validator(ans.(string)); err != nil {
+			return err
+		}
+		return nil
+	}))
 	return result, err
 }

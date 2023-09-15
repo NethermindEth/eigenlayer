@@ -45,7 +45,7 @@ func TestLs_NotRunning(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		func(t *testing.T, eigenlayerPath string) {
 			out, lsErr = runCommandOutput(t, eigenlayerPath, "ls")
@@ -72,7 +72,7 @@ func TestLs_RunningHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -103,7 +103,7 @@ func TestLs_RunningPartiallyHealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func TestLs_RunningUnhealthy(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -174,7 +174,7 @@ func TestLs_Comment(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--yes", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

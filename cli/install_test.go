@@ -45,6 +45,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -86,6 +87,55 @@ func TestInstall(t *testing.T) {
 			},
 		},
 		{
+			name: "valid arguments, hidden",
+			args: []string{common.MockAvsPkg.Repo()},
+			err:  nil,
+			daemonMock: func(d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				option := daemonMock.NewMockOption(gomock.NewController(t))
+				option.EXPECT().Name().Return("option1").Times(3)
+				option.EXPECT().Default().Return("default1")
+				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(true)
+
+				gomock.InOrder(
+					d.EXPECT().
+						Pull(common.MockAvsPkg.Repo(), daemon.PullTarget{}, true).
+						Return(daemon.PullResult{
+							Version: common.MockAvsPkg.Version(),
+							Options: map[string][]daemon.Option{
+								"profile1": {option},
+							},
+							HardwareRequirements: map[string]daemon.HardwareRequirements{
+								"profile1": {
+									MinCPUCores:                 2,
+									MinRAM:                      2048,
+									MinFreeSpace:                5120,
+									StopIfRequirementsAreNotMet: true,
+								},
+							},
+						}, nil),
+					p.EXPECT().Select("Select a profile", []string{"profile1"}).Return("profile1", nil),
+					d.EXPECT().CheckHardwareRequirements(daemon.HardwareRequirements{
+						MinCPUCores:                 2,
+						MinRAM:                      2048,
+						MinFreeSpace:                5120,
+						StopIfRequirementsAreNotMet: true,
+					}).Return(true, nil),
+					p.EXPECT().InputHiddenString("option1", "help1", gomock.Any()).Return("value1", nil),
+					d.EXPECT().InitMonitoring(false, false).Return(nil),
+					d.EXPECT().
+						Install(daemon.InstallOptions{
+							URL:     common.MockAvsPkg.Repo(),
+							Version: common.MockAvsPkg.Version(),
+							Profile: "profile1",
+							Options: []daemon.Option{option},
+							Tag:     "default",
+						}).Return("mock-avs-pkg-default", nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(false, nil),
+				)
+			},
+		},
+		{
 			name: "valid arguments, run confirmed, init monitoring error",
 			args: []string{common.MockAvsPkg.Repo()},
 			err:  assert.AnError,
@@ -94,6 +144,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false).AnyTimes()
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -123,6 +174,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -162,6 +214,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -200,6 +253,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -238,6 +292,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -276,6 +331,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -350,6 +406,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().
@@ -449,6 +506,7 @@ func TestInstall(t *testing.T) {
 				option.EXPECT().Name().Return("option1").Times(3)
 				option.EXPECT().Default().Return("default1").Times(2)
 				option.EXPECT().Help().Return("help1").Times(2)
+				option.EXPECT().Hidden().Return(false)
 
 				gomock.InOrder(
 					d.EXPECT().

@@ -151,9 +151,16 @@ the user to know which options are available for each profile.
 						return err
 					}
 				} else {
-					_, err := p.InputString(o.Name(), o.Default(), o.Help(), func(s string) error {
-						return o.Set(s)
-					})
+					var err error
+					if o.Hidden() {
+						_, err = p.InputHiddenString(o.Name(), o.Help(), func(s string) error {
+							return o.Set(s)
+						})
+					} else {
+						_, err = p.InputString(o.Name(), o.Default(), o.Help(), func(s string) error {
+							return o.Set(s)
+						})
+					}
 					if err != nil {
 						return err
 					}

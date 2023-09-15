@@ -20,6 +20,8 @@ type Option interface {
 	Name() string
 	// Help returns the help text for the option.
 	Help() string
+	// Hidden returns true if the option value should be hidden from the user.
+	Hidden() bool
 	// Set sets the value of the option. If the value is invalid, it returns an error.
 	Set(string) error
 	// Value returns the current value of the option.
@@ -28,6 +30,7 @@ type Option interface {
 	Default() string
 	// Target returns the target docker-compose environment variable for the option.
 	Target() string
+	// IsSet returns true if the option has been set.
 	IsSet() bool
 }
 
@@ -36,6 +39,7 @@ type option struct {
 	name   string
 	target string
 	help   string
+	hidden bool
 }
 
 // OptionInt is a struct representing an integer option. It implements the Option interface.
@@ -59,6 +63,7 @@ func NewOptionInt(pkgOption profile.Option) (*OptionInt, error) {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: defaultValue,
 		validate: pkgOption.ValidateDef != nil,
@@ -81,6 +86,10 @@ func (oi *OptionInt) Help() string {
 		return fmt.Sprintf("%s (min: %d, max: %d)", oi.option.help, oi.MinValue, oi.MaxValue)
 	}
 	return oi.option.help
+}
+
+func (oi *OptionInt) Hidden() bool {
+	return oi.hidden
 }
 
 func (oi *OptionInt) Set(value string) error {
@@ -151,6 +160,7 @@ func NewOptionFloat(pkgOption profile.Option) (*OptionFloat, error) {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: defaultValue,
 		validate: pkgOption.ValidateDef != nil,
@@ -173,6 +183,10 @@ func (of *OptionFloat) Help() string {
 		return fmt.Sprintf("%s (min: %f, max: %f)", of.option.help, of.MinValue, of.MaxValue)
 	}
 	return of.option.help
+}
+
+func (of *OptionFloat) Hidden() bool {
+	return of.hidden
 }
 
 func (of *OptionFloat) Set(value string) error {
@@ -234,6 +248,7 @@ func NewOptionBool(pkgOption profile.Option) (*OptionBool, error) {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: defaultValue,
 	}, nil
@@ -247,6 +262,10 @@ func (ob *OptionBool) Name() string {
 
 func (ob *OptionBool) Help() string {
 	return ob.option.help
+}
+
+func (ob *OptionBool) Hidden() bool {
+	return ob.hidden
 }
 
 func (ob *OptionBool) Set(value string) error {
@@ -292,6 +311,7 @@ func NewOptionString(pkgOption profile.Option) *OptionString {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -313,6 +333,10 @@ func (os *OptionString) Help() string {
 		return fmt.Sprintf("%s (regex: %s)", os.option.help, os.Re2Regex)
 	}
 	return os.option.help
+}
+
+func (os *OptionString) Hidden() bool {
+	return os.hidden
 }
 
 func (os *OptionString) Set(value string) error {
@@ -367,6 +391,7 @@ func NewOptionPathDir(pkgOption profile.Option) *OptionPathDir {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: pkgOption.Default,
 	}
@@ -380,6 +405,10 @@ func (opd *OptionPathDir) Name() string {
 
 func (opd *OptionPathDir) Help() string {
 	return opd.option.help
+}
+
+func (opd *OptionPathDir) Hidden() bool {
+	return opd.hidden
 }
 
 func (opd *OptionPathDir) Set(value string) error {
@@ -428,6 +457,7 @@ func NewOptionPathFile(pkgOption profile.Option) *OptionPathFile {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -449,6 +479,10 @@ func (opf *OptionPathFile) Help() string {
 		return fmt.Sprintf("%s (format: %s)", opf.option.help, opf.Format)
 	}
 	return opf.option.help
+}
+
+func (opf *OptionPathFile) Hidden() bool {
+	return opf.hidden
 }
 
 func (opf *OptionPathFile) Set(value string) error {
@@ -506,6 +540,7 @@ func NewOptionURI(pkgOption profile.Option) *OptionURI {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -527,6 +562,10 @@ func (ou *OptionURI) Help() string {
 		return fmt.Sprintf("%s (uri scheme: %s)", ou.option.help, strings.Join(ou.UriScheme, ", "))
 	}
 	return ou.option.help
+}
+
+func (ou *OptionURI) Hidden() bool {
+	return ou.hidden
 }
 
 func (ou *OptionURI) Set(value string) error {
@@ -589,6 +628,7 @@ func NewOptionSelect(pkgOption profile.Option) *OptionSelect {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: pkgOption.Default,
 		validate: pkgOption.ValidateDef != nil,
@@ -607,6 +647,10 @@ func (oe *OptionSelect) Name() string {
 
 func (oe *OptionSelect) Help() string {
 	return fmt.Sprintf("%s (options: %s)", oe.option.help, strings.Join(oe.Options, ", "))
+}
+
+func (oe *OptionSelect) Hidden() bool {
+	return oe.hidden
 }
 
 func (oe *OptionSelect) Set(value string) error {
@@ -659,6 +703,7 @@ func NewOptionPort(pkgOption profile.Option) (*OptionPort, error) {
 			name:   pkgOption.Name,
 			target: pkgOption.Target,
 			help:   pkgOption.Help,
+			hidden: pkgOption.Hidden,
 		},
 		defValue: defaultValue,
 	}, nil
@@ -672,6 +717,10 @@ func (op *OptionPort) Name() string {
 
 func (op *OptionPort) Help() string {
 	return fmt.Sprintf("%s (min: 0, max: 65535)", op.option.help)
+}
+
+func (op *OptionPort) Hidden() bool {
+	return op.hidden
 }
 
 func (op *OptionPort) Set(value string) error {

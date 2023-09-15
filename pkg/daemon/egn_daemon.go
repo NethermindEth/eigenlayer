@@ -16,6 +16,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
+	"golang.org/x/mod/semver"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
@@ -24,6 +25,7 @@ import (
 	hardwarechecker "github.com/NethermindEth/eigenlayer/internal/hardware_checker"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/profile"
 	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring/services/types"
@@ -256,20 +258,7 @@ func checkHealth(ip string, port string) (NodeHealth, error) {
 
 // Pull implements Daemon.Pull.
 func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullResult, err error) {
-	tID := tempID(url)
-	if force {
-		if err = d.dataDir.RemoveTemp(tID); err != nil {
-			return
-		}
-	}
-	tempPath, err := d.dataDir.InitTemp(tID)
-	if err != nil {
-		return
-	}
-	pkgHandler, err := package_handler.NewPackageHandlerFromURL(package_handler.NewPackageHandlerOptions{
-		Path: tempPath,
-		URL:  url,
-	})
+	pkgHandler, err := d.pullPackage(url, force)
 	if err != nil {
 		return
 	}
@@ -322,34 +311,9 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 	}
 	profileOptions := make(map[string][]Option, len(profiles))
 	for _, profile := range profiles {
-		options := make([]Option, len(profile.Options))
-		for i, o := range profile.Options {
-			switch o.Type {
-			case "str":
-				options[i] = NewOptionString(o)
-			case "int":
-				options[i], err = NewOptionInt(o)
-			case "float":
-				options[i], err = NewOptionFloat(o)
-			case "bool":
-				options[i], err = NewOptionBool(o)
-			case "path_dir":
-				options[i] = NewOptionPathDir(o)
-			case "path_file":
-				options[i] = NewOptionPathFile(o)
-			case "uri":
-				options[i] = NewOptionURI(o)
-			case "select":
-				options[i] = NewOptionSelect(o)
-			case "port":
-				options[i], err = NewOptionPort(o)
-			default:
-				err = errors.New("unknown option type: " + o.Type)
-				return
-			}
-		}
+		options, err := optionsFromProfile(&profile)
 		if err != nil {
-			return
+			return PullResult{}, err
 		}
 		profileOptions[profile.Name] = options
 	}
@@ -372,6 +336,155 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 	result.HardwareRequirements = requirements
 
 	return result, err
+}
+
+func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error) {
+	pkgHandler, err := d.pullPackage(url, true)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	instance, err := d.dataDir.Instance(instanceID)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	if ref.Version != "" {
+		// Check if the new version is greater than the current version
+		if semver.Compare(ref.Version, instance.Version) != 1 {
+			return PullUpdateResult{}, fmt.Errorf("%w: %s, must be grater than the current version", ErrInvalidUpdateVersion, ref.Version)
+		}
+		err = pkgHandler.CheckoutVersion(ref.Version)
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+	} else if ref.Commit != "" {
+		err := pkgHandler.CheckoutCommit(ref.Commit)
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+		ok, err := pkgHandler.CommitPrecedence(instance.Commit, ref.Commit)
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+		if !ok {
+			return PullUpdateResult{}, fmt.Errorf("%w: current commit %s is not previous to the update commit %s", ErrInvalidUpdateCommit, instance.Commit, ref.Commit)
+		}
+		err = pkgHandler.CheckoutCommit(ref.Commit)
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+	} else {
+		var latestVersion string
+		latestVersion, err = pkgHandler.LatestVersion()
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+		if semver.Compare(latestVersion, instance.Version) != 1 {
+			return PullUpdateResult{}, fmt.Errorf("%w: %s, must be grater than the current version", ErrInvalidUpdateVersion, ref.Version)
+		}
+		err = pkgHandler.CheckoutVersion(latestVersion)
+		if err != nil {
+			return PullUpdateResult{}, err
+		}
+	}
+
+	// Get new options
+	profileNew, err := pkgHandler.Profile(instance.Profile)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	optionsNew, err := optionsFromProfile(profileNew)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	// Get old options with its values
+	profileOld, err := instance.ProfileFile()
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	optionsOld, err := optionsFromProfile(profileOld)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	valuesOld, err := instance.Env()
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	for _, o := range optionsOld {
+		if v, ok := valuesOld[o.Target()]; ok {
+			err := o.Set(v)
+			if err != nil {
+				return PullUpdateResult{}, err
+			}
+		} else {
+			return PullUpdateResult{}, fmt.Errorf("%w: old option %s", ErrOptionWithoutValue, o.Name())
+		}
+	}
+
+	mergedOptions, err := mergeOptions(optionsOld, optionsNew)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+
+	return PullUpdateResult{
+		Version:       ref.Version,
+		OldOptions:    optionsOld,
+		NewOptions:    optionsNew,
+		MergedOptions: mergedOptions,
+	}, nil
+}
+
+func mergeOptions(oldOptions, newOptions []Option) ([]Option, error) {
+	var mergedOptions []Option
+	for _, oNew := range newOptions {
+		var oOld Option
+		for _, o := range oldOptions {
+			// XXX: Do we need to check the option equality with the Name or the Target?
+			if o.Name() == oNew.Name() {
+				oOld = o
+				break
+			}
+		}
+		if oOld == nil {
+			// Option does not exist previously
+			mergedOptions = append(mergedOptions, oNew)
+		} else {
+			// Option exists previously. Try to set the old value
+			oldValue, err := oOld.Value()
+			if err != nil {
+				// Old option is expected to have a value but it does not.
+				return mergedOptions, err
+			}
+			err = oNew.Set(oldValue)
+			if err != nil {
+				// Old value is not valid for same option in the new version. This
+				// option should be filled by the user again.
+				log.Debugf("Option %s value %s is not valid for the new version. error: %s", oOld.Name(), oldValue, err.Error())
+			} else {
+				// Old value is valid for the new version and we can use it.
+				log.Debugf("Option %s value %s is valid for the new version", oOld.Name(), oldValue)
+			}
+			mergedOptions = append(mergedOptions, oNew)
+		}
+	}
+	return mergedOptions, nil
+}
+
+func (d *EgnDaemon) pullPackage(url string, force bool) (*package_handler.PackageHandler, error) {
+	tID := tempID(url)
+	if force {
+		err := d.dataDir.RemoveTemp(tID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	tempPath, err := d.dataDir.InitTemp(tID)
+	if err != nil {
+		return nil, err
+	}
+	return package_handler.NewPackageHandlerFromURL(package_handler.NewPackageHandlerOptions{
+		Path: tempPath,
+		URL:  url,
+	})
 }
 
 // Install implements Daemon.Install.
@@ -424,7 +537,7 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 		return instanceID, tID, err
 	}
 	// Select selectedProfile
-	var selectedProfile *package_handler.Profile
+	var selectedProfile *profile.Profile
 	for _, pkgProfile := range pkgProfiles {
 		if pkgProfile.Name == options.Profile {
 			selectedProfile = &pkgProfile
@@ -482,7 +595,7 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 			if err != nil {
 				return instanceID, tID, err
 			}
-			optionsEnv[o.Target()] = o.Value()
+			optionsEnv[o.Target()] = v
 		} else if o.Default() != "" {
 			optionsEnv[o.Target()] = o.Default()
 		} else {
@@ -539,7 +652,7 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 	if err != nil {
 		return instanceID, tID, err
 	}
-	var selectedProfile *package_handler.Profile
+	var selectedProfile *profile.Profile
 	// Check if selected profile is valid
 	for _, pkgProfile := range pkgProfiles {
 		if pkgProfile.Name == options.Profile {
@@ -558,7 +671,11 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 	}
 	optionsEnv := make(map[string]string, len(options.Options))
 	for _, o := range options.Options {
-		env[o.Target()] = o.Value()
+		oValue, err := o.Value()
+		if err != nil {
+			return instanceID, tID, err
+		}
+		env[o.Target()] = oValue
 	}
 	maps.Copy(env, optionsEnv)
 
@@ -568,7 +685,7 @@ func (d *EgnDaemon) remoteInstall(options InstallOptions) (string, string, error
 func (d *EgnDaemon) install(
 	instanceName, instanceID, tID string,
 	pkgHandler *package_handler.PackageHandler,
-	selectedProfile *package_handler.Profile,
+	selectedProfile *profile.Profile,
 	env map[string]string,
 	options InstallOptions,
 ) (string, string, error) {

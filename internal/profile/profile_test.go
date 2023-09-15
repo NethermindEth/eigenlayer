@@ -1,4 +1,4 @@
-package package_handler
+package profile
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Missing Fields Option",
 			filePath: "missing-fields/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"options.help"},
 			},
@@ -41,7 +41,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Missing and Invalid Fields Option",
 			filePath: "missing-invalid-fields/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"options.name", "options.target", "options.help"},
 				invalidFields: []string{"options.default"},
@@ -50,7 +50,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Full Missing Fields Option",
 			filePath: "full-missing/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"options.name", "options.target", "options.type", "options.help"},
 				invalidFields: []string{"options.default"},
@@ -59,7 +59,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Invalid Type in Option",
 			filePath: "invalid-type/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"options.target", "options.help"},
 				invalidFields: []string{"options.default"},
@@ -68,7 +68,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type int",
 			filePath: "check-invalid-int/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -76,7 +76,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type int with min-max value",
 			filePath: "check-invalid-int-validate/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -104,7 +104,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type port",
 			filePath: "check-invalid-port/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -112,7 +112,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type port with negative value",
 			filePath: "check-negative-port/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -120,7 +120,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type port with huge value",
 			filePath: "check-huge-port/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -128,7 +128,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type port with zero value",
 			filePath: "check-zero-port/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -136,7 +136,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type port with decimal value",
 			filePath: "check-decimal-port/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -144,7 +144,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type bool",
 			filePath: "check-invalid-bool/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -152,7 +152,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type float",
 			filePath: "check-invalid-float/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -160,7 +160,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type float with min-max value",
 			filePath: "check-invalid-float-validate/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -188,7 +188,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type uri",
 			filePath: "check-invalid-uri/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -196,7 +196,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type uri with scheme",
 			filePath: "check-invalid-uri-scheme/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -209,7 +209,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check valid type uri with invalid scheme",
 			filePath: "check-valid-uri-invalid-scheme/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -217,7 +217,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check type select",
 			filePath: "check-type-select/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"options.validate"},
 			},
@@ -245,7 +245,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type str with validate",
 			filePath: "check-invalid-str-validate/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -263,7 +263,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type path_file",
 			filePath: "check-invalid-path-file/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -271,7 +271,7 @@ func TestOptionValidate(t *testing.T) {
 		{
 			name:     "Check invalid type path_file with validate",
 			filePath: "check-invalid-path-file-validate/pkg/option.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"options.default"},
 			},
@@ -315,7 +315,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Invalid Path Monitoring Target",
 			filePath: "invalid-path/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"monitoring.targets.path"},
 			},
@@ -323,7 +323,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Invalid Port Monitoring Target",
 			filePath: "invalid-port/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"monitoring.targets.port"},
 			},
@@ -331,7 +331,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Invalid Service Monitoring Target",
 			filePath: "invalid-service/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				invalidFields: []string{"monitoring.targets.service"},
 			},
@@ -339,7 +339,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Invalid Targets Monitoring Target",
 			filePath: "invalid-targets/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"monitoring.targets.service", "monitoring.targets.port", "monitoring.targets.path"},
 			},
@@ -347,7 +347,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Missing Path Monitoring Target",
 			filePath: "missing-path/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"monitoring.targets.path"},
 			},
@@ -355,7 +355,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Missing Port Monitoring Target",
 			filePath: "missing-port/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"monitoring.targets.port"},
 			},
@@ -363,7 +363,7 @@ func TestMonitoringTargetValidate(t *testing.T) {
 		{
 			name:     "Missing Service Monitoring Target",
 			filePath: "missing-service/pkg/target.yml",
-			want: InvalidConfError{
+			want: InvalidProfileError{
 				message:       message,
 				missingFields: []string{"monitoring.targets.service"},
 			},

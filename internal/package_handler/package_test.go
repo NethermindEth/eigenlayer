@@ -9,6 +9,7 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
+	"github.com/NethermindEth/eigenlayer/internal/profile"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -277,15 +278,15 @@ func TestProfiles(t *testing.T) {
 	ts := []struct {
 		name    string
 		pkgPath string
-		want    []Profile
+		want    []profile.Profile
 		err     error
 	}{
 		{
 			name:    "good profiles",
 			pkgPath: "good-profiles",
-			want: []Profile{
+			want: []profile.Profile{
 				{
-					Options: []Option{
+					Options: []profile.Option{
 						{
 							Name:    "el-port",
 							Target:  "PORT",
@@ -302,26 +303,26 @@ func TestProfiles(t *testing.T) {
 					},
 				},
 				{
-					Options: []Option{},
+					Options: []profile.Option{},
 				},
 			},
 		},
 		{
 			name:    "bad profiles",
 			pkgPath: "bad-profiles",
-			want:    []Profile{},
+			want:    []profile.Profile{},
 			err:     ParsingProfileError{profileName: "invalid-yml"},
 		},
 		{
 			name:    "no options",
 			pkgPath: "no-options",
-			want:    []Profile{},
+			want:    []profile.Profile{},
 			err:     InvalidConfError{message: "Invalid profile", missingFields: []string{"options"}},
 		},
 		{
 			name:    "invalid profile",
 			pkgPath: "invalid-profile",
-			want:    []Profile{},
+			want:    []profile.Profile{},
 			err:     fmt.Errorf("Invalid profile: invalid options: %w: %w: invalid monitoring: %w", InvalidConfError{message: "Option #1 is invalid", invalidFields: []string{"options.default"}}, InvalidConfError{message: "Option #2 is invalid", missingFields: []string{"options.type", "options.help"}}, InvalidConfError{message: "Monitoring target #1 is invalid", missingFields: []string{"monitoring.targets.port", "monitoring.targets.path"}}),
 		},
 	}
@@ -411,20 +412,20 @@ func TestVersions(t *testing.T) {
 	ts := []testCase{
 		{
 			name:     "all tags are valid versions",
-			gitTags:  []string{"v0.0.0", "v0.2.0", "v4.3.0"},
-			versions: []string{"v4.3.0", "v0.2.0", "v0.0.0"},
+			gitTags:  []string{"v4.3.0", "v0.2.0", "v0.0.0"},
+			versions: []string{"v0.0.0", "v0.2.0", "v4.3.0"},
 			err:      nil,
 		},
 		{
 			name:     "no versions",
-			gitTags:  []string{"v0.0", "some-tag", "0"},
+			gitTags:  []string{"0.0", "some-tag", "0"},
 			versions: nil,
 			err:      ErrNoVersionsFound,
 		},
 		{
 			name:     "some tags are valid versions",
 			gitTags:  []string{"v0.0.0", "v0.2.0", "v4.3.0", "v0.0", "some-tag", "0"},
-			versions: []string{"v4.3.0", "v0.2.0", "v0.0.0"},
+			versions: []string{"v0.0", "v0.0.0", "v0.2.0", "v4.3.0"},
 			err:      nil,
 		},
 	}
@@ -449,9 +450,7 @@ func TestVersions(t *testing.T) {
 				exec.Command("git", "-C", path, "commit", "-m", "Initial commit"),
 			} {
 				err := cmd.Run()
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.NoError(t, err)
 			}
 
 			// Add tags
@@ -491,7 +490,7 @@ func TestLatestVersion(t *testing.T) {
 		},
 		{
 			name:          "no versions",
-			gitTags:       []string{"v0.0", "some-tag", "0"},
+			gitTags:       []string{"0.0", "some-tag", "0"},
 			latestVersion: "",
 			err:           ErrNoVersionsFound,
 		},
@@ -571,7 +570,7 @@ func TestCheckoutVersion(t *testing.T) {
 		{
 			name:       "checkout to invalid version format",
 			versions:   []string{"v1.0.0"},
-			checkoutTo: "v1.0",
+			checkoutTo: "1.0",
 			err:        ErrInvalidVersion,
 		},
 	}
@@ -758,7 +757,7 @@ func TestCurrentVersion(t *testing.T) {
 		}(),
 		func() testCase {
 			path := t.TempDir()
-			prepareTest(t, path, []string{"some-tag", "v1.0.1", "v1.2"})
+			prepareTest(t, path, []string{"some-tag", "v1.0.1", "1.2"})
 			return testCase{
 				name:    "HEAD has many tags, which one is a version tag",
 				path:    path,

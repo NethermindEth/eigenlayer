@@ -152,6 +152,10 @@ type PullResult struct {
 }
 
 type PullUpdateResult struct {
+	Name    string
+	Tag     string
+	Url     string
+	Profile string
 	// OldVersion is the version of the old package.
 	OldVersion string
 
@@ -174,7 +178,7 @@ type PullUpdateResult struct {
 	NewOptions []Option
 
 	// MergedOptions is the list of options of the new package merged with the
-	// old package. These options the ones that will be used for the new instance
+	// old package. These options are the ones that will be used for the new instance
 	// and should be filled by the user.
 	MergedOptions []Option
 
@@ -186,6 +190,10 @@ type PullUpdateResult struct {
 type InstallOptions struct {
 	// Name is the name of the AVS represented by the package.
 	Name string
+
+	// Tag is the tag to use for the instance, required to build the instance id
+	// with the format <package_name>-<tag>
+	Tag string
 
 	// URL is the URL of the git repository containing the node software package.
 	URL string
@@ -207,10 +215,6 @@ type InstallOptions struct {
 
 	// Options is the list of options to use for the instance.
 	Options []Option
-
-	// Tag is the tag to use for the instance, required to build the instance id
-	// with the format <package_name>-<tag>
-	Tag string
 }
 
 // LocalInstallOptions is a set of options for installing a node software package

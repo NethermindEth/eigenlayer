@@ -339,6 +339,9 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 }
 
 func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error) {
+	if !d.dataDir.HasInstance(instanceID) {
+		return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceID)
+	}
 	pkgHandler, err := d.pullPackage(url, true)
 	if err != nil {
 		return PullUpdateResult{}, err
@@ -419,7 +422,7 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 		if v, ok := valuesOld[o.Target()]; ok {
 			err := o.Set(v)
 			if err != nil {
-				return PullUpdateResult{}, err
+				return PullUpdateResult{}, fmt.Errorf("error setting old option value: %v", err)
 			}
 		} else {
 			return PullUpdateResult{}, fmt.Errorf("%w: old option %s", ErrOptionWithoutValue, o.Name())
@@ -432,6 +435,11 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 	}
 
 	return PullUpdateResult{
+		Name:          instance.Name,
+		Tag:           instance.Tag,
+		Url:           instance.URL,
+		Profile:       instance.Profile,
+		HasPlugin:     instance.Plugin != nil,
 		OldVersion:    instance.Version,
 		NewVersion:    newVersion,
 		OldCommit:     instance.Commit,
@@ -442,7 +450,22 @@ func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (P
 	}, nil
 }
 
+// mergeOptions merges the old options with the new ones following the next rules:
+//
+//  1. New option is not present in the old options: New option is added to the
+//     merged options without a value.
+//
+// 2. New option is present in the old options:
+//
+//	2.1: Old option value is valid for the new option: the new option is added
+//	     to the merged options using the old option value.
+//
+//	2.2: Old option value is not valid for the new option: the new option is
+//	     added to the merged options without a value and probably the user
+//	     will need to fill it again or use its default value.
 func mergeOptions(oldOptions, newOptions []Option) ([]Option, error) {
+	// mergedOptions will contain the result of merging the new options with the
+	// old ones
 	var mergedOptions []Option
 	for _, oNew := range newOptions {
 		var oOld Option

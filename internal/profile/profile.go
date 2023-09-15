@@ -1,4 +1,4 @@
-package package_handler
+package profile
 
 import (
 	"errors"
@@ -44,7 +44,7 @@ func (p *Profile) Validate() error {
 	invalidMonitoringErr := p.Monitoring.validate()
 
 	if len(missingFields) > 0 || invalidOptions || invalidMonitoringErr != nil {
-		var err error = InvalidConfError{
+		var err error = InvalidProfileError{
 			message:       "Invalid profile",
 			missingFields: missingFields,
 		}
@@ -167,7 +167,7 @@ func (o *Option) validate(idx int) error {
 	}
 
 	if len(missingFields) > 0 || len(invalidFields) > 0 {
-		return InvalidConfError{
+		return InvalidProfileError{
 			message:       "Option #" + strconv.Itoa(idx+1) + " is invalid",
 			missingFields: missingFields,
 			invalidFields: invalidFields,
@@ -244,7 +244,7 @@ func (m *MonitoringTarget) validate(idx int) error {
 	}
 
 	if len(missingFields) > 0 || len(invalidFields) > 0 {
-		return InvalidConfError{
+		return InvalidProfileError{
 			message:       "Monitoring target #" + strconv.Itoa(idx+1) + " is invalid",
 			missingFields: missingFields,
 			invalidFields: invalidFields,

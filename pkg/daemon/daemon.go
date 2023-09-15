@@ -15,6 +15,8 @@ type Daemon interface {
 	// calling Pull all is ready to call Install.
 	Pull(url string, ref PullTarget, force bool) (PullResult, error)
 
+	PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error)
+
 	// Install downloads and installs a node software package using the provided options,
 	// and returns the instance ID of the installed package. Make sure to call Pull
 	// before calling Install to ensure that the package is downloaded.
@@ -145,6 +147,30 @@ type PullResult struct {
 
 	// HardwareRequirements is the hardware requirements specified in the package manifest.
 	HardwareRequirements map[string]HardwareRequirements
+}
+
+type PullUpdateResult struct {
+	// Version is the version of the pulled package.
+	Version string
+
+	// SpecVersion is the version of the Eigenlayer AVS Node Specification the instance
+	// targets. The version must match the regex `^\d+\.\d+\.\d+$`.
+	SpecVersion string
+
+	// Commit hash of the pulled package.
+	Commit string
+
+	// HasPlugin is true if the package has a plugin.
+	HasPlugin bool
+
+	OldOptions []Option
+
+	NewOptions []Option
+
+	MergedOptions []Option
+
+	// HardwareRequirements is the hardware requirements specified in the package manifest.
+	HardwareRequirements HardwareRequirements
 }
 
 // InstallOptions is a set of options for installing a node software package.

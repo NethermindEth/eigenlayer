@@ -84,6 +84,7 @@ type Option struct {
 	Type        string    `yaml:"type"`
 	Default     string    `yaml:"default"`
 	Help        string    `yaml:"help"`
+	Hidden      bool      `yaml:"hidden"`
 	ValidateDef *Validate `yaml:"validate,omitempty"`
 }
 

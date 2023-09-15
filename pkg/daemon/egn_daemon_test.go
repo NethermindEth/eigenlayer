@@ -1065,7 +1065,14 @@ func TestInstall(t *testing.T) {
 			// Pull the package
 			pullResult, err := daemon.Pull(tt.options.URL, PullTarget{Version: tt.options.Version}, true)
 			require.NoError(t, err)
-			tt.options.Options = pullResult.Options[tt.options.Profile]
+			tt.options.Options = make([]Option, 0)
+			for _, option := range pullResult.Options[tt.options.Profile] {
+				if option.Hidden() {
+					// Hidden options don't have defaults. Skip
+					continue
+				}
+				tt.options.Options = append(tt.options.Options, option)
+			}
 
 			// Fill option's values
 			for _, option := range tt.options.Options {

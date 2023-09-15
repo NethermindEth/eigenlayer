@@ -74,7 +74,7 @@ func TestPlugin_LocalInstall(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			installErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run")
+			installErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestPlugin_Install_Run(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -151,7 +151,7 @@ func TestPlugin_Volume_File(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -216,7 +216,7 @@ func TestPlugin_Volume_Existing_Dir(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -283,7 +283,7 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -345,7 +345,7 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -388,7 +388,7 @@ func TestPlugin_ExitsWithError(t *testing.T) {
 			if err := buildMockAvsImages(t); err != nil {
 				return err
 			}
-			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

@@ -99,6 +99,7 @@ func (oi *OptionInt) Set(value string) error {
 			optionName: oi.name,
 			value:      value,
 			msg:        "it is not an integer",
+			hidden:     oi.hidden,
 		}
 	}
 	if oi.validate {
@@ -107,6 +108,7 @@ func (oi *OptionInt) Set(value string) error {
 				optionName: oi.name,
 				value:      value,
 				msg:        fmt.Sprintf("should be greater than %d", oi.MinValue),
+				hidden:     oi.hidden,
 			}
 		}
 		if v > oi.MaxValue {
@@ -114,6 +116,7 @@ func (oi *OptionInt) Set(value string) error {
 				optionName: oi.name,
 				value:      value,
 				msg:        fmt.Sprintf("should be less than %d", oi.MaxValue),
+				hidden:     oi.hidden,
 			}
 		}
 	}
@@ -199,6 +202,7 @@ func (of *OptionFloat) Set(value string) error {
 			optionName: of.name,
 			value:      value,
 			msg:        value + " is too low",
+			hidden:     of.hidden,
 		}
 	}
 	if v > of.MaxValue {
@@ -206,6 +210,7 @@ func (of *OptionFloat) Set(value string) error {
 			optionName: of.name,
 			value:      value,
 			msg:        value + " is too high",
+			hidden:     of.hidden,
 		}
 	}
 	of.value = &v
@@ -352,6 +357,7 @@ func (os *OptionString) Set(value string) error {
 				optionName: os.name,
 				value:      value,
 				msg:        "does not match with regex: " + os.Re2Regex,
+				hidden:     os.hidden,
 			}
 		}
 	}
@@ -417,6 +423,7 @@ func (opd *OptionPathDir) Set(value string) error {
 			optionName: opd.name,
 			value:      value,
 			msg:        "it is not a valid path",
+			hidden:     opd.hidden,
 		}
 	}
 	opd.value = &value
@@ -492,6 +499,7 @@ func (opf *OptionPathFile) Set(value string) error {
 				optionName: opf.name,
 				value:      value,
 				msg:        "it has an invalid format. Required format is " + opf.Format,
+				hidden:     opf.hidden,
 			}
 		}
 	}
@@ -500,6 +508,7 @@ func (opf *OptionPathFile) Set(value string) error {
 			optionName: opf.name,
 			value:      value,
 			msg:        "is not a valid path",
+			hidden:     opf.hidden,
 		}
 	}
 	opf.value = &value
@@ -575,6 +584,7 @@ func (ou *OptionURI) Set(value string) error {
 			optionName: ou.name,
 			value:      value,
 			msg:        "it is not a valid uri",
+			hidden:     ou.hidden,
 		}
 	}
 	if ou.validate && len(ou.UriScheme) != 0 {
@@ -588,6 +598,7 @@ func (ou *OptionURI) Set(value string) error {
 			optionName: ou.name,
 			value:      value,
 			msg:        "it is not a valid uri, must be one of [" + strings.Join(ou.UriScheme, ", ") + "]",
+			hidden:     ou.hidden,
 		}
 	}
 	ou.value = &value
@@ -664,6 +675,7 @@ func (oe *OptionSelect) Set(value string) error {
 		optionName: oe.name,
 		value:      value,
 		msg:        "must be one of " + strings.Join(oe.Options, ", "),
+		hidden:     oe.hidden,
 	}
 }
 
@@ -730,6 +742,7 @@ func (op *OptionPort) Set(value string) error {
 			optionName: op.name,
 			value:      value,
 			msg:        "it is not a valid port number",
+			hidden:     op.hidden,
 		}
 	}
 
@@ -738,6 +751,7 @@ func (op *OptionPort) Set(value string) error {
 			optionName: op.name,
 			value:      value,
 			msg:        "it is not a valid port. Port must be between 0 and 65535",
+			hidden:     op.hidden,
 		}
 	}
 

@@ -190,6 +190,8 @@ func (p *PackageHandler) LatestVersion() (string, error) {
 	return versions[len(versions)-1], nil
 }
 
+// CommitPrecedence returns true if the new commit hash is a descendant of the
+// old commit hash. It returns an error if the commit hashes are not found.
 func (p *PackageHandler) CommitPrecedence(oldCommitHash, newCommitHash string) (bool, error) {
 	err := p.CheckoutCommit(newCommitHash)
 	if err != nil {
@@ -205,6 +207,7 @@ func (p *PackageHandler) CommitPrecedence(oldCommitHash, newCommitHash string) (
 	if err != nil {
 		return false, err
 	}
+	// Skip first commit, because it is the new commit hash itself
 	_, err = commitIter.Next()
 	if err != nil {
 		if errors.Is(err, io.EOF) {

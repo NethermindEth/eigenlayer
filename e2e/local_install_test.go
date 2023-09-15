@@ -38,7 +38,7 @@ func TestLocalInstall(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestLocalInstallNotRunning(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestLocalInstallInvalidManifest(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -228,7 +228,7 @@ func TestLocalInstallInvalidManifestCleanup(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -280,7 +280,7 @@ func TestLocalInstallInvalidManifestCleanupWithMonitoring(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestLocalInstallInvalidComposeCleanup(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Assert
 		func(t *testing.T) {
@@ -376,7 +376,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+			return runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -400,6 +400,47 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 			checkGrafanaHealth(t)
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", optionReturnerIP+":8080")
 			checkPrometheusLabels(t, optionReturnerIP+":8080")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestLocalInstall_ProfileWithHiddenOptionsNotSet(t *testing.T) {
+	// Test context
+	var (
+		testDir = t.TempDir()
+		pkgDir  = filepath.Join(testDir, "mock-avs")
+		runErr  error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, egnPath string) error {
+			if err := buildMockAvsImages(t); err != nil {
+				return err
+			}
+			err := os.MkdirAll(pkgDir, 0o755)
+			if err != nil {
+				return err
+			}
+			err = runCommand(t, "git", "clone", "--single-branch", "-b", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo(), pkgDir)
+			if err != nil {
+				return err
+			}
+			// remove .git folder
+			return os.RemoveAll(filepath.Join(pkgDir, ".git"))
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			runErr = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, runErr, "local-install command should fail")
+			checkInstanceNotInstalled(t, "mock-avs-default")
+			checkContainerNotExisting(t, "option-returner")
 		},
 	)
 	// Run test case

@@ -23,9 +23,13 @@ type InvalidOptionValueError struct {
 	optionName string
 	value      string
 	msg        string
+	hidden     bool
 }
 
 func (e InvalidOptionValueError) Error() string {
+	if e.hidden {
+		return "invalid value for option " + e.optionName + ": " + e.msg
+	}
 	return "invalid value for option " + e.optionName + ": " + e.value + ". " + e.msg
 }
 

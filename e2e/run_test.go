@@ -22,7 +22,7 @@ func Test_Run(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 		},
 		func(t *testing.T, egnPath string) {
 			runErr = runCommand(t, egnPath, "run", "mock-avs-default")
@@ -50,7 +50,7 @@ func Test_Run_StoppedInstance(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}
@@ -82,7 +82,7 @@ func Test_Run_AlreadyRunningInstance(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+			err = runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
 			if err != nil {
 				return err
 			}

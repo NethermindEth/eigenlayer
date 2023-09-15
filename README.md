@@ -32,7 +32,7 @@ This tool depends on [Docker](https://docs.docker.com/get-docker/) and [Docker C
 
 First, install the Go programming language following the [official instructions](https://go.dev/doc/install). You need at least the `1.21` version.
 
-> If you want to install Eigenlayer on an M1 mac, then you need the `darwin-arm64` package. You can find it by clicking on [other downloads](https://go.dev/dl/) from the Go install page.
+> Eigenlayer is only supported on **Linux**. Make sure you install Go for Linux in a Linux environment (e.g. WSL2, Docker, etc.)
 
 This command will install the `eigenlayer` executable along with the library and its dependencies in your system:
 

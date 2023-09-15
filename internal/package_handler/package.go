@@ -6,16 +6,16 @@ import (
 	"io"
 	"maps"
 	"path/filepath"
-	"regexp"
-	"sort"
-	"strings"
 
+	"github.com/NethermindEth/eigenlayer/internal/env"
+	"github.com/NethermindEth/eigenlayer/internal/profile"
 	"github.com/compose-spec/compose-go/cli"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/spf13/afero"
+	"golang.org/x/mod/semver"
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,8 +27,6 @@ const (
 	manifestSchemaFileName = "schema/manifest_schema.yml"
 	profileSchemaFileName  = "schema/profile_schema.yml"
 )
-
-var tagVersionRegex = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 
 // PackageHandler is used to interact with an AVS node software package at the given
 // path.
@@ -141,7 +139,7 @@ func (p *PackageHandler) Versions() ([]string, error) {
 	var versions []string
 	tagIter.ForEach(func(ref *plumbing.Reference) error {
 		tag := ref.Name().Short()
-		if tagVersionRegex.MatchString(tag) {
+		if semver.IsValid(tag) {
 			versions = append(versions, tag)
 		}
 		return nil
@@ -149,9 +147,7 @@ func (p *PackageHandler) Versions() ([]string, error) {
 	if len(versions) == 0 {
 		return nil, ErrNoVersionsFound
 	}
-	sort.Slice(versions, func(i, j int) bool {
-		return strings.ToLower(versions[i]) > strings.ToLower(versions[j])
-	})
+	semver.Sort(versions)
 	return versions, nil
 }
 
@@ -191,12 +187,41 @@ func (p *PackageHandler) LatestVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return versions[0], nil
+	return versions[len(versions)-1], nil
+}
+
+func (p *PackageHandler) CommitPrecedence(currentCommitHash, newCommitHash string) (bool, error) {
+	err := p.CheckoutCommit(newCommitHash)
+	if err != nil {
+		return false, err
+	}
+	gitRepo, err := git.PlainOpen(p.path)
+	if err != nil {
+		return false, err
+	}
+	commitIter, err := gitRepo.Log(&git.LogOptions{
+		From: plumbing.NewHash(newCommitHash),
+	})
+	if err != nil {
+		return false, err
+	}
+	for {
+		c, err := commitIter.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return false, nil
+			}
+			return false, err
+		}
+		if c.Hash.String() == currentCommitHash {
+			return true, nil
+		}
+	}
 }
 
 // CheckoutVersion checks out the cloned repository to the given version (tag).
 func (p *PackageHandler) CheckoutVersion(version string) error {
-	if !tagVersionRegex.MatchString(version) {
+	if !semver.IsValid(version) {
 		return ErrInvalidVersion
 	}
 	gitRepo, err := git.PlainOpen(p.path)
@@ -257,17 +282,15 @@ func (p *PackageHandler) CurrentVersion() (string, error) {
 			}
 			return "", err
 		}
-		if tagVersionRegex.MatchString(tag.Name) && head.Hash() == tag.Target {
+		if semver.IsValid(tag.Name) && head.Hash() == tag.Target {
 			headVersions = append(headVersions, tag.Name)
 		}
 	}
 	if len(headVersions) == 0 {
 		return "", ErrNoVersionsFound
 	}
-	sort.Slice(headVersions, func(i, j int) bool {
-		return strings.ToLower(headVersions[i]) > strings.ToLower(headVersions[j])
-	})
-	return headVersions[0], nil
+	semver.Sort(headVersions)
+	return headVersions[len(headVersions)-1], nil
 }
 
 // CurrentHash returns the git hash of the package HEAD
@@ -284,13 +307,13 @@ func (p *PackageHandler) CurrentCommitHash() (string, error) {
 }
 
 // Profiles returns the list of profiles defined in the package for the current version.
-func (p *PackageHandler) Profiles() ([]Profile, error) {
+func (p *PackageHandler) Profiles() ([]profile.Profile, error) {
 	names, err := p.profilesNames()
 	if err != nil {
 		return nil, err
 	}
 
-	profiles := make([]Profile, 0)
+	profiles := make([]profile.Profile, 0)
 	for _, profileName := range names {
 		profile, err := p.parseProfile(profileName)
 		if err != nil {
@@ -306,6 +329,31 @@ func (p *PackageHandler) Profiles() ([]Profile, error) {
 	}
 
 	return profiles, nil
+}
+
+// Profiles returns the list of profiles defined in the package for the current version.
+func (p *PackageHandler) Profile(name string) (*profile.Profile, error) {
+	names, err := p.profilesNames()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, profileName := range names {
+		if profileName == name {
+			profile, err := p.parseProfile(profileName)
+			if err != nil {
+				return nil, err
+			}
+			profile.Name = profileName
+			err = profile.Validate()
+			if err != nil {
+				return nil, err
+			}
+			return profile, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrProfileNotFound, name)
 }
 
 // CheckComposeProject checks if the compose project for the given profile is valid.
@@ -343,29 +391,15 @@ func (p *PackageHandler) CheckComposeProject(profileName string, env map[string]
 // DotEnv returns the .env file for the given profile.
 // Assumes the package has been checked and is valid.
 func (p *PackageHandler) DotEnv(profile string) (map[string]string, error) {
-	env := make(map[string]string)
 	envPath := filepath.Join(p.path, pkgDirName, profile, ".env")
-
-	data, err := afero.ReadFile(p.afs, envPath)
+	e, err := env.LoadEnv(p.afs, envPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ReadingDotEnvError{
 			pkgPath:     p.path,
 			profileName: profile,
 		}, err)
 	}
-
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.Split(line, "=")
-		if len(parts) != 2 {
-			continue
-		}
-		env[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
-	}
-	return env, nil
+	return e, nil
 }
 
 // ProfileFS returns the filesystem path for the given profile.
@@ -474,7 +508,7 @@ func (p *PackageHandler) profilesNames() ([]string, error) {
 	return manifest.Profiles, nil
 }
 
-func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
+func (p *PackageHandler) parseProfile(profileName string) (*profile.Profile, error) {
 	profilePath := filepath.Join(p.path, pkgDirName, profileName, profileFileName)
 	// Validate YAML Schemas
 	// TODO: Fix the relative path
@@ -490,7 +524,7 @@ func (p *PackageHandler) parseProfile(profileName string) (*Profile, error) {
 		}, err)
 	}
 
-	var profile Profile
+	var profile profile.Profile
 	err = yaml.Unmarshal(data, &profile)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ParsingProfileError{

@@ -9,8 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NethermindEth/eigenlayer/internal/env"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
+	"github.com/NethermindEth/eigenlayer/internal/profile"
 	"github.com/spf13/afero"
+	"gopkg.in/yaml.v3"
 )
 
 // InstanceId returns the instance ID for the given name and tag
@@ -221,6 +224,48 @@ func (i *Instance) Setup(env map[string]string, profilePath string) (err error) 
 // ComposePath returns the path to the docker-compose.yml file of the instance.
 func (i *Instance) ComposePath() string {
 	return filepath.Join(i.path, "docker-compose.yml")
+}
+
+// ProfileFile returns the data from the profile.yml file of the instance.
+func (i *Instance) ProfileFile() (*profile.Profile, error) {
+	if err := i.lock(); err != nil {
+		return nil, err
+	}
+	defer i.unlock()
+
+	var p profile.Profile
+	profileFilePath := filepath.Join(i.path, "profile.yml")
+	exists, err := afero.Exists(i.fs, profileFilePath)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, fmt.Errorf("profile file not found for instance %s", i.ID())
+	}
+	profileFile, err := i.fs.Open(profileFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer profileFile.Close()
+	profileFileData, err := io.ReadAll(profileFile)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(profileFileData, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, p.Validate()
+}
+
+// Env returns the environment variables from the .env file of the instance.
+func (i *Instance) Env() (map[string]string, error) {
+	if err := i.lock(); err != nil {
+		return nil, err
+	}
+	defer i.unlock()
+	envPath := filepath.Join(i.path, ".env")
+	return env.LoadEnv(i.fs, envPath)
 }
 
 // lock locks the .lock file of the instance.

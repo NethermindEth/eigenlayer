@@ -1,15 +1,19 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
-	"io"
+	"regexp"
 	"text/tabwriter"
 
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
 	"github.com/NethermindEth/eigenlayer/pkg/daemon"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
 )
+
+var hashRegex = regexp.MustCompile("^[0-9a-f]{40}$")
 
 func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	var (
@@ -20,7 +24,32 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		yes        bool
 	)
 	cmd := cobra.Command{
-		Use: "update",
+		Use:   "update [flags] [instance-id] [version]",
+		Short: "Update an instance to a new version.",
+		// TODO: add long description
+		// TODO: add examples
+		Args: func(cmd *cobra.Command, args []string) error {
+			log.Info(args)
+			if len(args) < 1 {
+				return fmt.Errorf("%w: instance-id is required", ErrInvalidNumberOfArgs)
+			}
+			if len(args) > 2 {
+				return fmt.Errorf("%w: too many arguments", ErrInvalidNumberOfArgs)
+			}
+			if len(args) >= 1 {
+				instanceId = args[0]
+			}
+			if len(args) == 2 {
+				if semver.IsValid(args[1]) {
+					version = args[1]
+				} else if hashRegex.MatchString(args[1]) {
+					commit = args[1]
+				} else {
+					return fmt.Errorf("%w: invalid version or commit", ErrInvalidArgs)
+				}
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Pull update
 			pullResult, err := pullUpdate(d, instanceId, version, commit)
@@ -31,10 +60,16 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 			// Log useful information about the update
 			logVersionChange(pullResult.OldVersion, pullResult.NewVersion)
 			logCommitChange(pullResult.OldCommit, pullResult.NewCommit)
-			printOptionsTable(cmd.OutOrStdout(), pullResult.OldOptions, pullResult.MergedOptions)
+			printOptionsTable(pullResult.OldOptions, pullResult.MergedOptions)
 
 			// Fill necessary options
 			for _, o := range pullResult.MergedOptions {
+				if noPrompt {
+					err := o.Set(o.Default())
+					if err != nil {
+						log.Debug(err)
+					}
+				}
 				if !o.IsSet() {
 					_, err := p.InputString(o.Name(), o.Default(), o.Help(), func(s string) error {
 						return o.Set(s)
@@ -156,7 +191,7 @@ func (i tableOptionItem) String() string {
 	return fmt.Sprintf("%s\t%s\t%s\t", i.name, i.old, i.new)
 }
 
-func printOptionsTable(out io.Writer, old, merged []daemon.Option) error {
+func printOptionsTable(old, merged []daemon.Option) error {
 	rows := make(map[string]*tableOptionItem)
 	for _, o := range old {
 		if o.IsSet() {
@@ -194,11 +229,13 @@ func printOptionsTable(out io.Writer, old, merged []daemon.Option) error {
 			}
 		}
 	}
-	w := tabwriter.NewWriter(out, 0, 0, 4, ' ', 0)
+	var out bytes.Buffer
+	w := tabwriter.NewWriter(&out, 0, 0, 4, ' ', 0)
 	fmt.Fprintln(w, "OPTION NAME\tOLD VALUE\tNEW VALUE\t")
 	for _, row := range rows {
 		fmt.Fprintln(w, row)
 	}
 	w.Flush()
+	log.Debug(out.String())
 	return nil
 }

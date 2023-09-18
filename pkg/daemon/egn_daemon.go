@@ -338,15 +338,15 @@ func (d *EgnDaemon) Pull(url string, ref PullTarget, force bool) (result PullRes
 	return result, err
 }
 
-func (d *EgnDaemon) PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error) {
+func (d *EgnDaemon) PullUpdate(instanceID string, ref PullTarget) (PullUpdateResult, error) {
 	if !d.dataDir.HasInstance(instanceID) {
 		return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceID)
 	}
-	pkgHandler, err := d.pullPackage(url, true)
+	instance, err := d.dataDir.Instance(instanceID)
 	if err != nil {
 		return PullUpdateResult{}, err
 	}
-	instance, err := d.dataDir.Instance(instanceID)
+	pkgHandler, err := d.pullPackage(instance.URL, true)
 	if err != nil {
 		return PullUpdateResult{}, err
 	}

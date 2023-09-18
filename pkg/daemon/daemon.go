@@ -17,7 +17,7 @@ type Daemon interface {
 
 	// PullUpdate downloads a node software package from the given URL and returns
 	// the result of merging both packages configs.
-	PullUpdate(instanceID string, url string, ref PullTarget) (PullUpdateResult, error)
+	PullUpdate(instanceID string, ref PullTarget) (PullUpdateResult, error)
 
 	// Install downloads and installs a node software package using the provided options,
 	// and returns the instance ID of the installed package. Make sure to call Pull

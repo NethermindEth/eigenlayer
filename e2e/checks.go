@@ -64,7 +64,7 @@ func checkContainerRunning(t *testing.T, containerNames ...string) {
 	for _, containerName := range containerNames {
 		t.Logf("Checking %s container is running", containerName)
 		container, err := dockerClient.ContainerInspect(context.Background(), containerName)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.True(t, container.State.Running, "%s container should be running", containerName)
 	}
 }

@@ -26,8 +26,29 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "update [flags] [instance-id] [version]",
 		Short: "Update an instance to a new version.",
-		// TODO: add long description
-		// TODO: add examples
+		Long:  `Updates instance [instance-id] to a new version using the specified version or commit hash in the [version] argument. If no version is specified, the latest version is used. If the new version is lower or equal to the current version, the update will fail. Also, if the new commit passed as argument or the commit of the new version is not a descendant of the current commit, the update will fail.`,
+		Example: `
+- Updating to the latest version:
+	
+	$ eigenlayer update mock-avs-default
+
+  In this case the latest version of the package will be pulled and tried to be
+  installed.
+
+- Updating to a specific version:
+
+	$ eigenlayer update mock-avs-default v5.5.0
+
+  In this case the version v5.5.0 of the package will be pulled and tried to be
+  installed.
+
+- Updating to a specific commit:
+
+    $ eigenlayer update mock-avs-default 3b2c50c15e53ae7afebbdbe210b834d1ee471043
+
+  In this case the commit 3b2c50c15e53ae7afebbdbe210b834d1ee471043 of the package
+  will be pulled and tried to be installed.
+`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			log.Info(args)
 			if len(args) < 1 {

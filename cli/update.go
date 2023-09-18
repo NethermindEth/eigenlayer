@@ -21,12 +21,19 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		version    string
 		commit     string
 		noPrompt   bool
+		help       bool
 		yes        bool
 	)
 	cmd := cobra.Command{
 		Use:   "update [flags] [instance-id] [version]",
 		Short: "Update an instance to a new version.",
-		Long:  `Updates instance [instance-id] to a new version using the specified version or commit hash in the [version] argument. If no version is specified, the latest version is used. If the new version is lower or equal to the current version, the update will fail. Also, if the new commit passed as argument or the commit of the new version is not a descendant of the current commit, the update will fail.`,
+		Long: `Updates instance [instance-id] to a new version using the specified
+version or commit hash in the [version] argument. If no version is specified, the
+latest version is used. If the new version is lower or equal to the current version,
+the update will fail. Also, if the new commit passed as argument or the commit of
+the new version is not a descendant of the current commit, the update will fail.
+
+Options of the new version can be specified using the --option.<option-name> flag.`,
 		Example: `
 - Updating to the latest version:
 	
@@ -49,8 +56,27 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
   In this case the commit 3b2c50c15e53ae7afebbdbe210b834d1ee471043 of the package
   will be pulled and tried to be installed.
 `,
-		Args: func(cmd *cobra.Command, args []string) error {
-			log.Info(args)
+		DisableFlagParsing: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Parse static flags
+			cmd.DisableFlagParsing = false
+			cmd.FParseErrWhitelist.UnknownFlags = true // Don't show error for unknown flags to allow dynamic flags
+			err := cmd.ParseFlags(args)
+			if err != nil {
+				return err
+			}
+
+			// Skip execution if help flag is set
+			help, err = cmd.Flags().GetBool("help")
+			if err != nil {
+				return err
+			}
+			if help {
+				return nil
+			}
+
+			// Validate args
+			args = cmd.Flags().Args()
 			if len(args) < 1 {
 				return fmt.Errorf("%w: instance-id is required", ErrInvalidNumberOfArgs)
 			}
@@ -72,6 +98,9 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if help {
+				return cmd.Help()
+			}
 			// Pull update
 			pullResult, err := pullUpdate(d, instanceId, version, commit)
 			if err != nil {
@@ -83,12 +112,29 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 			logCommitChange(pullResult.OldCommit, pullResult.NewCommit)
 			printOptionsTable(pullResult.OldOptions, pullResult.MergedOptions)
 
+			// Build dynamic flags with the profile options
+			for _, o := range pullResult.MergedOptions {
+				cmd.Flags().String("option."+o.Name(), o.Default(), o.Help())
+			}
+
+			// Parse dynamic flags
+			cmd.FParseErrWhitelist.UnknownFlags = false
+			if err = cmd.ParseFlags(args); err != nil {
+				return err
+			}
+
 			// Fill necessary options
 			for _, o := range pullResult.MergedOptions {
 				if noPrompt {
-					err := o.Set(o.Default())
+					flagValue, err := cmd.Flags().GetString("option." + o.Name())
 					if err != nil {
-						log.Debug(err)
+						return err
+					}
+					if flagValue == "" {
+						return fmt.Errorf("%w: %s", ErrOptionWithoutDefault, o.Name())
+					}
+					if err = o.Set(flagValue); err != nil {
+						return err
 					}
 				}
 				if !o.IsSet() {

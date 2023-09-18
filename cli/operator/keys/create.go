@@ -56,7 +56,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 					return err
 				}
 
-				password, err := p.Password("Enter password to encrypt the ecdsa private key:", "",
+				password, err := p.InputHiddenString("Enter password to encrypt the ecdsa private key:", "",
 					func(password string) error {
 						return nil
 					},
@@ -91,7 +91,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				if checkIfKeyExists(keyFileName) {
 					return errors.New("key name already exists. Please choose a different name")
 				}
-				password, err := p.Password("Enter password to encrypt the bls private key:", "",
+				password, err := p.InputHiddenString("Enter password to encrypt the bls private key:", "",
 					func(password string) error {
 						return nil
 					},
@@ -107,6 +107,9 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				if err != nil {
 					return err
 				}
+				fmt.Println("BLS Private Key: " + blsKeyPair.PrivKey.String())
+				fmt.Println("Please backup the above private key in safe place.")
+				fmt.Println()
 				fmt.Println("BLS Pub key: " + blsKeyPair.PubKey.String())
 				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
 			default:

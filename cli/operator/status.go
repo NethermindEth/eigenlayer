@@ -8,7 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
-	eigensdkReader "github.com/Layr-Labs/eigensdk-go/chainio/readers"
+	eigenChainio "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	elContracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 	eigensdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -20,7 +21,8 @@ func StatusCmd() *cobra.Command {
 		operatorCfg           types.OperatorConfig
 	)
 	cmd := cobra.Command{
-		Use: "status",
+		Use:   "status",
+		Short: "Check if the operator is registered and get the operator details",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
 			cmd.DisableFlagParsing = false
@@ -53,21 +55,36 @@ func StatusCmd() *cobra.Command {
 				return err
 			}
 
-			reader, err := eigensdkReader.NewEigenlayerReader(
+			ethClient, err := eigenChainio.NewEthClient(operatorCfg.EthRPCUrl)
+			if err != nil {
+				return err
+			}
+
+			elContractsClient, err := eigenChainio.NewELContractsChainClient(
 				common.HexToAddress(operatorCfg.ELSlasherAddress),
 				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
-				operatorCfg.EthRPCUrl,
+				ethClient,
+				ethClient,
+				llog)
+			if err != nil {
+				return err
+			}
+
+			reader, err := elContracts.NewELChainReader(
+				elContractsClient,
 				llog,
+				ethClient,
 			)
+
 			if err != nil {
 				return err
 			}
 
 			status, err := reader.IsOperatorRegistered(context.Background(), operatorCfg.Operator)
-
 			if err != nil {
 				return err
 			}
+
 			if status {
 				fmt.Println("Operator is registered")
 				operatorDetails, err := reader.GetOperatorDetails(context.Background(), operatorCfg.Operator)

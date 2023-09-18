@@ -8,7 +8,8 @@ import (
 
 func KeysCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "keys",
+		Use:   "keys",
+		Short: "Manage the operator's keys",
 	}
 
 	cmd.AddCommand(

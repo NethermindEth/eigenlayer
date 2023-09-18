@@ -8,7 +8,8 @@ import (
 
 func OperatorCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "operator",
+		Use:   "operator",
+		Short: "Execute onchain operations for the operator",
 	}
 
 	cmd.AddCommand(

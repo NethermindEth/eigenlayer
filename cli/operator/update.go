@@ -9,7 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
-	eigensdkWriter "github.com/Layr-Labs/eigensdk-go/chainio/writers"
+	eigenChainio "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	elContracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 	eigensdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -68,17 +69,31 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			elWriter, err := eigensdkWriter.NewEigenLayerWriter(
-				operatorCfg.EthRPCUrl,
-				common.HexToAddress(operatorCfg.ELSlasherAddress),
-				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
-				localSigner,
-				llog,
-			)
+			ethClient, err := eigenChainio.NewEthClient(operatorCfg.EthRPCUrl)
 			if err != nil {
 				return err
 			}
-			err = elWriter.UpdateOperatorDetails(context.Background(), operatorCfg.Operator)
+
+			elContractsClient, err := eigenChainio.NewELContractsChainClient(
+				common.HexToAddress(operatorCfg.ELSlasherAddress),
+				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
+				ethClient,
+				ethClient,
+				llog)
+			if err != nil {
+				return err
+			}
+			elWriter, err := elContracts.NewELChainWriter(
+				elContractsClient,
+				ethClient,
+				localSigner,
+				llog,
+			)
+
+			if err != nil {
+				return err
+			}
+			_, err = elWriter.UpdateOperatorDetails(context.Background(), operatorCfg.Operator)
 			if err != nil {
 				return err
 			}

@@ -12,7 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 
-	eigensdkWriter "github.com/Layr-Labs/eigensdk-go/chainio/writers"
+	eigenChainio "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	elContracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signer"
@@ -29,7 +30,8 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 		privateKeyHex         string
 	)
 	cmd := cobra.Command{
-		Use: "register [flags]",
+		Use:   "register [flags]",
+		Short: "Register the operator and the BLS public key in the Eigenlayer contracts",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
 			cmd.DisableFlagParsing = false
@@ -53,6 +55,14 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 			fmt.Printf("Operator configuration file read successfully %s\n", operatorCfg.Operator.Address)
+			fmt.Printf("validating operator config: %s\n", operatorCfg.Operator.Address)
+
+			err = operatorCfg.Operator.Validate()
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Operator file correct")
 
 			signerType, err = validateSignerType(signerTypeFlag, operatorCfg)
 			if err != nil {
@@ -73,18 +83,32 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			elWriter, err := eigensdkWriter.NewEigenLayerWriter(
-				operatorCfg.EthRPCUrl,
-				common.HexToAddress(operatorCfg.ELSlasherAddress),
-				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
-				localSigner,
-				llog,
-			)
+			ethClient, err := eigenChainio.NewEthClient(operatorCfg.EthRPCUrl)
 			if err != nil {
 				return err
 			}
 
-			err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
+			elContractsClient, err := eigenChainio.NewELContractsChainClient(
+				common.HexToAddress(operatorCfg.ELSlasherAddress),
+				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
+				ethClient,
+				ethClient,
+				llog)
+			if err != nil {
+				return err
+			}
+			elWriter, err := elContracts.NewELChainWriter(
+				elContractsClient,
+				ethClient,
+				localSigner,
+				llog,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			_, err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
@@ -94,7 +118,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
+			_, err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}

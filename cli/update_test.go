@@ -33,7 +33,9 @@ func TestUpdate(t *testing.T) {
 				oldOption.EXPECT().Name().Return("old-option").Times(3)
 				mergedOption.EXPECT().IsSet().Return(true).Times(2)
 				mergedOption.EXPECT().Value().Return("old-value", nil)
-				mergedOption.EXPECT().Name().Return("old-option")
+				mergedOption.EXPECT().Name().Return("old-option").Times(2)
+				mergedOption.EXPECT().Default().Return("default-value")
+				mergedOption.EXPECT().Help().Return("option help")
 
 				gomock.InOrder(
 					d.EXPECT().PullUpdate(instanceId, daemon.PullTarget{}).Return(daemon.PullUpdateResult{
@@ -84,7 +86,9 @@ func TestUpdate(t *testing.T) {
 				oldOption.EXPECT().Name().Return("old-option").Times(3)
 				mergedOption.EXPECT().IsSet().Return(true).Times(2)
 				mergedOption.EXPECT().Value().Return("old-value", nil)
-				mergedOption.EXPECT().Name().Return("old-option")
+				mergedOption.EXPECT().Name().Return("old-option").Times(2)
+				mergedOption.EXPECT().Default().Return("default-value")
+				mergedOption.EXPECT().Help().Return("option help")
 
 				gomock.InOrder(
 					d.EXPECT().PullUpdate(instanceId, daemon.PullTarget{
@@ -137,7 +141,9 @@ func TestUpdate(t *testing.T) {
 				oldOption.EXPECT().Name().Return("old-option").Times(3)
 				mergedOption.EXPECT().IsSet().Return(true).Times(2)
 				mergedOption.EXPECT().Value().Return("old-value", nil)
-				mergedOption.EXPECT().Name().Return("old-option")
+				mergedOption.EXPECT().Name().Return("old-option").Times(2)
+				mergedOption.EXPECT().Default().Return("default-value")
+				mergedOption.EXPECT().Help().Return("option help")
 
 				gomock.InOrder(
 					d.EXPECT().PullUpdate(instanceId, daemon.PullTarget{

@@ -14,7 +14,6 @@ import (
 func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	var (
 		instanceId string
-		url        string
 		version    string
 		commit     string
 		noPrompt   bool
@@ -24,7 +23,7 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		Use: "update",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Pull update
-			pullResult, err := pullUpdate(d, instanceId, url, version, commit)
+			pullResult, err := pullUpdate(d, instanceId, version, commit)
 			if err != nil {
 				return err
 			}
@@ -84,17 +83,15 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&instanceId, "instance-id", "", "ID of the instance to update")
-	cmd.Flags().StringVar(&url, "url", "", "URL of the package to pull")
-	cmd.Flags().StringVar(&version, "version", "", "Version of the package to pull")
 	cmd.Flags().StringVar(&commit, "commit", "", "Commit of the package to pull")
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
 	return &cmd
 }
 
-func pullUpdate(d daemon.Daemon, instanceID, url, version, commit string) (daemon.PullUpdateResult, error) {
+func pullUpdate(d daemon.Daemon, instanceID, version, commit string) (daemon.PullUpdateResult, error) {
 	log.Info("Pulling package...")
-	pullResult, err := d.PullUpdate(instanceID, url, daemon.PullTarget{Version: version, Commit: commit})
+	pullResult, err := d.PullUpdate(instanceID, daemon.PullTarget{Version: version, Commit: commit})
 	if err == nil {
 		log.Info("Package pulled successfully")
 	}

@@ -1,10 +1,14 @@
 package e2e
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestMonitoringStack_Init tests that the monitoring stack is not initialized if the user does not run the init-monitoring command
@@ -161,6 +165,47 @@ func TestMonitoring_Restart(t *testing.T) {
 			checkPrometheusTargetsUp(t, "egn_node_exporter:9100", mainService1IP+":8080", mainService2IP+":8080")
 			checkContainerRunning(t, "main-service-1")
 			checkContainerRunning(t, "main-service-2")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestMonitoring_LockError(t *testing.T) {
+	t.Cleanup(func() {
+		for _, containerName := range []string{"egn_grafana", "egn_prometheus", "egn_node_exporter"} {
+			err := exec.Command("docker", "stop", containerName).Run()
+			require.NoError(t, err)
+			err = exec.Command("docker", "rm", containerName).Run()
+			require.NoError(t, err)
+		}
+	})
+	// Test context
+	var (
+		installErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, eigenlayerPath string) error {
+			err := runCommand(t, eigenlayerPath, "init-monitoring")
+			if err != nil {
+				return err
+			}
+			dataDir, err := dataDirPath()
+			if err != nil {
+				return err
+			}
+			return os.RemoveAll(filepath.Join(dataDir, "monitoring"))
+		},
+		// Act
+		func(t *testing.T, eigenlayerPath string) {
+			installErr = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), common.MockAvsPkg.Repo())
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.Error(t, installErr)
 		},
 	)
 	// Run test case

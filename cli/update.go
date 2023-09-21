@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
 	"text/tabwriter"
@@ -110,6 +111,10 @@ Options of the new version can be specified using the --option.<option-name> fla
 			// Pull update
 			pullResult, err := pullUpdate(d, instanceId, version, commit)
 			if err != nil {
+				if errors.Is(err, daemon.ErrVersionAlreadyInstalled) {
+					log.Info(err.Error())
+					return nil
+				}
 				return err
 			}
 

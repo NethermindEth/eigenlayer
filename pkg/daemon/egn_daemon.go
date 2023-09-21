@@ -352,7 +352,11 @@ func (d *EgnDaemon) PullUpdate(instanceID string, ref PullTarget) (PullUpdateRes
 	}
 	if ref.Version != "" {
 		// Check if the new version is greater than the current version
-		if semver.Compare(ref.Version, instance.Version) != 1 {
+		versionCompare := semver.Compare(ref.Version, instance.Version)
+		if versionCompare == 0 {
+			return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrVersionAlreadyInstalled, ref.Version)
+		}
+		if versionCompare != 1 {
 			return PullUpdateResult{}, fmt.Errorf("%w: %s, must be grater than the current version", ErrInvalidUpdateVersion, ref.Version)
 		}
 		err = pkgHandler.CheckoutVersion(ref.Version)
@@ -369,7 +373,11 @@ func (d *EgnDaemon) PullUpdate(instanceID string, ref PullTarget) (PullUpdateRes
 		if err != nil {
 			return PullUpdateResult{}, err
 		}
-		if semver.Compare(latestVersion, instance.Version) != 1 {
+		versionCompare := semver.Compare(latestVersion, instance.Version)
+		if versionCompare == 0 {
+			return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrVersionAlreadyInstalled, latestVersion)
+		}
+		if versionCompare != 1 {
 			return PullUpdateResult{}, fmt.Errorf("%w: %s, must be grater than the current version", ErrInvalidUpdateVersion, ref.Version)
 		}
 		err = pkgHandler.CheckoutVersion(latestVersion)
@@ -382,6 +390,11 @@ func (d *EgnDaemon) PullUpdate(instanceID string, ref PullTarget) (PullUpdateRes
 	if err != nil {
 		return PullUpdateResult{}, err
 	}
+
+	if instance.Commit == newCommit {
+		return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrVersionAlreadyInstalled, newCommit)
+	}
+
 	// Check commit precedence
 	ok, err := pkgHandler.CommitPrecedence(instance.Commit, newCommit)
 	if err != nil {

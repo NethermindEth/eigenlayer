@@ -29,9 +29,10 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		Short: "Update an instance to a new version.",
 		Long: `Updates instance [instance-id] to a new version using the specified
 version or commit hash in the [version] argument. If no version is specified, the
-latest version is used. If the new version is lower or equal to the current version,
-the update will fail. Also, if the new commit passed as argument or the commit of
-the new version is not a descendant of the current commit, the update will fail.
+latest version will be used. If the new version is lower or equal to the current
+version, the update will fail. Also, if the new commit passed as argument or the
+commit of the new version is not a descendant of the current commit, the update
+will fail.
 
 Options of the new version can be specified using the --option.<option-name> flag.`,
 		Example: `
@@ -155,7 +156,7 @@ Options of the new version can be specified using the --option.<option-name> fla
 				return err
 			}
 
-			// Install new instance versions
+			// Install new instance's version
 			newInstanceId, err := install(d, daemon.InstallOptions{
 				Name:    pullResult.Name,
 				Tag:     pullResult.Tag,

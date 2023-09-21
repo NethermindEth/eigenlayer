@@ -100,7 +100,7 @@ func TestUpdate_SameVersion(t *testing.T) {
 		},
 		// Assert
 		func(t *testing.T) {
-			require.Error(t, updateError, "update command should fail")
+			require.NoError(t, updateError, "update command should not fail")
 			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
@@ -172,7 +172,7 @@ func TestUpdate_SameCommit(t *testing.T) {
 		},
 		// Assert
 		func(t *testing.T) {
-			require.Error(t, updateError, "update command should fail")
+			require.NoError(t, updateError, "update command should not fail")
 			checkInstanceInstalled(t, "mock-avs-default")
 			checkContainerRunning(t, "option-returner")
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")

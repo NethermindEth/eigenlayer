@@ -190,8 +190,6 @@ Options of the new version can be specified using the --option.<option-name> fla
 		},
 	}
 
-	cmd.Flags().StringVar(&instanceId, "instance-id", "", "ID of the instance to update")
-	cmd.Flags().StringVar(&commit, "commit", "", "Commit of the package to pull")
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
 	return &cmd

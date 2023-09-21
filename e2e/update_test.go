@@ -45,7 +45,7 @@ func TestUpdate_Run(t *testing.T) {
 	// Test context
 	var (
 		initialVersion = "v5.4.0"
-		updateVersion  = common.MockAvsPkg.Version()
+		updateCommit   = common.MockAvsPkg.CommitHash()
 		updateError    error
 	)
 	// Build test case
@@ -61,7 +61,7 @@ func TestUpdate_Run(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			updateError = runCommand(t, egnPath, "update", "--yes", "--no-prompt", "--option.test-option-hidden", "12345678", "mock-avs-default", updateVersion)
+			updateError = runCommand(t, egnPath, "update", "--yes", "--no-prompt", "--option.test-option-hidden", "12345678", "mock-avs-default", updateCommit)
 		},
 		// Assert
 		func(t *testing.T) {

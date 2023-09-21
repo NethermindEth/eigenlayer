@@ -13,6 +13,10 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
     - [From GitHub](#from-github)
     - [Non-interactive installation](#non-interactive-installation)
     - [From local directory](#from-local-directory)
+  - [Updating AVS Node](#updating-avs-node)
+    - [Updating with explicit version](#updating-with-explicit-version)
+    - [Updating with commit hash](#updating-with-commit-hash)
+    - [Updating options](#updating-options)
   - [Uninstalling AVS Node Software](#uninstalling-avs-node-software)
   - [List installed instances](#list-installed-instances)
   - [Run an AVS instance](#run-an-avs-instance)
@@ -213,6 +217,51 @@ Output:
 WARN[0000] This command is insecure and should only be used for development purposes
 INFO[0001] Installed successfully with instance id: mock-avs-default
 ```
+
+## Updating AVS Node
+
+To update an installed AVS Node Software, use the `eigenlayer update` command with the AVS instance ID as an argument, as follows:
+
+```bash
+eigenlayer update mock-avs-default
+```
+
+Output:
+
+```
+INFO[0000] Pulling package...                           
+INFO[0000] Package pulled successfully                  
+INFO[0000] Package version changed: v5.4.0 -> v5.5.0    
+INFO[0000] Package commit changed from b64c50c15e53ae7afebbdbe210b834d1ee471043 -> a3406616b848164358fdd24465b8eecda5f5ae34 
+INFO[0000] Uninstalling current package...              
+INFO[0000] Package uninstalled successfully             
+INFO[0000] Installing new package...                    
+INFO[0000] Package installed successfully with instance ID: mock-avs-default 
+INFO[0000] The installed node software has a plugin.    
+INFO[0000] Instance mock-avs-default running successfully
+```
+
+> This case updates the instance to the latest version, if possible. If the latest version is already installed, then the command does not do anything.
+
+### Updating with explicit version
+
+To update to an specific version, pass the version as an argument. The new version mus be greater than the current version following the [semver](https://semver.org/) specification. For instance:
+
+```bash
+eigenlayer update mock-avs-default v5.5.0
+```
+
+### Updating with commit hash
+
+To update to a specific commit, pass the commit hash as an argument. The new commit should be a descendant of the installed commit, we guarantee that checking the git history from the pulled package. For instance:
+
+```bash
+eigenlayer update mock-avs-default a3406616b848164358fdd24465b8eecda5f5ae34
+```
+
+### Updating options
+
+The `--no-prompt` flag is available to skip the options prompt, also the dynamic flags `--option.<option-name>` are available to set the option values, like in the `install` command.
 
 ## Uninstalling AVS Node Software
 

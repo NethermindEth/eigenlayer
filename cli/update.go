@@ -34,6 +34,11 @@ version, the update will fail. Also, if the new commit passed as argument or the
 commit of the new version is not a descendant of the current commit, the update
 will fail.
 
+The update process will check if the new version has the same profile as the
+current one. If it's not the case, the process will fail. If is necessary to change
+profiles between versions, the user should install the new version and profile
+using the install command and then uninstall the current version.
+
 Options of the new version can be specified using the --option.<option-name> flag.`,
 		Example: `
 - Updating to the latest version:

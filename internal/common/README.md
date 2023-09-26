@@ -14,11 +14,12 @@ The YAML files are the following:
 To enforce an update on those files, you can delete them and run the code again/run the `/scripts/mock-avs-versions.go` script (`go run scripts/mock-avs-versions.go`).
 
 ### Key Components:
+
 #### Constants:
 - `dataFile`: Path to the YAML file storing the latest versions of the repositories.
 - `cacheFile`: Path to the cache file.
 - Repository URLs for mock-avs and mock-avs-pkg.
-- 
+  
 #### Data Structures:
 - `Repos`: Contains a list of MockAVSData which holds information about a repository.
 - `MockAVS`: Represents a GitHub repository with its URL, latest version, and commit hash.

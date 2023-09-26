@@ -16,7 +16,7 @@ import (
 
 const (
 	dataFile                = "/tmp/mock-avs-versions.yml"
-	cacheFile               = "/tmp/mock-avs-versions-cache.yml"
+	cacheFile               = "/tmp/mock-avs-versions-cache.json"
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
 	mockAVSPkgRepo          = "https://github.com/NethermindEth/mock-avs-pkg"
 	optionReturnerImageName = "mock-avs-option-returner"

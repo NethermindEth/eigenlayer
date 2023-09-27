@@ -760,7 +760,7 @@ func TestDataDir_initBackupDir(t *testing.T) {
 	}
 }
 
-func TestDataDir_hashBackup(t *testing.T) {
+func TestDataDir_hasBackup(t *testing.T) {
 	backupId := BackupId{
 		InstanceId: "mock-avs-default",
 		Timestamp:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -808,7 +808,7 @@ func TestDataDir_hashBackup(t *testing.T) {
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)
-				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200000000000.tar"))
+				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200.tar"))
 				require.NoError(t, err)
 				require.NoError(t, file.Close())
 				return &DataDir{
@@ -877,7 +877,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)
-				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200000000000.tar"))
+				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200.tar"))
 				require.NoError(t, err)
 				require.NoError(t, file.Close())
 				return &DataDir{

@@ -35,17 +35,30 @@ func runCommandOutput(t *testing.T, path string, args ...string) ([]byte, error)
 	return out, err
 }
 
-func buildMockAvsImages(t *testing.T) error {
+func buildMockAvsImagesLatest(t *testing.T) error {
 	t.Helper()
-	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
 	if err != nil {
 		return err
 	}
-	err = runCommand(t, "docker", "build", "-t", common.PluginImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:plugin")
+	err = runCommand(t, "docker", "build", "-t", common.PluginImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:plugin")
 	if err != nil {
 		return err
 	}
-	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.Image(), "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+}
+
+func buildMockAvsImagesCustomTag(t *testing.T, tag string) error {
+	t.Helper()
+	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	if err != nil {
+		return err
+	}
+	err = runCommand(t, "docker", "build", "-t", common.PluginImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:plugin")
+	if err != nil {
+		return err
+	}
+	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
 }
 
 func repoPath(t *testing.T) string {

@@ -43,7 +43,7 @@ func TestInstall_ValidArgument(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -73,7 +73,7 @@ func TestInstall_FromCommitHash(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -103,7 +103,7 @@ func TestInstall_ValidArgumentWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImages(t); err != nil {
+			if err := buildMockAvsImagesLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -145,7 +145,7 @@ func TestInstall_ValidArgumentNotRun(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -172,7 +172,7 @@ func TestInstall_DuplicatedID(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImages(t); err != nil {
+			if err := buildMockAvsImagesLatest(t); err != nil {
 				return err
 			}
 			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--tag", "integration", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -205,7 +205,7 @@ func TestInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImages(t); err != nil {
+			if err := buildMockAvsImagesLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -252,7 +252,7 @@ func TestInstall_MultipleAVS(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -293,7 +293,7 @@ func TestInstall_MultipleAVSWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImages(t); err != nil {
+			if err := buildMockAvsImagesLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -349,7 +349,7 @@ func TestInstall_HighRequirements(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
@@ -376,7 +376,7 @@ func TestInstall_ProfileWithHiddenOptionsNotSet(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			return buildMockAvsImages(t)
+			return buildMockAvsImagesLatest(t)
 		},
 		// Act
 		func(t *testing.T, egnPath string) {

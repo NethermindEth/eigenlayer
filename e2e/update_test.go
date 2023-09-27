@@ -20,7 +20,11 @@ func TestUpdate(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesCustomTag(t, "v0.1.0")
+			if err != nil {
+				return err
+			}
+			err = buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}
@@ -53,7 +57,11 @@ func TestUpdate_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesCustomTag(t, "v0.1.0")
+			if err != nil {
+				return err
+			}
+			err = buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}
@@ -88,7 +96,7 @@ func TestUpdate_SameVersion(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}
@@ -124,7 +132,7 @@ func TestUpdate_OldVersion(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}
@@ -152,7 +160,7 @@ func TestUpdate_SameCommit(t *testing.T) {
 	// Test context
 	var (
 		installVersion = common.MockAvsPkg.Version()
-		updateCommit   = "a3406616b848164358fdd24465b8eecda5f5ae34"
+		updateCommit   = common.MockAvsPkg.CommitHash()
 		updateError    error
 	)
 	// Build test case
@@ -160,7 +168,7 @@ func TestUpdate_SameCommit(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}
@@ -196,7 +204,7 @@ func TestUpdate_OldCommit(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}

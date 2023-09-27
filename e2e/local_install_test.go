@@ -438,9 +438,12 @@ func TestLocalInstall_ProfileWithHiddenOptionsNotSet(t *testing.T) {
 		},
 		// Assert
 		func(t *testing.T) {
-			assert.Error(t, runErr, "local-install command should fail")
-			checkInstanceNotInstalled(t, "mock-avs-default")
-			checkContainerNotExisting(t, "option-returner")
+			assert.NoError(t, runErr, "local-install command should succeed")
+			checkInstanceInstalled(t, "mock-avs-default")
+			checkContainerRunning(t, "option-returner")
+			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
+			require.NoError(t, err, "failed to get option-returner container IP")
+			checkAVSHealth(t, optionReturnerIP, "8080", 200)
 		},
 	)
 	// Run test case
@@ -474,7 +477,7 @@ func TestLocalInstall_OptionsWithoutDefault(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImages(t); err != nil {
+			if err := buildMockAvsImagesLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)

@@ -23,5 +23,10 @@ func BackupCmd(d daemon.Daemon) *cobra.Command {
 			return nil
 		},
 	}
+
+	// Add ls subcommand
+	lsCmd := BackupLsCmd(d)
+	cmd.AddCommand(lsCmd)
+
 	return &cmd
 }

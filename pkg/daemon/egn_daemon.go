@@ -1040,6 +1040,22 @@ func (d *EgnDaemon) Backup(instanceId string) (string, error) {
 	return d.backupManager.BackupInstance(instanceId)
 }
 
+func (d *EgnDaemon) BackupList() ([]BackupInfo, error) {
+	backupInfo, err := d.backupManager.BackupList()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BackupInfo, len(backupInfo))
+	for i, b := range backupInfo {
+		out[i] = BackupInfo{
+			Instance:  b.Instance,
+			Timestamp: b.Timestamp,
+			SizeBytes: b.SizeBytes,
+		}
+	}
+	return out, nil
+}
+
 func tempID(url string) string {
 	tempHash := sha256.Sum256([]byte(url))
 	return hex.EncodeToString(tempHash[:])

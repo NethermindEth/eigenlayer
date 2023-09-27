@@ -998,7 +998,11 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 			Target: dst,
 		})
 	}
-	return d.docker.Run(instance.Plugin.Image, network, pluginArgs, mounts)
+	return d.docker.Run(instance.Plugin.Image, docker.RunOptions{
+		Network: network,
+		Args:    pluginArgs,
+		Mounts:  mounts,
+	})
 }
 
 // NodeLogs implements Daemon.NodeLogs.

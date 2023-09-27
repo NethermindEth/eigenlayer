@@ -419,6 +419,14 @@ func (d *DockerManager) ImageRemove(image string) error {
 	return err
 }
 
+type RunOptions struct {
+	Network     string
+	Args        []string
+	Mounts      []Mount
+	VolumesFrom []string
+	AutoRemove  bool
+}
+
 // Run is a method of DockerManager that handles running a Docker container from an image.
 // It creates the container from the specified image with the provided command arguments,
 // connects the created container to the specified network, then starts the container.
@@ -426,11 +434,14 @@ func (d *DockerManager) ImageRemove(image string) error {
 // After the container starts, the function waits for the container to exit.
 // During the waiting process, it also listens for errors from the container.
 // If an error is received, it prints the container logs and returns the error.
-func (d *DockerManager) Run(image string, network string, args []string, mounts []Mount) (err error) {
+func (d *DockerManager) Run(image string, options RunOptions) (err error) {
 	log.Debugf("Creating container from image %s", image)
 	// Build mounts
-	hostConfig := &dockerCt.HostConfig{}
-	for _, mount := range mounts {
+	hostConfig := &dockerCt.HostConfig{
+		VolumesFrom: options.VolumesFrom,
+		AutoRemove:  options.AutoRemove,
+	}
+	for _, mount := range options.Mounts {
 		switch mount.Type {
 		case VolumeTypeBind, VolumeTypeVolume:
 			hostConfig.Mounts = append(hostConfig.Mounts, mount.mount())
@@ -440,7 +451,7 @@ func (d *DockerManager) Run(image string, network string, args []string, mounts 
 	}
 	// Create container
 	createResponse, err := d.dockerClient.ContainerCreate(context.Background(),
-		&dockerCt.Config{Image: image, Cmd: args},
+		&dockerCt.Config{Image: image, Cmd: options.Args},
 		hostConfig, nil, nil, "")
 	if err != nil {
 		return err
@@ -461,9 +472,9 @@ func (d *DockerManager) Run(image string, network string, args []string, mounts 
 		}
 	}()
 
-	if network != NetworkHost {
-		log.Debugf("Connecting container %s to network %s", createResponse.ID, network)
-		err = d.NetworkConnect(createResponse.ID, network)
+	if options.Network != "" && options.Network != NetworkHost {
+		log.Debugf("Connecting container %s to network %s", createResponse.ID, options.Network)
+		err = d.NetworkConnect(createResponse.ID, options.Network)
 		if err != nil {
 			return err
 		}

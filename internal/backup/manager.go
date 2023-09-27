@@ -14,7 +14,11 @@ import (
 	"github.com/spf13/afero"
 )
 
-const SnapshotterRemoteContext = "github.com/NethermindEth/docker-volumes-snapshotter.git#main"
+const (
+	SnapshotterVersion       = "v0.1.0"
+	SnapshotterRemoteContext = "github.com/NethermindEth/docker-volumes-snapshotter.git#" + SnapshotterVersion
+	SnapshotterImage         = "eigenlayer-snapshotter:" + SnapshotterVersion
+)
 
 var _ BackupManager = &backupManager{}
 
@@ -153,11 +157,17 @@ func (b *backupManager) backupInstanceServiceVolumes(service types.ServiceConfig
 	return nil
 }
 
-func (b *backupManager) buildSnapshotterImage() (err error) {
-	log.Info("Building snapshotter image...")
-	err = b.dockerMgr.BuildImageFromURI(SnapshotterRemoteContext, "eigenlayer-snapshotter", nil)
+func (b *backupManager) buildSnapshotterImage() error {
+	ok, err := b.dockerMgr.ImageExist(SnapshotterImage)
 	if err != nil {
-		return fmt.Errorf("%w: %s", data.ErrCreatingBackup, err.Error())
+		return err
+	}
+	if !ok {
+		log.Info("Building snapshotter image...")
+		err = b.dockerMgr.BuildImageFromURI(SnapshotterRemoteContext, SnapshotterImage, nil)
+		if err != nil {
+			return fmt.Errorf("%w: %s", data.ErrCreatingBackup, err.Error())
+		}
 	}
 	return nil
 }

@@ -41,6 +41,7 @@ type EgnDaemon struct {
 	docker        DockerManager
 	monitoringMgr MonitoringManager
 	locker        locker.Locker
+	backupManager BackupManager
 }
 
 // NewDaemon create a new daemon instance.
@@ -49,6 +50,7 @@ func NewEgnDaemon(
 	cmpMgr ComposeManager,
 	dockerMgr DockerManager,
 	mtrMgr MonitoringManager,
+	backupMgr BackupManager,
 	locker locker.Locker,
 ) (*EgnDaemon, error) {
 	return &EgnDaemon{
@@ -57,6 +59,7 @@ func NewEgnDaemon(
 		docker:        dockerMgr,
 		monitoringMgr: mtrMgr,
 		locker:        locker,
+		backupManager: backupMgr,
 	}, nil
 }
 
@@ -1031,6 +1034,10 @@ func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string
 		Timestamps: opts.Timestamps,
 		Tail:       opts.Tail,
 	})
+}
+
+func (d *EgnDaemon) Backup(instanceId string) (string, error) {
+	return d.backupManager.BackupInstance(instanceId)
 }
 
 func tempID(url string) string {

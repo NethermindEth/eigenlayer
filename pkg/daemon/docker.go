@@ -21,7 +21,7 @@ type DockerManager interface {
 	LoadImageContext(path string) (io.ReadCloser, error)
 
 	// Run runs the given image with the given network and arguments.
-	Run(image string, network string, args []string, mounts []docker.Mount) error
+	Run(image string, options docker.RunOptions) error
 
 	// ContainerLogsMerged returns the merge of the logs of the given services.
 	ContainerLogsMerged(ctx context.Context, w io.Writer, services map[string]string, opts docker.ContainerLogsMergedOptions) error

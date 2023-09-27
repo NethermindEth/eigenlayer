@@ -5,6 +5,7 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/cli"
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
+	"github.com/NethermindEth/eigenlayer/internal/backup"
 	"github.com/NethermindEth/eigenlayer/internal/commands"
 	"github.com/NethermindEth/eigenlayer/internal/compose"
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -63,8 +64,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Backup manager
+	backupMgr := backup.NewBackupManager(fs, dataDir, dockerManager)
+
 	// Initialize daemon
-	daemon, err := daemon.NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+	daemon, err := daemon.NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 	if err != nil {
 		log.Fatal(err)
 	}

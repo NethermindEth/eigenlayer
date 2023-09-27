@@ -8,6 +8,7 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/spf13/afero"
 )
 
@@ -15,6 +16,7 @@ const (
 	nodesDirName = "nodes"
 	tempDir      = "temp"
 	pluginsDir   = "plugin"
+	backupDir    = "backup"
 )
 
 const monitoringStackDirName = "monitoring"
@@ -160,6 +162,65 @@ func (d *DataDir) TempPath(id string) (string, error) {
 		return "", ErrTempIsNotDir
 	}
 	return tempPath, nil
+}
+
+func (d *DataDir) InitBackup(backupId BackupId) (*Backup, error) {
+	if err := d.initBackupDir(); err != nil {
+		return nil, err
+	}
+	return d.initBackup(backupId)
+}
+
+func (d *DataDir) initBackup(backupId BackupId) (*Backup, error) {
+	backupPath, err := d.backupPath(backupId)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := d.hasBackup(backupId)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return nil, fmt.Errorf("%w: %s", ErrBackupAlreadyExists, backupId)
+	}
+
+	err = utils.TarInit(d.fs, backupPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Backup{
+		Id:   backupId,
+		path: backupPath,
+	}, nil
+}
+
+func (d *DataDir) hasBackup(backupId BackupId) (bool, error) {
+	backupPath, err := d.backupPath(backupId)
+	if err != nil {
+		return false, err
+	}
+	return afero.Exists(d.fs, backupPath)
+}
+
+func (d *DataDir) backupPath(backupId BackupId) (string, error) {
+	return filepath.Join(d.path, backupDir, backupId.String()+".tar"), nil
+}
+
+func (d *DataDir) initBackupDir() error {
+	backupDirPath := filepath.Join(d.path, backupDir)
+	ok, err := afero.DirExists(d.fs, backupDirPath)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		err = d.fs.MkdirAll(backupDirPath, 0o755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // MonitoringStack checks if a monitoring stack directory exists in the data directory.

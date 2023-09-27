@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/data"
@@ -24,6 +26,7 @@ var _ BackupManager = &backupManager{}
 
 type BackupManager interface {
 	BackupInstance(instanceId string) (string, error)
+	BackupList() ([]BackupInfo, error)
 }
 
 type BackupInfo struct {
@@ -85,6 +88,50 @@ func (b *backupManager) BackupInstance(instanceId string) (string, error) {
 	}
 
 	return backup.Id.String(), nil
+}
+
+// BackupList implements BackupManager.
+func (b *backupManager) BackupList() ([]BackupInfo, error) {
+	// Get the list of backup paths from the data dir
+	backupPaths, err := b.dataDir.BackupList()
+	if err != nil {
+		return nil, err
+	}
+	// Get the backup info for each backup path
+	var backups []BackupInfo
+	for _, backupPath := range backupPaths {
+		backupFileName := filepath.Base(backupPath)
+		instanceId, timestamp, err := parseBackupName(backupFileName)
+		if err != nil {
+			log.Warnf("Skipping invalid backup file %s: %s", backupFileName, err.Error())
+			continue
+		}
+		bStat, err := b.fs.Stat(backupPath)
+		if err != nil {
+			return nil, err
+		}
+		backups = append(backups, BackupInfo{
+			Instance:  instanceId,
+			Timestamp: timestamp,
+			SizeBytes: uint64(bStat.Size()),
+		})
+	}
+	return backups, nil
+}
+
+func parseBackupName(backupName string) (instanceId string, timestamp time.Time, err error) {
+	backupFileNameRegex := regexp.MustCompile(`^(?P<instance_id>.*)-(?P<timestamp>[0-9]+)\.tar$`)
+	match := backupFileNameRegex.FindStringSubmatch(backupName)
+	if len(match) != 3 {
+		return "", time.Time{}, fmt.Errorf("%w: %s", ErrInvalidBackupName, backupName)
+	}
+	instanceId = match[1]
+	timestampInt, err := strconv.ParseInt(match[2], 10, 64)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("%w: %s", ErrInvalidBackupName, backupName)
+	}
+	timestamp = time.Unix(timestampInt, 0)
+	return instanceId, timestamp, nil
 }
 
 func (b *backupManager) backupInstanceData(instanceId string, backup *data.Backup) (err error) {

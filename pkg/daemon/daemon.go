@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 )
 
 // Daemon is the interface for the egn daemon. It should be used as the entrypoint
@@ -75,6 +76,9 @@ type Daemon interface {
 	// backup ID. If there is no installed instance with the given ID an error
 	// will be returned.
 	Backup(instanceId string) (backupId string, err error)
+
+	// BackupList returns a list of all the backups and their information.
+	BackupList() ([]BackupInfo, error)
 }
 
 type PullTarget struct {
@@ -250,4 +254,10 @@ type HardwareRequirements struct {
 
 func (h HardwareRequirements) String() string {
 	return fmt.Sprintf("CPU: %d Cores, RAM: %d Mb, Disk Space: %d Mb", h.MinCPUCores, h.MinRAM, h.MinFreeSpace)
+}
+
+type BackupInfo struct {
+	Instance  string
+	Timestamp time.Time
+	SizeBytes uint64
 }

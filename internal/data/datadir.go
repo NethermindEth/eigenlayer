@@ -171,6 +171,31 @@ func (d *DataDir) InitBackup(backupId BackupId) (*Backup, error) {
 	return d.initBackup(backupId)
 }
 
+// BackupList returns the list of paths to all the backups. Only .tar files are
+// returned.
+func (d *DataDir) BackupList() ([]string, error) {
+	// Init backup dir
+	if err := d.initBackupDir(); err != nil {
+		return nil, err
+	}
+	// Get all files in backup dir
+	dirItems, err := afero.ReadDir(d.fs, filepath.Join(d.path, backupDir))
+	if err != nil {
+		return nil, err
+	}
+	// Filter .tar files
+	var backups []string
+	for _, dirItem := range dirItems {
+		if dirItem.IsDir() {
+			continue
+		}
+		if filepath.Ext(dirItem.Name()) == ".tar" {
+			backups = append(backups, filepath.Join(d.path, backupDir, dirItem.Name()))
+		}
+	}
+	return backups, nil
+}
+
 func (d *DataDir) initBackup(backupId BackupId) (*Backup, error) {
 	backupPath, err := d.backupPath(backupId)
 	if err != nil {

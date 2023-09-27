@@ -23,8 +23,7 @@ func SetupProfileFS(t *testing.T, instanceName string, afs afero.Fs) string {
 		t.Fatalf("failed to setup instance filesystem: %v", err)
 	}
 
-	tempPath, err := afero.TempDir(afs, "profile", "")
-	require.NoError(t, err)
+	tempPath := t.TempDir()
 
 	err = fs.WalkDir(instanceFs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

@@ -52,7 +52,7 @@ func main() {
 			})
 		}
 
-		err := writeYMLFile(fileName, Repos{Repos: data})
+		err := writeYMLFile(fileName, Repos{Timestamp: time.Now(), Repos: data})
 		if err != nil {
 			fmt.Println("Error writing to yml file:", err)
 			return

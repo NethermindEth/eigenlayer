@@ -148,7 +148,7 @@ func checkCache() error {
 			})
 		}
 
-		err := writeYMLFile(dataFile, Repos{Repos: data})
+		err := writeYMLFile(dataFile, Repos{Timestamp: time.Now(), Repos: data})
 		if err != nil {
 			return fmt.Errorf("error writing to yml file: %w", err)
 		}

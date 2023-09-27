@@ -1439,9 +1439,7 @@ func TestDockerManager_Run(t *testing.T) {
 		name          string
 		setupMock     func(*gomock.Controller) *mocks.MockAPIClient
 		image         string
-		network       string
-		args          []string
-		mounts        []Mount
+		options       RunOptions
 		expectedError error
 	}{
 		{
@@ -1467,8 +1465,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:   "my-image",
-			network: "my-network",
-			args:    []string{"arg1", "arg2"},
+			options: RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 		},
 		{
 			name: "Container create error",
@@ -1480,8 +1477,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: errors.New("creation error"),
 		},
 		{
@@ -1507,8 +1503,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: errors.New("remove error"),
 		},
 		{
@@ -1523,8 +1518,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: errors.New("network connection error"),
 		},
 		{
@@ -1546,8 +1540,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: errors.New("start container error"),
 		},
 		{
@@ -1573,8 +1566,7 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: errors.New("error waiting for container containerID: container wait error. container logs: container logs"),
 		},
 		{
@@ -1600,15 +1592,13 @@ func TestDockerManager_Run(t *testing.T) {
 				return dockerClient
 			},
 			image:         "my-image",
-			network:       "my-network",
-			args:          []string{"arg1", "arg2"},
+			options:       RunOptions{Network: "my-network", Args: []string{"arg1", "arg2"}},
 			expectedError: fmt.Errorf("unexpected exit code 1 for container containerID. container logs: container logs"),
 		},
 		{
 			name:    "Running on host network",
 			image:   "my-image",
-			network: "host",
-			args:    []string{},
+			options: RunOptions{Network: "host", Args: []string{}},
 			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
 				dockerClient := mocks.NewMockAPIClient(ctrl)
 
@@ -1634,20 +1624,22 @@ func TestDockerManager_Run(t *testing.T) {
 			},
 		},
 		{
-			name:    "with mounts",
-			image:   "my-image",
-			network: "my-network",
-			args:    []string{},
-			mounts: []Mount{
-				{
-					Type:   VolumeTypeBind,
-					Source: "/home/user/dir",
-					Target: "/container/dir1",
-				},
-				{
-					Type:   VolumeTypeVolume,
-					Source: "volume-name",
-					Target: "/container/dir2",
+			name:  "with mounts",
+			image: "my-image",
+			options: RunOptions{
+				Network: "my-network",
+				Args:    []string{},
+				Mounts: []Mount{
+					{
+						Type:   VolumeTypeBind,
+						Source: "/home/user/dir",
+						Target: "/container/dir1",
+					},
+					{
+						Type:   VolumeTypeVolume,
+						Source: "volume-name",
+						Target: "/container/dir2",
+					},
 				},
 			},
 			setupMock: func(ctrl *gomock.Controller) *mocks.MockAPIClient {
@@ -1699,7 +1691,7 @@ func TestDockerManager_Run(t *testing.T) {
 
 			dockerManager := NewDockerManager(dockerClient)
 
-			err := dockerManager.Run(tt.image, tt.network, tt.args, tt.mounts)
+			err := dockerManager.Run(tt.image, tt.options)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

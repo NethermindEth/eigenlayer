@@ -15,4 +15,6 @@ var (
 	ErrReadingFile                 = errors.New("failed reading file")
 	ErrWritingFile                 = errors.New("failed writing file")
 	ErrStackNotInitialized         = errors.New("stack not initialized")
+	ErrBackupAlreadyExists         = errors.New("backup already exists")
+	ErrCreatingBackup              = errors.New("failed creating backup")
 )

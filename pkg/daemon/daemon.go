@@ -70,6 +70,11 @@ type Daemon interface {
 	// NodeLogs returns the logs of the node with the given ID. If there is no
 	// installed instance with the given ID an error will be returned.
 	NodeLogs(ctx context.Context, w io.Writer, instanceID string, opts NodeLogsOptions) error
+
+	// Backup creates a backup of the instance with the given ID and returns the
+	// backup ID. If there is no installed instance with the given ID an error
+	// will be returned.
+	Backup(instanceId string) (backupId string, err error)
 }
 
 type PullTarget struct {

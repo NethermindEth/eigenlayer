@@ -9,10 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/env"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/client"
 	gapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -330,4 +332,32 @@ func checkAVSHealth(t *testing.T, ip string, port string, wantCode int) {
 	}, b)
 	assert.NoError(t, err, "AVS health should be ok, but it is not")
 	assert.Equal(t, wantCode, responseCode, "AVS health should be %d, but it is %d", wantCode, responseCode)
+}
+
+func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
+	// Check nodes folder exists
+	dataDir, err := dataDirPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does exist and is not empty
+	instancePath := filepath.Join(nodesDir, instanceId)
+	assert.DirExists(t, instancePath)
+	assert.FileExists(t, filepath.Join(instancePath, ".env"))
+
+	// Load .env file
+	fs := afero.NewOsFs()
+	envData, err := env.LoadEnv(fs, filepath.Join(instancePath, ".env"))
+	envTargets := make([]string, 0, len(envData))
+	for key := range envData {
+		envTargets = append(envTargets, key)
+	}
+
+	t.Logf("Checking .env targets")
+	for _, target := range targets {
+		assert.Contains(t, envTargets, target)
+		assert.Equal(t, envData[target], "\"\"", "target %s should be empty string", target)
+	}
 }

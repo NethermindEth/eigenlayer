@@ -641,10 +641,11 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 				return instanceID, tID, err
 			}
 			optionsEnv[o.Target()] = v
-		} else if o.Default() != "" {
+		} else if o.Default() != "" && !o.Hidden() {
 			optionsEnv[o.Target()] = o.Default()
 		} else {
-			return instanceID, tID, fmt.Errorf("%w: %s", ErrOptionWithoutValue, o.Name())
+			log.Warn("Option ", o.Name(), " does not have a default value. Using empty string as value.")
+			optionsEnv[o.Target()] = "\"\""
 		}
 	}
 	maps.Copy(env, optionsEnv)

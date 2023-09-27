@@ -26,19 +26,14 @@ type MockAVS struct {
 }
 
 type Repos struct {
-	Repos []MockAVS `yml:"repos"`
+	Timestamp time.Time `yml:"timestamp"`
+	Repos     []MockAVS `yml:"repos"`
 }
 
 func main() {
 	repos := []string{
 		"https://github.com/NethermindEth/mock-avs",
 		"https://github.com/NethermindEth/mock-avs-pkg",
-	}
-
-	cache, err := readFromCache()
-	if err == nil && time.Since(cache.Timestamp).Hours() < 1 {
-		fmt.Println("Using cached data:", cache.Data)
-		return
 	}
 
 	data := make([]MockAVS, 0)
@@ -57,30 +52,52 @@ func main() {
 			})
 		}
 
-		err = writeYMLFile(fileName, Repos{Repos: data})
+		err := writeYMLFile(fileName, Repos{Repos: data})
 		if err != nil {
 			fmt.Println("Error writing to yml file:", err)
 			return
-		}
-
-		// Update the cache
-		err = writeToCache(Repos{Repos: data})
-		if err != nil {
-			fmt.Println("Error updating cache:", err)
 		}
 	}
 }
 
 func shouldUpdateFile(filePath string) bool {
-	info, err := os.Stat(filePath)
+	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return true
 	}
 
-	modifiedTime := info.ModTime()
-	currentTime := time.Now()
+	cache, err := readYMLFile(filePath)
+	if err != nil {
+		return true
+	}
 
-	return currentTime.Sub(modifiedTime).Hours() > 1
+	return time.Since(cache.Timestamp).Hours() < 1
+}
+
+func readYMLFile(filePath string) (Repos, error) {
+	var cache Repos
+
+	file, err := os.ReadFile(cacheFile)
+	if err != nil {
+		return cache, err
+	}
+
+	err = yaml.Unmarshal(file, &cache)
+	return cache, err
+}
+
+func writeYMLFile(filePath string, data Repos) error {
+	ymlContent, err := yaml.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, ymlContent, 0o644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Tag struct {
@@ -142,49 +159,4 @@ func latestGitTagAndCommitHash(repoURL string) (string, string, error) {
 	}
 
 	return tag, commitHash, nil
-}
-
-func writeYMLFile(filePath string, data Repos) error {
-	ymlContent, err := yaml.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filePath, ymlContent, 0o644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type CacheData struct {
-	Timestamp time.Time `json:"timestamp"`
-	Data      Repos     `json:"data"`
-}
-
-func readFromCache() (CacheData, error) {
-	var cache CacheData
-
-	file, err := os.ReadFile(cacheFile)
-	if err != nil {
-		return cache, err
-	}
-
-	err = json.Unmarshal(file, &cache)
-	return cache, err
-}
-
-func writeToCache(data Repos) error {
-	cache := CacheData{
-		Timestamp: time.Now(),
-		Data:      data,
-	}
-
-	jsonData, err := json.Marshal(cache)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(cacheFile, jsonData, 0o644)
 }

@@ -72,9 +72,8 @@ func (p *Plugin) validate() error {
 // state.json file and validates it.
 func newInstance(path string, fs afero.Fs, locker locker.Locker) (*Instance, error) {
 	i := Instance{
-		path:   path,
-		fs:     fs,
-		locker: locker,
+		path: path,
+		fs:   fs,
 	}
 	stateFile, err := i.fs.Open(filepath.Join(i.path, "state.json"))
 	if err != nil {
@@ -102,6 +101,7 @@ func newInstance(path string, fs afero.Fs, locker locker.Locker) (*Instance, err
 	if err != nil {
 		return nil, err
 	}
+	i.locker = locker.New(filepath.Join(path, ".lock"))
 	return &i, nil
 }
 

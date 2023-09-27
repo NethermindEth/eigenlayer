@@ -126,7 +126,7 @@ func TestNewInstance(t *testing.T) {
 				"profile":"mainnet",
 				"tag":"test_tag",
 				"plugin":{
-					"image":"`+common.PluginImage.Image()+`"
+					"image":"`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 			if err != nil {
@@ -144,7 +144,7 @@ func TestNewInstance(t *testing.T) {
 					Commit:  common.MockAvsPkg.CommitHash(),
 					Profile: "mainnet",
 					Plugin: &Plugin{
-						Image: common.PluginImage.Image(),
+						Image: common.PluginImage.FullImage(),
 					},
 					path: testDir,
 				},

@@ -24,7 +24,7 @@ func LocalInstallCmd(d daemon.Daemon) *cobra.Command {
 		logDebug bool
 	)
 	cmd := cobra.Command{
-		Use:   "local-install [path]",
+		Use:   "local-install [flags] --profile <profile_name> <path>",
 		Short: "Install AVS node software from a local directory",
 		Long: `
 !!! THIS INSTALLATION METHOD IS INSECURE !!!
@@ -145,5 +145,7 @@ profile.`,
 	cmd.Flags().BoolVarP(&run, "run", "r", false, "run the new instance after installation")
 	cmd.Flags().StringVarP(&profile, "profile", "p", "", "profile to use for the new instance. If not specified, the installation will fail.")
 	cmd.Flags().StringVarP(&tag, "tag", "t", "default", "tag to use for the new instance.")
+
+	cmd.MarkFlagRequired("profile")
 	return &cmd
 }

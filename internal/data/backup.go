@@ -11,7 +11,7 @@ type BackupId struct {
 }
 
 func (b *BackupId) String() string {
-	return fmt.Sprintf("%s-%d", b.InstanceId, b.Timestamp.UnixNano())
+	return fmt.Sprintf("%s-%d", b.InstanceId, b.Timestamp.Unix())
 }
 
 type Backup struct {

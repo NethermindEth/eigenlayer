@@ -19,7 +19,7 @@ func LogsCmd(d daemon.Daemon) *cobra.Command {
 	)
 
 	cmd := cobra.Command{
-		Use:   "logs [instance-id]",
+		Use:   "logs <instance_id>",
 		Short: "Show AVS node logs",
 		Long:  "Show AVS node logs, which are the logs of all the services running in the node.",
 		Args:  cobra.ExactArgs(1),

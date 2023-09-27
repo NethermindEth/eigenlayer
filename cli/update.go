@@ -26,10 +26,10 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		yes        bool
 	)
 	cmd := cobra.Command{
-		Use:   "update [flags] [instance-id] [version]",
+		Use:   "update [flags] <instance_id> <version>",
 		Short: "Update an instance to a new version.",
-		Long: `Updates instance [instance-id] to a new version using the specified
-version or commit hash in the [version] argument. If no version is specified, the
+		Long: `Updates instance <instance_id> to a new version using the specified
+version or commit hash in the <version> argument. If no version is specified, the
 latest version will be used. If the new version is lower or equal to the current
 version, the update will fail. Also, if the new commit passed as argument or the
 commit of the new version is not a descendant of the current commit, the update

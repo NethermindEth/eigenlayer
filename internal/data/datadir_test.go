@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
+	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/locker/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/afero"
@@ -77,10 +79,12 @@ func TestDataDir_Instance(t *testing.T) {
 
 	type testCase struct {
 		name       string
+		locker     locker.Locker
 		instanceId string
 		path       string
 		instance   *Instance
 		err        error
+		mockCtrl   *gomock.Controller
 	}
 	ts := []testCase{
 		func() testCase {
@@ -99,8 +103,12 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
+			locker.EXPECT().New(filepath.Join(path, nodesDirName, "mock-avs-default", ".lock")).Return(locker)
 			return testCase{
 				name:       "valid instance",
+				locker:     locker,
 				instanceId: "mock-avs-default",
 				path:       path,
 				instance: &Instance{
@@ -111,8 +119,10 @@ func TestDataDir_Instance(t *testing.T) {
 					Profile: "option-returner",
 					path:    filepath.Join(path, nodesDirName, "mock-avs-default"),
 					fs:      fs,
+					locker:  locker,
 				},
-				err: nil,
+				err:      nil,
+				mockCtrl: ctrl,
 			}
 		}(),
 		func() testCase {
@@ -131,12 +141,16 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
 			return testCase{
 				name:       "invalid instance, state without name field",
+				locker:     locker,
 				instanceId: "mock-avs-default",
 				path:       path,
 				instance:   nil,
 				err:        ErrInvalidInstance,
+				mockCtrl:   ctrl,
 			}
 		}(),
 		func() testCase {
@@ -146,26 +160,23 @@ func TestDataDir_Instance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			ctrl := gomock.NewController(t)
+			locker := mocks.NewMockLocker(ctrl)
 			return testCase{
 				name:       "instance not found",
+				locker:     locker,
 				instanceId: "mock-avs-default",
 				path:       path,
 				instance:   nil,
 				err:        ErrInvalidInstanceDir,
+				mockCtrl:   ctrl,
 			}
 		}(),
 	}
 	for _, tc := range ts {
 		t.Run(tc.name, func(t *testing.T) {
-			// Create a mock locker
-			ctrl := gomock.NewController(t)
-			locker := mocks.NewMockLocker(ctrl)
-
-			if tc.instance != nil {
-				tc.instance.locker = locker
-			}
-
-			dataDir, err := NewDataDir(tc.path, fs, locker)
+			defer tc.mockCtrl.Finish()
+			dataDir, err := NewDataDir(tc.path, fs, tc.locker)
 			assert.NoError(t, err)
 			instance, err := dataDir.Instance(tc.instanceId)
 			if tc.err != nil {
@@ -693,6 +704,203 @@ func TestDataDir_TempPath(t *testing.T) {
 			} else {
 				assert.NoError(t, gotErr)
 				assert.Equal(t, tt.want, gotPath)
+			}
+		})
+	}
+}
+
+func TestDataDir_initBackupDir(t *testing.T) {
+	tc := []struct {
+		name  string
+		err   error
+		setup func(*testing.T) *DataDir
+	}{
+		{
+			name: "backup dir exists",
+			err:  nil,
+			setup: func(t *testing.T) *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(testDir, 0o755)
+				require.NoError(t, err)
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+		{
+			name: "backup dir does not exist",
+			err:  nil,
+			setup: func(t *testing.T) *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
+				require.NoError(t, err)
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			d := tt.setup(t)
+			err := d.initBackupDir()
+			if tt.err != nil {
+				assert.ErrorIs(t, err, tt.err)
+			} else {
+				require.NoError(t, err)
+				exists, err := afero.DirExists(d.fs, filepath.Join(d.path, backupDir))
+				require.NoError(t, err)
+				assert.True(t, exists)
+			}
+		})
+	}
+}
+
+func TestDataDir_hashBackup(t *testing.T) {
+	backupId := BackupId{
+		InstanceId: "mock-avs-default",
+		Timestamp:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	tc := []struct {
+		name  string
+		setup func() *DataDir
+		ok    bool
+		err   error
+	}{
+		{
+			name: "backup dir does not exist",
+			ok:   false,
+			err:  nil,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+		{
+			name: "backup file does not exist",
+			ok:   false,
+			err:  nil,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
+				require.NoError(t, err)
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+		{
+			name: "backup file exists",
+			ok:   true,
+			err:  nil,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
+				require.NoError(t, err)
+				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200000000000.tar"))
+				require.NoError(t, err)
+				require.NoError(t, file.Close())
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			d := tt.setup()
+			ok, err := d.hasBackup(backupId)
+			if tt.err != nil {
+				require.Error(t, err)
+				assert.False(t, ok)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.ok, ok)
+			}
+		})
+	}
+}
+
+func TestDataDir_InitBackup(t *testing.T) {
+	backupId := BackupId{
+		InstanceId: "mock-avs-default",
+		Timestamp:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	tc := []struct {
+		name  string
+		err   error
+		setup func() *DataDir
+	}{
+		{
+			name: "success, backup dir does not exist",
+			err:  nil,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+		{
+			name: "success, backup file does not exist",
+			err:  nil,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
+				require.NoError(t, err)
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+		{
+			name: "error, backup file exists",
+			err:  ErrBackupAlreadyExists,
+			setup: func() *DataDir {
+				fs := afero.NewMemMapFs()
+				testDir := t.TempDir()
+				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
+				require.NoError(t, err)
+				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200000000000.tar"))
+				require.NoError(t, err)
+				require.NoError(t, file.Close())
+				return &DataDir{
+					path: testDir,
+					fs:   fs,
+				}
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			d := tt.setup()
+			b, err := d.initBackup(backupId)
+			if tt.err != nil {
+				assert.ErrorIs(t, err, tt.err)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, b)
+				assert.Equal(t, backupId, b.Id)
+				bStat, err := d.fs.Stat(b.path)
+				require.NoError(t, err)
+				require.Equal(t, bStat.Mode(), os.FileMode(0o644))
+				require.Equal(t, bStat.Size(), int64(1024))
 			}
 		})
 	}

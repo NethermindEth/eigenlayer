@@ -504,6 +504,17 @@ func (d *DockerManager) Run(image string, options RunOptions) (err error) {
 	}
 }
 
+func (d *DockerManager) ImageExist(image string) (bool, error) {
+	_, _, err := d.dockerClient.ImageInspectWithRaw(context.Background(), image)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func containerLogs(dockerClient client.APIClient, containerID string) string {
 	logsReader, err := dockerClient.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {

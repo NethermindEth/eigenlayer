@@ -22,7 +22,7 @@ func PluginCmd(d daemon.Daemon) *cobra.Command {
 		volumes        []string
 	)
 	cmd := cobra.Command{
-		Use:   "plugin [flags] [instance_id] [plugin_args]",
+		Use:   "plugin [flags] <instance_id> [plugin_args]",
 		Short: "Run an AVS node plugin",
 		Long:  `Run a plugin. The instance id is required as the unique argument. The plugin arguments are passed to the plugin as is.`,
 		Args:  cobra.MinimumNArgs(1),

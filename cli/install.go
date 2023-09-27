@@ -22,7 +22,7 @@ func InstallCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		yes      bool
 	)
 	cmd := cobra.Command{
-		Use:   "install [URL] [flags]",
+		Use:   "install [flags] <repository_url>",
 		Short: "Install AVS node software from a git repository",
 		Long: `
 Installs the AVS node software by downloading it from a git repository. The 

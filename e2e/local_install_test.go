@@ -487,7 +487,7 @@ func TestLocalInstall_OptionsWithoutDefault(t *testing.T) {
 			}
 			// Modify health-checker to add a hidden option will default and a non-hidden option without default.
 			// Both TARGETS should be the empty string in the .env.
-			f, err := os.OpenFile(filepath.Join(pkgDir, "pkg", "health-checker", "profile.yml"), os.O_APPEND|os.O_WRONLY, 0644)
+			f, err := os.OpenFile(filepath.Join(pkgDir, "pkg", "health-checker", "profile.yml"), os.O_APPEND|os.O_WRONLY, 0o644)
 			if err != nil {
 				t.Fatalf("failed to open profile.yml: %v", err)
 			}
@@ -496,10 +496,6 @@ func TestLocalInstall_OptionsWithoutDefault(t *testing.T) {
 			if _, err = f.WriteString(newOptions); err != nil {
 				t.Fatalf("failed to write to profile.yml: %v", err)
 			}
-
-			// data, _ := os.ReadFile(filepath.Join(pkgDir, "pkg", "health-checker", "profile.yml"))
-			// t.Logf("profile.yml: \n %s \n", data)
-			// t.Fatal("stop")
 
 			// remove .git folder
 			return os.RemoveAll(filepath.Join(pkgDir, ".git"))

@@ -350,6 +350,9 @@ func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 	// Load .env file
 	fs := afero.NewOsFs()
 	envData, err := env.LoadEnv(fs, filepath.Join(instancePath, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	envTargets := make([]string, 0, len(envData))
 	for key := range envData {
 		envTargets = append(envTargets, key)

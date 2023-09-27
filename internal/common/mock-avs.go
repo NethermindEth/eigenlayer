@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 const (
+	dataFile                = "/tmp/mock-avs-versions.yml"
+	cacheFile               = "/tmp/mock-avs-versions-cache.json"
 	mockAVSRepo             = "https://github.com/NethermindEth/mock-avs"
 	mockAVSPkgRepo          = "https://github.com/NethermindEth/mock-avs-pkg"
 	optionReturnerImageName = "mock-avs-option-returner"
@@ -20,6 +24,9 @@ const (
 	pluginImageName         = "mock-avs-plugin"
 )
 
+// Global variables to store the latest versions of the mock-avs and
+// mock-avs-pkg repositories, and the docker image names for the
+// option-returner, health-checker profiles, and the mock-avs plugin.
 var (
 	MockAvsSrc          MockAVS
 	MockAvsPkg          MockAVS
@@ -27,6 +34,17 @@ var (
 	HealthCheckerImage  MockAVSImage
 	PluginImage         MockAVSImage
 )
+
+type Repos struct {
+	Timestamp time.Time     `yml:"timestamp"`
+	Repos     []MockAVSData `yml:"repos"`
+}
+
+type MockAVSData struct {
+	Repo       string `yml:"repo"`
+	Version    string `yml:"version"`
+	CommitHash string `yml:"commitHash"`
+}
 
 type MockAVS struct {
 	repo       string
@@ -76,6 +94,117 @@ func (m *MockAVSImage) Tag() string {
 
 func (m *MockAVSImage) FullImage() string {
 	return fmt.Sprintf("%s:%s", m.image, m.tag)
+}
+
+// SetMockAVSs set up the MockAVS and MockAVSPkg data structures with
+// the latest versions of the mock-avs and mock-avs-pkg repositories.
+// It reads the data from the mock-avs-versions.yml file, which is
+// generated if it doesn't exist or if it is older than one hour.
+// It also sets up the OptionReturnerImage, HealthCheckerImage and
+// PluginImage data structures using as tag the latest version of the
+// mock-avs repository.
+func SetMockAVSs() error {
+	if err := checkCache(); err != nil {
+		return fmt.Errorf("error checking cache for mock-avs data: %w", err)
+	}
+
+	// Read the data from the mock-avs-versions.yml file
+	file, err := os.ReadFile(dataFile)
+	if err != nil {
+		return fmt.Errorf("error reading mock-avs data file: %w", err)
+	}
+
+	// Unmarshal the data into the Repos struct
+	var reposData Repos
+	err = yaml.Unmarshal(file, &reposData)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling mock-avs data: %w", err)
+	}
+
+	// Set the MockAvsSrc and MockAvsPkg global variables
+	for _, repo := range reposData.Repos {
+		if repo.Repo == mockAVSRepo {
+			MockAvsSrc = *NewMockAVS(repo.Repo, repo.Version, repo.CommitHash)
+		} else {
+			MockAvsPkg = *NewMockAVS(repo.Repo, repo.Version, repo.CommitHash)
+		}
+	}
+
+	OptionReturnerImage = *NewMockAVSImage(optionReturnerImageName, MockAvsSrc.Version())
+	HealthCheckerImage = *NewMockAVSImage(healthCheckerImageName, MockAvsSrc.Version())
+	PluginImage = *NewMockAVSImage(pluginImageName, MockAvsSrc.Version())
+
+	return nil
+}
+
+func checkCache() error {
+	repos := []string{
+		mockAVSRepo,
+		mockAVSPkgRepo,
+	}
+
+	data := make([]MockAVSData, 0)
+	if shouldUpdateFile(dataFile) {
+		for _, repo := range repos {
+			tag, commitHash, err := latestGitTagAndCommitHash(repo)
+			if err != nil {
+				return fmt.Errorf("error fetching latest git tag and commit: %w", err)
+			}
+
+			data = append(data, MockAVSData{
+				Repo:       repo,
+				Version:    tag,
+				CommitHash: commitHash,
+			})
+		}
+
+		err := writeYMLFile(dataFile, Repos{Timestamp: time.Now(), Repos: data})
+		if err != nil {
+			return fmt.Errorf("error writing to yml file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func shouldUpdateFile(filePath string) bool {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return true
+	}
+
+	cache, err := readYMLFile(filePath)
+	if err != nil {
+		return true
+	}
+
+	return time.Since(cache.Timestamp).Hours() < 1
+}
+
+func readYMLFile(filePath string) (Repos, error) {
+	var cache Repos
+
+	file, err := os.ReadFile(cacheFile)
+	if err != nil {
+		return cache, err
+	}
+
+	err = yaml.Unmarshal(file, &cache)
+	return cache, err
+}
+
+func writeYMLFile(filePath string, data Repos) error {
+	ymlContent, err := yaml.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, ymlContent, 0o644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Tag struct {
@@ -137,30 +266,4 @@ func latestGitTagAndCommitHash(repoURL string) (string, string, error) {
 	}
 
 	return tag, commitHash, nil
-}
-
-// SetMockAVSs set up the MockAVS and MockAVSPkg data structures with
-// the latest versions of the mock-avs and mock-avs-pkg repositories.
-// It also sets up the OptionReturnerImage, HealthCheckerImage and
-// PluginImage data structures using as tag the latest version of the
-// mock-avs repository.
-func SetMockAVSs() error {
-	repos := []string{mockAVSRepo, mockAVSPkgRepo}
-	for _, repo := range repos {
-		tag, commitHash, err := latestGitTagAndCommitHash(repo)
-		if err != nil {
-			return err
-		}
-		if repo == mockAVSRepo {
-			MockAvsSrc = *NewMockAVS(repo, tag, commitHash)
-		} else {
-			MockAvsPkg = *NewMockAVS(repo, tag, commitHash)
-		}
-	}
-
-	OptionReturnerImage = *NewMockAVSImage(optionReturnerImageName, MockAvsSrc.Version())
-	HealthCheckerImage = *NewMockAVSImage(healthCheckerImageName, MockAvsSrc.Version())
-	PluginImage = *NewMockAVSImage(pluginImageName, MockAvsSrc.Version())
-
-	return nil
 }

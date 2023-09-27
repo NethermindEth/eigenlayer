@@ -74,16 +74,26 @@ func (m *MockAVS) CommitHash() string {
 
 type MockAVSImage struct {
 	image string
+	tag   string
 }
 
 func NewMockAVSImage(image, tag string) *MockAVSImage {
 	return &MockAVSImage{
-		image: fmt.Sprintf("%s:%s", image, tag),
+		image: image,
+		tag:   tag,
 	}
 }
 
 func (m *MockAVSImage) Image() string {
 	return m.image
+}
+
+func (m *MockAVSImage) Tag() string {
+	return m.tag
+}
+
+func (m *MockAVSImage) FullImage() string {
+	return fmt.Sprintf("%s:%s", m.image, m.tag)
 }
 
 // SetMockAVSs set up the MockAVS and MockAVSPkg data structures with

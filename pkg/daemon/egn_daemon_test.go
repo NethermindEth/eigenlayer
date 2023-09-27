@@ -2830,7 +2830,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				gomock.InOrder(
@@ -2844,7 +2844,7 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Run(common.PluginImage.Image(), "network-el", []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), "network-el", []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2856,7 +2856,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.Image()).Return(nil),
+					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
 				)
 			},
 		},
@@ -2881,11 +2881,11 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				gomock.InOrder(
-					d.dockerManager.EXPECT().Run(common.PluginImage.Image(), docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
+					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
 						{
 							Type:   docker.VolumeTypeBind,
 							Source: "/tmp",
@@ -2897,7 +2897,7 @@ func TestRunPlugin(t *testing.T) {
 							Target: "/tmp/volume1",
 						},
 					}),
-					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.Image()).Return(nil),
+					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
 				)
 			},
 		},
@@ -2932,7 +2932,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2954,7 +2954,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2976,7 +2976,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -3003,7 +3003,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`",
 					"plugin": {
-						"image": "`+common.PluginImage.Image()+`"
+						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
 				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{

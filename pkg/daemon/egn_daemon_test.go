@@ -379,6 +379,9 @@ func TestInitMonitoring(t *testing.T) {
 			// Create a mock locker
 			locker := mock_locker.NewMockLocker(ctrl)
 
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
+
 			// Create in-memory filesystem
 			afs := afero.NewMemMapFs()
 
@@ -390,7 +393,7 @@ func TestInitMonitoring(t *testing.T) {
 			monitoringMgr := tt.mocker(t, ctrl)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, backupMgr, locker)
 			require.NoError(t, err)
 
 			err = daemon.InitMonitoring(true, true)
@@ -465,6 +468,9 @@ func TestCleanMonitoring(t *testing.T) {
 			// Create mock docker manager
 			dockerMgr := mocks.NewMockDockerManager(ctrl)
 
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
+
 			// Create a mock locker
 			locker := mock_locker.NewMockLocker(ctrl)
 
@@ -479,7 +485,7 @@ func TestCleanMonitoring(t *testing.T) {
 			monitoringMgr := tt.mocker(t, ctrl)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeMgr, dockerMgr, monitoringMgr, backupMgr, locker)
 			require.NoError(t, err)
 
 			err = daemon.CleanMonitoring()
@@ -589,7 +595,7 @@ func TestPull(t *testing.T) {
 			dataDir := tt.mocker(t, locker)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, nil, nil, nil, locker)
+			daemon, err := NewEgnDaemon(dataDir, nil, nil, nil, nil, locker)
 			require.NoError(t, err)
 
 			result, err := daemon.Pull(tt.url, tt.ref, tt.force)
@@ -1059,7 +1065,7 @@ func TestInstall(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, nil, locker)
 			require.NoError(t, err)
 
 			// Pull the package
@@ -1160,12 +1166,12 @@ func TestRun(t *testing.T) {
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
+				locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker).Times(2)
+				locker.EXPECT().Lock().Return(nil)
+				locker.EXPECT().Locked().Return(true)
+				locker.EXPECT().Unlock().Return(nil)
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
-					locker.EXPECT().Lock().Return(nil),
-					locker.EXPECT().Locked().Return(true),
-					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
 					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
 					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
@@ -1205,12 +1211,12 @@ func TestRun(t *testing.T) {
 			mocker: func(tmp string, composeManager *mocks.MockComposeManager, dockerManager *mocks.MockDockerManager, locker *mock_locker.MockLocker, monitoringManager *mocks.MockMonitoringManager) {
 				path := filepath.Join(tmp, "nodes", instanceID, "docker-compose.yml")
 
+				locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker).Times(2)
+				locker.EXPECT().Lock().Return(nil)
+				locker.EXPECT().Locked().Return(true)
+				locker.EXPECT().Unlock().Return(nil)
 				// Init, install and run
 				gomock.InOrder(
-					locker.EXPECT().New(filepath.Join(tmp, "nodes", instanceID, ".lock")).Return(locker),
-					locker.EXPECT().Lock().Return(nil),
-					locker.EXPECT().Locked().Return(true),
-					locker.EXPECT().Unlock().Return(nil),
 					composeManager.EXPECT().Create(compose.DockerComposeCreateOptions{Path: path, Build: true}).Return(nil),
 					composeManager.EXPECT().Up(compose.DockerComposeUpOptions{Path: path}).Return(nil),
 					monitoringManager.EXPECT().InstallationStatus().Return(common.Installed, nil),
@@ -1350,6 +1356,8 @@ func TestRun(t *testing.T) {
 			locker := mock_locker.NewMockLocker(ctrl)
 			// Create a mock monitoring manager
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			// Create a Datadir
 			dataDir, err := data.NewDataDir(tmp, afs, locker)
@@ -1358,7 +1366,7 @@ func TestRun(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {
@@ -1471,6 +1479,8 @@ func TestStop(t *testing.T) {
 			locker := mock_locker.NewMockLocker(ctrl)
 			// Create a mock monitoring manager
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			// Create a Datadir
 			dataDir, err := data.NewDataDir(tmp, afs, locker)
@@ -1479,7 +1489,7 @@ func TestStop(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {
@@ -1650,6 +1660,8 @@ func TestUninstall(t *testing.T) {
 			locker := mock_locker.NewMockLocker(ctrl)
 			// Create a mock monitoring manager
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			// Create a Datadir
 			dataDir, err := data.NewDataDir(tmp, afs, locker)
@@ -1658,7 +1670,7 @@ func TestUninstall(t *testing.T) {
 			tt.mocker(tmp, composeManager, dockerManager, locker, monitoringManager)
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			if tt.options != nil {
@@ -1734,6 +1746,7 @@ func TestListInstances(t *testing.T) {
 					}
 				}`)
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -1846,6 +1859,7 @@ func TestListInstances(t *testing.T) {
 				var mockCalls []*gomock.Call
 				for _, instance := range instances {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
+					d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", instance.id, ".lock")).Return(d.locker).Times(3)
 					mockCalls = append(mockCalls,
 						d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 							Path:          filepath.Join(d.dataDirPath, "nodes", instance.id, "docker-compose.yml"),
@@ -1981,6 +1995,9 @@ func TestListInstances(t *testing.T) {
 					}(),
 				}
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", ".lock")).Return(d.locker).Times(3)
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", ".lock")).Return(d.locker).Times(2)
+
 				var mockCalls []*gomock.Call
 				for _, instance := range instances {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
@@ -2085,6 +2102,9 @@ func TestListInstances(t *testing.T) {
 					},
 				}
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", ".lock")).Return(d.locker).Times(3)
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", ".lock")).Return(d.locker).Times(3)
+
 				var mockCalls []*gomock.Call
 				for _, instance := range instances {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
@@ -2152,6 +2172,9 @@ func TestListInstances(t *testing.T) {
 					},
 				}
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-0", ".lock")).Return(d.locker).Times(2)
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-1", ".lock")).Return(d.locker).Times(2)
+
 				var mockCalls []*gomock.Call
 				for _, instance := range instances {
 					initInstanceDir(t, d.fs, d.dataDirPath, instance.id, instance.stateJSON)
@@ -2201,6 +2224,7 @@ func TestListInstances(t *testing.T) {
 				}
 			}`)
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2256,6 +2280,8 @@ func TestListInstances(t *testing.T) {
 							"port": "`+apiServerURL.Port()+`"
 						}
 					}`)
+
+					d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 
 					// Mocks
 					gomock.InOrder(
@@ -2319,6 +2345,8 @@ func TestListInstances(t *testing.T) {
 				}
 			}`)
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(2)
+
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2357,6 +2385,8 @@ func TestListInstances(t *testing.T) {
 						"port": "`+apiServerURL.Port()+`"
 					}
 				}`)
+
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 
 				// Mocks
 				gomock.InOrder(
@@ -2414,6 +2444,8 @@ func TestListInstances(t *testing.T) {
 					}
 				}`)
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
+
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2469,6 +2501,8 @@ func TestListInstances(t *testing.T) {
 						"port": "`+apiServerURL.Port()+`"
 					}
 				}`)
+
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 
 				// Mocks
 				gomock.InOrder(
@@ -2526,6 +2560,8 @@ func TestListInstances(t *testing.T) {
 					}
 				}`)
 
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(2)
+
 				// Mocks
 				gomock.InOrder(
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
@@ -2564,6 +2600,8 @@ func TestListInstances(t *testing.T) {
 						"port": "`+apiServerURL.Port()+`"
 					}
 				}`)
+
+				d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker).Times(3)
 
 				// Mocks
 				gomock.InOrder(
@@ -2611,6 +2649,7 @@ func TestListInstances(t *testing.T) {
 			dockerManager := mocks.NewMockDockerManager(ctrl)
 			locker := mock_locker.NewMockLocker(ctrl)
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			tmp, err := afero.TempDir(afs, "", "egn-test-install")
 			require.NoError(t, err)
@@ -2631,7 +2670,7 @@ func TestListInstances(t *testing.T) {
 			}
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			// List instances
@@ -2709,20 +2748,23 @@ func TestNodeLogs(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format: "json",
-					All:    true,
-				}).Return([]compose.ComposeService{
-					{
-						Id:    "abc123",
-						Name:  "main-service",
-						State: "running",
-					},
-				}, nil)
-				d.dockerManager.EXPECT().ContainerLogsMerged(context.Background(), w, map[string]string{
-					"main-service": "abc123",
-				}, docker.ContainerLogsMergedOptions{})
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format: "json",
+						All:    true,
+					}).Return([]compose.ComposeService{
+						{
+							Id:    "abc123",
+							Name:  "main-service",
+							State: "running",
+						},
+					}, nil),
+					d.dockerManager.EXPECT().ContainerLogsMerged(context.Background(), w, map[string]string{
+						"main-service": "abc123",
+					}, docker.ContainerLogsMergedOptions{}),
+				)
 			},
 		},
 		{
@@ -2742,11 +2784,14 @@ func TestNodeLogs(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format: "json",
-					All:    true,
-				}).Return([]compose.ComposeService{}, assert.AnError)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						Path:   filepath.Join(d.dataDirPath, "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format: "json",
+						All:    true,
+					}).Return([]compose.ComposeService{}, assert.AnError),
+				)
 			},
 		},
 	}
@@ -2758,6 +2803,7 @@ func TestNodeLogs(t *testing.T) {
 			dockerManager := mocks.NewMockDockerManager(ctrl)
 			locker := mock_locker.NewMockLocker(ctrl)
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			tmp, err := afero.TempDir(afs, "", "egn-test-install")
 			require.NoError(t, err)
@@ -2778,7 +2824,7 @@ func TestNodeLogs(t *testing.T) {
 			}
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			err = daemon.NodeLogs(tt.ctx, tt.w, tt.instanceID, tt.opts)
@@ -2834,6 +2880,7 @@ func TestRunPlugin(t *testing.T) {
 					}
 				}`)
 				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
 					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
 						FilterRunning: true,
 						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
@@ -2844,16 +2891,20 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
-					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), "network-el", []string{"arg1", "arg2"}, []docker.Mount{
-						{
-							Type:   docker.VolumeTypeBind,
-							Source: "/tmp",
-							Target: "/tmp",
-						},
-						{
-							Type:   docker.VolumeTypeVolume,
-							Source: "volume1",
-							Target: "/tmp/volume1",
+					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.RunOptions{
+						Network: "network-el",
+						Args:    []string{"arg1", "arg2"},
+						Mounts: []docker.Mount{
+							{
+								Type:   docker.VolumeTypeBind,
+								Source: "/tmp",
+								Target: "/tmp",
+							},
+							{
+								Type:   docker.VolumeTypeVolume,
+								Source: "volume1",
+								Target: "/tmp/volume1",
+							},
 						},
 					}),
 					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
@@ -2885,16 +2936,21 @@ func TestRunPlugin(t *testing.T) {
 					}
 				}`)
 				gomock.InOrder(
-					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.NetworkHost, []string{"arg1", "arg2"}, []docker.Mount{
-						{
-							Type:   docker.VolumeTypeBind,
-							Source: "/tmp",
-							Target: "/tmp",
-						},
-						{
-							Type:   docker.VolumeTypeVolume,
-							Source: "volume1",
-							Target: "/tmp/volume1",
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.RunOptions{
+						Network: docker.NetworkHost,
+						Args:    []string{"arg1", "arg2"},
+						Mounts: []docker.Mount{
+							{
+								Type:   docker.VolumeTypeBind,
+								Source: "/tmp",
+								Target: "/tmp",
+							},
+							{
+								Type:   docker.VolumeTypeVolume,
+								Source: "volume1",
+								Target: "/tmp/volume1",
+							},
 						},
 					}),
 					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
@@ -2918,6 +2974,7 @@ func TestRunPlugin(t *testing.T) {
 					"profile": "option-returner",
 					"url": "`+common.MockAvsPkg.Repo()+`"
 				}`)
+				d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker)
 			},
 		},
 		{
@@ -2935,11 +2992,14 @@ func TestRunPlugin(t *testing.T) {
 						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					FilterRunning: true,
-					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format:        "json",
-				}).Return([]compose.ComposeService{}, assert.AnError)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{}, assert.AnError),
+				)
 			},
 		},
 		{
@@ -2957,11 +3017,14 @@ func TestRunPlugin(t *testing.T) {
 						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					FilterRunning: true,
-					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format:        "json",
-				}).Return([]compose.ComposeService{}, nil)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{}, nil),
+				)
 			},
 		},
 		{
@@ -2979,16 +3042,15 @@ func TestRunPlugin(t *testing.T) {
 						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					FilterRunning: true,
-					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format:        "json",
-				}).Return([]compose.ComposeService{
-					{
-						Id: "abc123",
-					},
-				}, nil)
-				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return(nil, assert.AnError)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{{Id: "abc123"}}, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return(nil, assert.AnError),
+				)
 			},
 		},
 		{
@@ -3006,16 +3068,15 @@ func TestRunPlugin(t *testing.T) {
 						"image": "`+common.PluginImage.FullImage()+`"
 					}
 				}`)
-				d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
-					FilterRunning: true,
-					Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
-					Format:        "json",
-				}).Return([]compose.ComposeService{
-					{
-						Id: "abc123",
-					},
-				}, nil)
-				d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{}, nil)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{{Id: "abc123"}}, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{}, nil),
+				)
 			},
 		},
 	}
@@ -3027,6 +3088,8 @@ func TestRunPlugin(t *testing.T) {
 			dockerManager := mocks.NewMockDockerManager(ctrl)
 			locker := mock_locker.NewMockLocker(ctrl)
 			monitoringManager := mocks.NewMockMonitoringManager(ctrl)
+			// Create mock backup manager
+			backupMgr := mocks.NewMockBackupManager(ctrl)
 
 			tmp, err := afero.TempDir(afs, "", "egn-test-install")
 			require.NoError(t, err)
@@ -3047,7 +3110,7 @@ func TestRunPlugin(t *testing.T) {
 			}
 
 			// Create a daemon
-			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, locker)
+			daemon, err := NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)
 			require.NoError(t, err)
 
 			err = daemon.RunPlugin(tt.instanceId, tt.args, tt.options)
@@ -3092,7 +3155,7 @@ func TestGetPluginData(t *testing.T) {
 	}
 	defer dockerClient.Close()
 	dockerManager := docker.NewDockerManager(dockerClient)
-	daemon, err := NewEgnDaemon(dataDir, nil, dockerManager, nil, lock)
+	daemon, err := NewEgnDaemon(dataDir, nil, dockerManager, nil, nil, lock)
 	require.NoError(t, err, "failed to initialize daemon")
 
 	// Tests

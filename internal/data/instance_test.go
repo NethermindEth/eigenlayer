@@ -23,6 +23,7 @@ func TestNewInstance(t *testing.T) {
 		name     string
 		path     string
 		instance *Instance
+		mocker   func(*mocks.MockLocker)
 		err      error
 	}
 	ts := []testCase{
@@ -89,6 +90,10 @@ func TestNewInstance(t *testing.T) {
 					Commit:  common.MockAvsPkg.CommitHash(),
 					Profile: "mainnet",
 					path:    testDir,
+					fs:      fs,
+				},
+				mocker: func(locker *mocks.MockLocker) {
+					locker.EXPECT().New(filepath.Join(testDir, ".lock")).Return(locker)
 				},
 				err: nil,
 			}
@@ -146,7 +151,11 @@ func TestNewInstance(t *testing.T) {
 					Plugin: &Plugin{
 						Image: common.PluginImage.FullImage(),
 					},
+					fs:   fs,
 					path: testDir,
+				},
+				mocker: func(locker *mocks.MockLocker) {
+					locker.EXPECT().New(filepath.Join(testDir, ".lock")).Return(locker)
 				},
 				err: nil,
 			}
@@ -184,9 +193,11 @@ func TestNewInstance(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create a mock locker
 			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 			locker := mocks.NewMockLocker(ctrl)
-			if tc.instance != nil {
-				tc.instance.fs = fs
+
+			if tc.mocker != nil {
+				tc.mocker(locker)
 				tc.instance.locker = locker
 			}
 
@@ -394,4 +405,37 @@ func TestInstance_Env(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInstance_ComposeProject(t *testing.T) {
+	fs := afero.NewOsFs()
+	dir := testdata.SetupProfileFS(t, "option-returner", fs)
+
+	ctrl := gomock.NewController(t)
+	l := mocks.NewMockLocker(ctrl)
+	defer ctrl.Finish()
+	gomock.InOrder(
+		l.EXPECT().Lock().Return(nil),
+		l.EXPECT().Locked().Return(true),
+		l.EXPECT().Unlock().Return(nil),
+	)
+
+	i := Instance{
+		path:   dir,
+		locker: l,
+		fs:     fs,
+	}
+	p, err := i.ComposeProject()
+	require.NoError(t, err)
+
+	// Check services
+	require.Len(t, p.Services, 1)
+	require.Equal(t, "main-service", p.Services[0].Name)
+	// Check main-service ports
+	mainService := p.Services[0]
+	require.Len(t, mainService.Ports, 1)
+	require.Equal(t, uint32(8080), mainService.Ports[0].Target)
+	require.Equal(t, "8080", mainService.Ports[0].Published)
+	// Check main-service container name
+	require.Equal(t, "main-service", mainService.ContainerName)
 }

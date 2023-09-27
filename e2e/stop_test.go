@@ -18,7 +18,7 @@ func Test_Stop(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImages(t)
+			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
 			}

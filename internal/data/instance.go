@@ -226,6 +226,23 @@ func (i *Instance) ComposePath() string {
 	return filepath.Join(i.path, "docker-compose.yml")
 }
 
+// ComposeProject returns the compose project of the instance.
+func (i *Instance) ComposeProject() (*types.Project, error) {
+	// Load instance environment variables
+	instanceEnv, err := i.Env()
+	if err != nil {
+		return nil, err
+	}
+	// Build project options with the instance environment
+	projectOptions, err := cli.NewProjectOptions([]string{i.ComposePath()})
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(projectOptions.Environment, instanceEnv)
+	// Load project from options
+	return cli.ProjectFromOptions(projectOptions)
+}
+
 // ProfileFile returns the data from the profile.yml file of the instance.
 func (i *Instance) ProfileFile() (*profile.Profile, error) {
 	if err := i.lock(); err != nil {

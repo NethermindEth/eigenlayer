@@ -12,7 +12,7 @@ import (
 	"github.com/NethermindEth/eigenlayer/internal/package_handler/testdata"
 )
 
-func TestManifestValidate(t *testing.T) {
+func TestManifest_ValidateFromYML(t *testing.T) {
 	afs := afero.NewMemMapFs()
 	testDir, err := afero.TempDir(afs, "", "test")
 	require.NoError(t, err)
@@ -31,7 +31,7 @@ func TestManifestValidate(t *testing.T) {
 		{
 			name:      "Invalid Fields Manifest",
 			filePath:  "invalid-fields/pkg/manifest.yml",
-			wantError: "Invalid manifest file: Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value): Invalid plugin -> invalid fields: plugin.image -> (invalid docker image)",
+			wantError: "Invalid manifest file: Invalid hardware requirements -> invalid fields: hardware_requirements.min_cpu_cores -> (negative value), hardware_requirements.min_ram -> (negative value), hardware_requirements.min_free_space -> (negative value): Invalid plugin -> invalid fields: plugin.image -> (invalid docker image: invalid reference format)",
 		},
 		{
 			name:      "Minimal Manifest",
@@ -67,6 +67,124 @@ func TestManifestValidate(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tt.wantError)
+			}
+		})
+	}
+}
+
+// TODO: Add more test cases
+func TestManifest_Validate(t *testing.T) {
+	tests := []struct {
+		name     string
+		manifest *Manifest
+		wantErr  bool
+	}{
+		{
+			name: "valid manifest",
+			manifest: &Manifest{
+				Version: "1.0.0",
+				Name:    "test-package",
+				Upgrade: "manual",
+				HardwareRequirements: hardwareRequirements{
+					MinCPUCores:                 2,
+					MinRAM:                      4096,
+					MinFreeSpace:                1024,
+					StopIfRequirementsAreNotMet: true,
+				},
+				Plugin: &Plugin{
+					Image: "test-image:latest",
+				},
+				Profiles: []string{"test-profile"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid manifest",
+			manifest: &Manifest{
+				Version: "1.0.0",
+				Name:    "",
+				Upgrade: "manual",
+				HardwareRequirements: hardwareRequirements{
+					MinCPUCores:                 -1,
+					MinRAM:                      4096,
+					MinFreeSpace:                1024,
+					StopIfRequirementsAreNotMet: true,
+				},
+				Plugin: &Plugin{
+					Image: "",
+				},
+				Profiles: []string{"test-profile"},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.manifest.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Manifest.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPlugin_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugin  *Plugin
+		wantErr bool
+	}{
+		{
+			name:    "valid image",
+			plugin:  &Plugin{Image: "nginx:latest"},
+			wantErr: false,
+		},
+		{
+			name:    "valid image with tag",
+			plugin:  &Plugin{Image: "localhost:5000/my-image"},
+			wantErr: false,
+		},
+		{
+			name:    "valid image with complex tag",
+			plugin:  &Plugin{Image: "my-registry.com:8080/my-image:1.0"},
+			wantErr: false,
+		},
+		{
+			name:    "valid image with sub-registry",
+			plugin:  &Plugin{Image: "my-registry.com/sub-registry/my-image:abc123"},
+			wantErr: false,
+		},
+		{
+			name:    "invalid image with double colon",
+			plugin:  &Plugin{Image: "nginx::latest"},
+			wantErr: true,
+		},
+		{
+			name:    "invalid image with double colon and port",
+			plugin:  &Plugin{Image: "localhost::5000/my-image"},
+			wantErr: true,
+		},
+		{
+			name:    "invalid image with double colon and port",
+			plugin:  &Plugin{Image: "my-registry.com::8080/my-image:1.0"},
+			wantErr: true,
+		},
+		{
+			name:    "invalid image with double at symbol",
+			plugin:  &Plugin{Image: "my-registry.com/my-image@@sha256:abc123"},
+			wantErr: true,
+		},
+		{
+			name:    "invalid image with uppercase letters",
+			plugin:  &Plugin{Image: "UPPERCASEINVALID"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.plugin.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Plugin.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

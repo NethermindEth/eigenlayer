@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	eigenChainio "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elContracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
 	eigensdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
@@ -55,7 +56,7 @@ func StatusCmd() *cobra.Command {
 				return err
 			}
 
-			ethClient, err := eigenChainio.NewEthClient(operatorCfg.EthRPCUrl)
+			ethClient, err := eth.NewClient(operatorCfg.EthRPCUrl)
 			if err != nil {
 				return err
 			}

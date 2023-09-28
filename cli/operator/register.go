@@ -13,9 +13,11 @@ import (
 	"github.com/spf13/cobra"
 
 	eigenChainio "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elContracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	eigensdkLogger "github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signer"
 	eigensdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -83,7 +85,17 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			ethClient, err := eigenChainio.NewEthClient(operatorCfg.EthRPCUrl)
+			blsKeyPassword, err := p.InputHiddenString("Enter password to decrypt the bls private key:", "",
+				func(password string) error {
+					return nil
+				},
+			)
+			if err != nil {
+				fmt.Println("Error while reading bls key password")
+				return err
+			}
+
+			ethClient, err := eth.NewClient(operatorCfg.EthRPCUrl)
 			if err != nil {
 				return err
 			}
@@ -97,11 +109,14 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			elWriter, err := elContracts.NewELChainWriter(
+
+			noopMetrics := metrics.NewNoopMetrics()
+			elWriter := elContracts.NewELChainWriter(
 				elContractsClient,
 				ethClient,
 				localSigner,
 				llog,
+				noopMetrics,
 			)
 
 			if err != nil {
@@ -113,7 +128,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
-			keyPair, err := bls.ReadPrivateKeyFromFile(operatorCfg.BlsPrivateKeyStorePath, "")
+			keyPair, err := bls.ReadPrivateKeyFromFile(operatorCfg.BlsPrivateKeyStorePath, blsKeyPassword)
 			if err != nil {
 				return err
 			}
@@ -185,8 +200,17 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 		return localSigner, nil
 	case types.LocalKeystoreSigner:
 		fmt.Println("Using local keystore signer")
+		ecdsaPassword, err := p.InputHiddenString("Enter password to decrypt the ecdsa private key:", "",
+			func(password string) error {
+				return nil
+			},
+		)
+		if err != nil {
+			fmt.Println("Error while reading ecdsa key password")
+			return nil, err
+		}
 		// TODO: Get chain ID from config
-		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, "", chainId)
+		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, ecdsaPassword, chainId)
 		if err != nil {
 			return nil, err
 		}

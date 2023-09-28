@@ -3,7 +3,8 @@ package package_handler
 import (
 	"errors"
 	"fmt"
-	"regexp"
+
+	"github.com/docker/distribution/reference"
 )
 
 // Manifest represents the manifest file of a package
@@ -102,9 +103,9 @@ func (p *Plugin) validate() error {
 	var invalidFields []string
 	// Validate plugin image field is a valid docker image
 	if p.Image != "" {
-		re := regexp.MustCompile(`^([\w-]+\/)?([\w-]+)(:[\w-\.]+)?$`)
-		if !re.MatchString(p.Image) {
-			invalidFields = append(invalidFields, "plugin.image -> (invalid docker image)")
+		// Parse the image name
+		if _, err := reference.ParseNormalizedNamed(p.Image); err != nil {
+			invalidFields = append(invalidFields, fmt.Sprintf("plugin.image -> (invalid docker image: %v)", err))
 		}
 	} else {
 		invalidFields = append(invalidFields, "plugin.image -> (empty)")

@@ -458,6 +458,9 @@ func (d *DockerManager) Run(image string, options RunOptions) (err error) {
 
 	// Ensure the container is removed after use
 	defer func() {
+		if options.AutoRemove {
+			return
+		}
 		log.Debugf("Removing container %s", createResponse.ID)
 		removeErr := d.dockerClient.ContainerRemove(context.Background(), createResponse.ID, types.ContainerRemoveOptions{})
 		if removeErr != nil {

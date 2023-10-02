@@ -173,7 +173,7 @@ func (d *DataDir) InitBackup(backupId BackupId) (*Backup, error) {
 
 // BackupList returns the list of paths to all the backups. Only .tar files are
 // returned.
-func (d *DataDir) BackupList() ([]string, error) {
+func (d *DataDir) BackupList() ([]*Backup, error) {
 	// Init backup dir
 	if err := d.initBackupDir(); err != nil {
 		return nil, err
@@ -184,13 +184,17 @@ func (d *DataDir) BackupList() ([]string, error) {
 		return nil, err
 	}
 	// Filter .tar files
-	var backups []string
+	var backups []*Backup
 	for _, dirItem := range dirItems {
 		if dirItem.IsDir() {
 			continue
 		}
 		if filepath.Ext(dirItem.Name()) == ".tar" {
-			backups = append(backups, filepath.Join(d.path, backupDir, dirItem.Name()))
+			b, err := NewBackup(d.fs, filepath.Join(d.path, backupDir, dirItem.Name()))
+			if err != nil {
+				return nil, err
+			}
+			backups = append(backups, b)
 		}
 	}
 	return backups, nil
@@ -216,8 +220,9 @@ func (d *DataDir) initBackup(backupId BackupId) (*Backup, error) {
 	}
 
 	return &Backup{
-		Id:   backupId,
-		path: backupPath,
+		BackupId: backupId,
+		path:     backupPath,
+		fs:       d.fs,
 	}, nil
 }
 

@@ -22,8 +22,13 @@ func StatusCmd() *cobra.Command {
 		operatorCfg           types.OperatorConfig
 	)
 	cmd := cobra.Command{
-		Use:   "status",
+		Use:   "status [flags]",
 		Short: "Check if the operator is registered and get the operator details",
+		Long: `
+		Check the registration status of operator to Eigenlayer.
+
+		It expects the same configuration yaml file as input to register command
+		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
 			cmd.DisableFlagParsing = false

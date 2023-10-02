@@ -14,7 +14,13 @@ import (
 
 func ListCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
-		Use: "list",
+		Use:   "list",
+		Short: "List all the keys created by this create command",
+		Long: `
+		This command will list both ecdsa and bls key created using create command
+
+		It will only list keys created in the default folder (./operator_keys/)
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			files, err := os.ReadDir(OperatorKeyFolder + "/")
 			if err != nil {

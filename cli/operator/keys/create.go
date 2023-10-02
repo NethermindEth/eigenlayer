@@ -30,7 +30,18 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 	var keyType string
 
 	cmd := cobra.Command{
-		Use: "create [keyname] [flags]",
+		Use:   "create [keyname] [flags]",
+		Short: "Used to create encrypted keys in local keystore",
+		Long: `
+		Used to create ecdsa and bls key in local keystore
+
+		keyname is required
+
+		use --key-type ecdsa/bls to create ecdsa/bls key. 
+		It will prompt for password to encrypt the key, which is otional but higly recommended.
+
+		This command will create keys in ./operator_keys/ location
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyName := args[0]
 

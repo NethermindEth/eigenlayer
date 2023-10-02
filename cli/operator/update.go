@@ -27,7 +27,14 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 		privateKeyHex         string
 	)
 	cmd := cobra.Command{
-		Use: "update [flags]",
+		Use:   "update [flags]",
+		Short: "Updates the operator metadata",
+		Long: `
+		Updates the operator metadata.
+
+		Requires the same file used for registration as a flag input to
+		--configuration-file
+		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
 			cmd.DisableFlagParsing = false

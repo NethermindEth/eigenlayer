@@ -33,6 +33,13 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "register [flags]",
 		Short: "Register the operator and the BLS public key in the Eigenlayer contracts",
+		Long: `
+		Register command expectes a yaml config file with --configuration-file
+		to successfully register an operator address to eigenlayer
+
+		This will register operator to DelegationManager and will register
+		the BLS public key on eigenlayer
+		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
 			cmd.DisableFlagParsing = false

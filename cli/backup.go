@@ -9,8 +9,10 @@ import (
 func BackupCmd(d daemon.Daemon) *cobra.Command {
 	var instanceId string
 	cmd := cobra.Command{
-		Use:  "backup",
-		Args: cobra.MinimumNArgs(1),
+		Use:   "backup <instance-id>",
+		Short: "Backup an instance",
+		Long:  "Backup an instance saving the data into a tarball file. To list backups, use 'eigenlayer backup ls'.",
+		Args:  cobra.MinimumNArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			instanceId = args[0]
 		},

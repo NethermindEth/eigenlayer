@@ -67,8 +67,6 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
-replace github.com/Layr-Labs/eigensdk-go => /Users/madhurshrimal/Desktop/github/Layr-Labs/eigensdk-go
-
 require (
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect

@@ -76,7 +76,6 @@ func StatusCmd() *cobra.Command {
 				llog,
 				ethClient,
 			)
-
 			if err != nil {
 				return err
 			}

@@ -20,7 +20,7 @@ func CreateCmd() *cobra.Command {
 				return err
 			}
 			operatorFile := "operator.yaml"
-			err = os.WriteFile(operatorFile, yamlData, 0644)
+			err = os.WriteFile(operatorFile, yamlData, 0o644)
 			if err != nil {
 				return err
 			}
@@ -31,7 +31,7 @@ func CreateCmd() *cobra.Command {
 				return err
 			}
 			metadataFile := "metadata.json"
-			err = os.WriteFile(metadataFile, jsonData, 0644)
+			err = os.WriteFile(metadataFile, jsonData, 0o644)
 			if err != nil {
 				return err
 			}

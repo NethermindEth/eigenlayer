@@ -16,7 +16,6 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
 		Use: "list",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			files, err := os.ReadDir(OperatorKeyFolder + "/")
 			if err != nil {
 				return err

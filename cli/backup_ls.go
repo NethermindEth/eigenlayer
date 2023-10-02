@@ -14,12 +14,13 @@ func BackupLsCmd(d daemon.Daemon) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "ls",
 		Short: "List backups",
+		Long:  "List backups showing all backups and their details.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			backus, err := d.BackupList()
+			backups, err := d.BackupList()
 			if err != nil {
 				return err
 			}
-			printBackupTable(backus, cmd.OutOrStdout())
+			printBackupTable(backups, cmd.OutOrStdout())
 			return nil
 		},
 	}
@@ -28,12 +29,12 @@ func BackupLsCmd(d daemon.Daemon) *cobra.Command {
 
 func printBackupTable(backups []daemon.BackupInfo, out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 4, ' ', 0)
-	fmt.Fprintln(w, "AVS Instance ID\tTIMESTAMP\tSIZE (Bytes)\t")
+	fmt.Fprintln(w, "AVS Instance ID\tTIMESTAMP\tSIZE (GB)\t")
 	for _, b := range backups {
 		fmt.Fprintln(w, backupTableItem{
 			instance:  b.Instance,
 			timestamp: b.Timestamp.Format(time.DateTime),
-			size:      b.SizeBytes,
+			size:      float64(b.SizeBytes) / 1000000000,
 		})
 	}
 	w.Flush()
@@ -42,9 +43,9 @@ func printBackupTable(backups []daemon.BackupInfo, out io.Writer) {
 type backupTableItem struct {
 	instance  string
 	timestamp string
-	size      uint64
+	size      float64
 }
 
 func (b backupTableItem) String() string {
-	return fmt.Sprintf("%s\t%s\t%d\t", b.instance, b.timestamp, b.size)
+	return fmt.Sprintf("%s\t%s\t%f\t", b.instance, b.timestamp, b.size)
 }

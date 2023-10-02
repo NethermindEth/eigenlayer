@@ -896,7 +896,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, b)
-				assert.Equal(t, backupId, b.Id)
+				assert.Equal(t, backupId, b.BackupId)
 				bStat, err := d.fs.Stat(b.path)
 				require.NoError(t, err)
 				require.Equal(t, bStat.Mode(), os.FileMode(0o644))

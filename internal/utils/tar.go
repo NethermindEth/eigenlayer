@@ -209,14 +209,14 @@ func TarAddDir(srcPath, prefix string, tarFile io.Writer) error {
 
 		// if not a dir, write file content
 		if !fi.IsDir() {
-			data, err := os.Open(file)
+			f, err := os.Open(file)
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(tarWriter, data); err != nil {
+			defer f.Close()
+			if _, err := io.Copy(tarWriter, f); err != nil {
 				return err
 			}
-			err = data.Close()
 			if err != nil {
 				return err
 			}

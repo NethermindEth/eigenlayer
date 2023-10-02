@@ -8,15 +8,12 @@ import (
 
 type backupConfig struct {
 	Prefix  string   `yaml:"prefix"`
-	Out     string   `yaml:"out"`
 	Volumes []string `yaml:"volumes"`
 }
 
 func (b *backupConfig) Save(f io.Writer) error {
-	data, err := yaml.Marshal(b)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(data)
-	return err
+	encoder := yaml.NewEncoder(f)
+	encoder.SetIndent(2)
+	defer encoder.Close()
+	return encoder.Encode(b)
 }

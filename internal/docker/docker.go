@@ -507,6 +507,7 @@ func (d *DockerManager) Run(image string, options RunOptions) (err error) {
 	}
 }
 
+// ImageExist checks if a specified Docker image exists.
 func (d *DockerManager) ImageExist(image string) (bool, error) {
 	_, _, err := d.dockerClient.ImageInspectWithRaw(context.Background(), image)
 	if err != nil {

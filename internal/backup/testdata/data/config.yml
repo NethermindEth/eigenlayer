@@ -1,0 +1,4 @@
+prefix: volumes/instance-1
+volumes:
+  - /path/to/volume1
+  - /path/to/volume/2.txt

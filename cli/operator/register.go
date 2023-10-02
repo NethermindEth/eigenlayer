@@ -3,7 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
@@ -177,7 +176,6 @@ func getSignerType(signerType string, operatorCfg types.OperatorConfig) (string,
 
 func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex string, operatorCfg types.OperatorConfig) (signer.Signer, error) {
 	var localSigner signer.Signer
-	chainId := big.NewInt(31337)
 	switch signerType {
 	case types.PrivateKeySigner:
 		fmt.Println("Using private key signer")
@@ -193,7 +191,7 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 			return nil, err
 		}
 		// TODO: Get chain ID from config
-		localSigner, err = signer.NewPrivateKeySigner(privateKey, chainId)
+		localSigner, err = signer.NewPrivateKeySigner(privateKey, &operatorCfg.ChainId)
 		if err != nil {
 			return nil, err
 		}
@@ -210,7 +208,7 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 			return nil, err
 		}
 		// TODO: Get chain ID from config
-		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, ecdsaPassword, chainId)
+		localSigner, err := signer.NewPrivateKeyFromKeystoreSigner(operatorCfg.PrivateKeyStorePath, ecdsaPassword, &operatorCfg.ChainId)
 		if err != nil {
 			return nil, err
 		}

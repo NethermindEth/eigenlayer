@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math/big"
+
 	eigensdkTypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -19,4 +21,5 @@ type OperatorConfig struct {
 	PrivateKeyStorePath           string                 `yaml:"private_key_store_path"`
 	SignerType                    SignerType             `yaml:"signer_type"`
 	BlsPrivateKeyStorePath        string                 `yaml:"bls_private_key_store_path"`
+	ChainId                       big.Int                `yaml:"chain_id"`
 }

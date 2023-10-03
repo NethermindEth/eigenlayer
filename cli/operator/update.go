@@ -30,7 +30,11 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 		Use:   "update [flags]",
 		Short: "Updates the operator metadata",
 		Long: `
-		Updates the operator metadata.
+		Updates the operator metadata onchain which includes 
+			- metadata url
+			- delegation approver address
+			- earnings reciver address
+			- staker opt out window blocks
 
 		Requires the same file used for registration as a flag input to
 		--configuration-file

@@ -12,7 +12,15 @@ import (
 
 func CreateCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use: "create",
+		Use:   "create",
+		Short: "Used to creata operator config and metadata json sample file",
+		Long: `
+		This command is used to create a sample empty operator config file 
+		and also an empty metadata json file which you need to upload for
+		operator metadata
+
+		Both of these are needed for operator registration
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			op := types.OperatorConfig{}
 			yamlData, err := yaml.Marshal(&op)

@@ -98,6 +98,8 @@ func GetAddress(keyStoreFile string) (string, error) {
 	}
 }
 
+// GetECDSAPrivateKey - Keeping it right now as we might need this function to export
+// the keys
 func GetECDSAPrivateKey(keyStoreFile string, password string) (*ecdsa.PrivateKey, error) {
 	keyStoreContents, err := os.ReadFile(keyStoreFile)
 	if err != nil {

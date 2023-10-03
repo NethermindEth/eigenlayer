@@ -30,7 +30,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 	var keyType string
 
 	cmd := cobra.Command{
-		Use:   "create [keyname] [flags]",
+		Use:   "create --key-type <key-type> <keyname>",
 		Short: "Used to create encrypted keys in local keystore",
 		Long: `
 		Used to create ecdsa and bls key in local keystore
@@ -38,7 +38,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 		keyname is required
 
 		use --key-type ecdsa/bls to create ecdsa/bls key. 
-		It will prompt for password to encrypt the key, which is otional but higly recommended.
+		It will prompt for password to encrypt the key, which is optional but highly recommended.
 
 		This command will create keys in ./operator_keys/ location
 		`,
@@ -82,6 +82,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				}
 
 				privateKeyHex := hex.EncodeToString(privateKey.D.Bytes())
+				// TODO: display it using `less` of `vi` so that it is not saved in terminal history
 				fmt.Println("ECDSA Private Key (Hex): ", privateKeyHex)
 				fmt.Println("Please backup the above private key hex in safe place.")
 				fmt.Println()
@@ -118,6 +119,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				if err != nil {
 					return err
 				}
+				// TODO: display it using `less` of `vi` so that it is not saved in terminal history
 				fmt.Println("BLS Private Key: " + blsKeyPair.PrivKey.String())
 				fmt.Println("Please backup the above private key in safe place.")
 				fmt.Println()
@@ -165,7 +167,12 @@ func writeBytesToFile(keyName string, data []byte) error {
 		return err
 	}
 	// remember to close the file
-	defer file.Close()
+	defer func() {
+		cerr := file.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 
 	fileScanner := bufio.NewScanner(file)
 	fileScanner.Split(bufio.ScanLines)

@@ -257,7 +257,11 @@ func (h HardwareRequirements) String() string {
 }
 
 type BackupInfo struct {
+	Id        string
 	Instance  string
 	Timestamp time.Time
-	SizeBytes uint64
+	SizeBytes int64
+	Version   string
+	Commit    string
+	Url       string
 }

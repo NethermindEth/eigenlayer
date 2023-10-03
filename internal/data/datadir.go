@@ -164,82 +164,82 @@ func (d *DataDir) TempPath(id string) (string, error) {
 	return tempPath, nil
 }
 
-func (d *DataDir) InitBackup(backupId BackupId) (*Backup, error) {
-	if err := d.initBackupDir(); err != nil {
-		return nil, err
-	}
-	return d.initBackup(backupId)
-}
-
-// BackupList returns the list of paths to all the backups. Only .tar files are
-// returned.
-func (d *DataDir) BackupList() ([]*Backup, error) {
-	// Init backup dir
-	if err := d.initBackupDir(); err != nil {
-		return nil, err
-	}
-	// Get all files in backup dir
-	dirItems, err := afero.ReadDir(d.fs, filepath.Join(d.path, backupDir))
+// BackupList returns the list of paths to all the backups.
+func (d *DataDir) BackupList() ([]Backup, error) {
+	err := d.initBackupDir()
 	if err != nil {
 		return nil, err
 	}
-	// Filter .tar files
-	var backups []*Backup
-	for _, dirItem := range dirItems {
-		if dirItem.IsDir() {
-			continue
-		}
-		if filepath.Ext(dirItem.Name()) == ".tar" {
-			b, err := NewBackup(d.fs, filepath.Join(d.path, backupDir, dirItem.Name()))
+	backupFiles, err := afero.ReadDir(d.fs, d.backupsDir())
+	if err != nil {
+		return nil, err
+	}
+
+	var backups []Backup
+	for _, backupFile := range backupFiles {
+		if !backupFile.IsDir() && filepath.Ext(backupFile.Name()) == ".tar" {
+			b, err := BackupFromTar(d.fs, filepath.Join(d.backupsDir(), backupFile.Name()))
 			if err != nil {
 				return nil, err
 			}
-			backups = append(backups, b)
+			backups = append(backups, *b)
 		}
 	}
 	return backups, nil
 }
 
-func (d *DataDir) initBackup(backupId BackupId) (*Backup, error) {
-	backupPath, err := d.backupPath(backupId)
+// BackupSize returns the size in bytes of the backup with the given id.
+func (d *DataDir) BackupSize(backupId string) (int64, error) {
+	backupStat, err := d.fs.Stat(d.BackupPath(backupId))
 	if err != nil {
-		return nil, err
+		return -1, err
 	}
-
-	ok, err := d.hasBackup(backupId)
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		return nil, fmt.Errorf("%w: %s", ErrBackupAlreadyExists, backupId)
-	}
-
-	err = utils.TarInit(d.fs, backupPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Backup{
-		BackupId: backupId,
-		path:     backupPath,
-		fs:       d.fs,
-	}, nil
+	return backupStat.Size(), nil
 }
 
-func (d *DataDir) hasBackup(backupId BackupId) (bool, error) {
-	backupPath, err := d.backupPath(backupId)
+// HasBackup returns true if the backup with the given id exists.
+func (d *DataDir) HasBackup(backupId string) (bool, error) {
+	_, err := d.fs.Stat(d.BackupPath(backupId))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
 		return false, err
 	}
-	return afero.Exists(d.fs, backupPath)
+	return true, nil
 }
 
-func (d *DataDir) backupPath(backupId BackupId) (string, error) {
-	return filepath.Join(d.path, backupDir, backupId.String()+".tar"), nil
+// BackupPath returns the path to the backup with the given id.
+func (d *DataDir) BackupPath(backupId string) string {
+	return filepath.Join(d.path, backupDir, backupId+".tar")
+}
+
+// InitBackup initialized a new backup. If a backup with the same id already
+// exists, an ErrBackupAlreadyExists error is returned.
+func (d *DataDir) InitBackup(b *Backup) error {
+	// Check if backup already exists
+	exists, err := d.HasBackup(b.Id())
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("%w: %s", ErrBackupAlreadyExists, b.Id())
+	}
+	// Create backup directory if it does not exist
+	err = d.initBackupDir()
+	if err != nil {
+		return err
+	}
+	// Initialize backup tar file
+	return utils.TarInit(d.fs, d.BackupPath(b.Id()))
+}
+
+func (d *DataDir) backupsDir() string {
+	return filepath.Join(d.path, backupDir)
 }
 
 func (d *DataDir) initBackupDir() error {
-	backupDirPath := filepath.Join(d.path, backupDir)
+	backupDirPath := d.backupsDir()
 	ok, err := afero.DirExists(d.fs, backupDirPath)
 	if err != nil {
 		return err

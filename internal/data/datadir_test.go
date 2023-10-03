@@ -760,10 +760,13 @@ func TestDataDir_initBackupDir(t *testing.T) {
 	}
 }
 
-func TestDataDir_hasBackup(t *testing.T) {
-	backupId := BackupId{
+func TestDataDir_HasBackup(t *testing.T) {
+	backup := Backup{
 		InstanceId: "mock-avs-default",
-		Timestamp:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		Timestamp:  time.Unix(1696340865, 0),
+		Version:    common.MockAvsPkg.Version(),
+		Commit:     common.MockAvsPkg.CommitHash(),
+		Url:        common.MockAvsPkg.Repo(),
 	}
 	tc := []struct {
 		name  string
@@ -808,7 +811,7 @@ func TestDataDir_hasBackup(t *testing.T) {
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)
-				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200.tar"))
+				file, err := fs.Create(filepath.Join(testDir, backupDir, backup.Id()+".tar"))
 				require.NoError(t, err)
 				require.NoError(t, file.Close())
 				return &DataDir{
@@ -821,7 +824,7 @@ func TestDataDir_hasBackup(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			d := tt.setup()
-			ok, err := d.hasBackup(backupId)
+			ok, err := d.HasBackup(backup.Id())
 			if tt.err != nil {
 				require.Error(t, err)
 				assert.False(t, ok)
@@ -834,9 +837,12 @@ func TestDataDir_hasBackup(t *testing.T) {
 }
 
 func TestDataDir_InitBackup(t *testing.T) {
-	backupId := BackupId{
+	backup := Backup{
 		InstanceId: "mock-avs-default",
-		Timestamp:  time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		Timestamp:  time.Unix(1696340865, 0),
+		Version:    common.MockAvsPkg.Version(),
+		Commit:     common.MockAvsPkg.CommitHash(),
+		Url:        common.MockAvsPkg.Repo(),
 	}
 	tc := []struct {
 		name  string
@@ -877,7 +883,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)
-				file, err := fs.Create(filepath.Join(testDir, backupDir, "mock-avs-default-1672531200.tar"))
+				file, err := fs.Create(filepath.Join(testDir, backupDir, backup.Id()+".tar"))
 				require.NoError(t, err)
 				require.NoError(t, file.Close())
 				return &DataDir{
@@ -890,14 +896,12 @@ func TestDataDir_InitBackup(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			d := tt.setup()
-			b, err := d.initBackup(backupId)
+			err := d.InitBackup(&backup)
 			if tt.err != nil {
 				assert.ErrorIs(t, err, tt.err)
 			} else {
 				require.NoError(t, err)
-				require.NotNil(t, b)
-				assert.Equal(t, backupId, b.BackupId)
-				bStat, err := d.fs.Stat(b.path)
+				bStat, err := d.fs.Stat(d.BackupPath(backup.Id()))
 				require.NoError(t, err)
 				require.Equal(t, bStat.Mode(), os.FileMode(0o644))
 				require.Equal(t, bStat.Size(), int64(1024))

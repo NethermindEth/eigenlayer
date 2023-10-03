@@ -22,6 +22,7 @@ func UpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		version    string
 		commit     string
 		noPrompt   bool
+		backup     bool
 		help       bool
 		yes        bool
 	)
@@ -158,7 +159,14 @@ Options of the new version can be specified using the --option.<option-name> fla
 				}
 			}
 
-			// TODO: backup current instance
+			// Backup instance
+			if backup {
+				backupId, err := d.Backup(instanceId)
+				if err != nil {
+					return err
+				}
+				log.Info("Backup created with id: ", backupId)
+			}
 
 			// Uninstall current instance
 			err = uninstallPackage(d, instanceId)
@@ -197,6 +205,7 @@ Options of the new version can be specified using the --option.<option-name> fla
 
 	cmd.Flags().BoolVar(&noPrompt, "no-prompt", false, "disable command prompts, and all options should be passed using command flags.")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
+	cmd.Flags().BoolVar(&backup, "backup", false, "backup current instance before updating.")
 	return &cmd
 }
 

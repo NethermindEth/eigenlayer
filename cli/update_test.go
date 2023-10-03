@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	daemonMock "github.com/NethermindEth/eigenlayer/cli/mocks"
 	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
@@ -180,6 +181,104 @@ func TestUpdate(t *testing.T) {
 					}).Return(instanceId, nil),
 					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
 					d.EXPECT().Run(instanceId),
+				)
+			},
+		},
+		{
+			name: "update with backup",
+			args: []string{instanceId, "--backup"},
+			err:  nil,
+			mocker: func(ctrl *gomock.Controller, d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				oldOption := daemonMock.NewMockOption(ctrl)
+				newOption := daemonMock.NewMockOption(ctrl)
+				mergedOption := daemonMock.NewMockOption(ctrl)
+
+				oldOption.EXPECT().IsSet().Return(true)
+				oldOption.EXPECT().Value().Return("old-value", nil)
+				oldOption.EXPECT().Name().Return("old-option").Times(3)
+				mergedOption.EXPECT().IsSet().Return(true).Times(2)
+				mergedOption.EXPECT().Value().Return("old-value", nil)
+				mergedOption.EXPECT().Name().Return("old-option").Times(2)
+				mergedOption.EXPECT().Default().Return("default-value")
+				mergedOption.EXPECT().Help().Return("option help")
+
+				gomock.InOrder(
+					d.EXPECT().PullUpdate(instanceId, daemon.PullTarget{}).Return(daemon.PullUpdateResult{
+						Name:          "mock-avs",
+						Tag:           "default",
+						Url:           common.MockAvsPkg.Repo(),
+						Profile:       "option-returner",
+						OldVersion:    "v5.4.0",
+						NewVersion:    common.MockAvsPkg.Version(),
+						OldCommit:     "b64c50c15e53ae7afebbdbe210b834d1ee471043",
+						NewCommit:     common.MockAvsPkg.CommitHash(),
+						HasPlugin:     true,
+						OldOptions:    []daemon.Option{oldOption},
+						NewOptions:    []daemon.Option{newOption},
+						MergedOptions: []daemon.Option{mergedOption},
+						HardwareRequirements: daemon.HardwareRequirements{
+							MinCPUCores:                 2,
+							MinRAM:                      2048,
+							MinFreeSpace:                5120,
+							StopIfRequirementsAreNotMet: true,
+						},
+					}, nil),
+					d.EXPECT().Backup(instanceId).Return(fmt.Sprintf("%s-%d", instanceId, time.Now().Unix()), nil),
+					d.EXPECT().Uninstall(instanceId).Return(nil),
+					d.EXPECT().Install(daemon.InstallOptions{
+						Name:    "mock-avs",
+						Tag:     "default",
+						URL:     common.MockAvsPkg.Repo(),
+						Profile: "option-returner",
+						Version: common.MockAvsPkg.Version(),
+						Commit:  common.MockAvsPkg.CommitHash(),
+						Options: []daemon.Option{mergedOption},
+					}).Return(instanceId, nil),
+					p.EXPECT().Confirm("Run the new instance now?").Return(true, nil),
+					d.EXPECT().Run(instanceId),
+				)
+			},
+		},
+		{
+			name: "update backup error",
+			args: []string{instanceId, "--backup"},
+			err:  assert.AnError,
+			mocker: func(ctrl *gomock.Controller, d *daemonMock.MockDaemon, p *prompterMock.MockPrompter) {
+				oldOption := daemonMock.NewMockOption(ctrl)
+				newOption := daemonMock.NewMockOption(ctrl)
+				mergedOption := daemonMock.NewMockOption(ctrl)
+
+				oldOption.EXPECT().IsSet().Return(true)
+				oldOption.EXPECT().Value().Return("old-value", nil)
+				oldOption.EXPECT().Name().Return("old-option").Times(3)
+				mergedOption.EXPECT().IsSet().Return(true).Times(2)
+				mergedOption.EXPECT().Value().Return("old-value", nil)
+				mergedOption.EXPECT().Name().Return("old-option").Times(2)
+				mergedOption.EXPECT().Default().Return("default-value")
+				mergedOption.EXPECT().Help().Return("option help")
+
+				gomock.InOrder(
+					d.EXPECT().PullUpdate(instanceId, daemon.PullTarget{}).Return(daemon.PullUpdateResult{
+						Name:          "mock-avs",
+						Tag:           "default",
+						Url:           common.MockAvsPkg.Repo(),
+						Profile:       "option-returner",
+						OldVersion:    "v5.4.0",
+						NewVersion:    common.MockAvsPkg.Version(),
+						OldCommit:     "b64c50c15e53ae7afebbdbe210b834d1ee471043",
+						NewCommit:     common.MockAvsPkg.CommitHash(),
+						HasPlugin:     true,
+						OldOptions:    []daemon.Option{oldOption},
+						NewOptions:    []daemon.Option{newOption},
+						MergedOptions: []daemon.Option{mergedOption},
+						HardwareRequirements: daemon.HardwareRequirements{
+							MinCPUCores:                 2,
+							MinRAM:                      2048,
+							MinFreeSpace:                5120,
+							StopIfRequirementsAreNotMet: true,
+						},
+					}, nil),
+					d.EXPECT().Backup(instanceId).Return("", assert.AnError),
 				)
 			},
 		},

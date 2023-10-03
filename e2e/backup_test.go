@@ -73,8 +73,8 @@ func TestBackupList(t *testing.T) {
 			t.Log(string(out))
 			assert.NoError(t, backupErr, "backup ls command should succeed")
 			assert.Regexp(t, regexp.MustCompile(
-				`AVS Instance ID     TIMESTAMP              SIZE \(GB\)    
-mock-avs-default    .*    0\.000009`),
+				`AVS Instance ID     TIMESTAMP              SIZE    
+mock-avs-default    .*    9KiB`),
 				string(out))
 		},
 	)

@@ -28,7 +28,7 @@ type Backup struct {
 // NewBackup creates a new Backup instance from the given path.
 func NewBackup(fs afero.Fs, path string) (*Backup, error) {
 	backupFileName := filepath.Base(path)
-	instanceId, timestamp, err := parseBackupName(backupFileName)
+	instanceId, timestamp, err := ParseBackupName(backupFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (b *Backup) Size() (uint64, error) {
 	return uint64(bStat.Size()), nil
 }
 
-func parseBackupName(backupName string) (instanceId string, timestamp time.Time, err error) {
+func ParseBackupName(backupName string) (instanceId string, timestamp time.Time, err error) {
 	backupFileNameRegex := regexp.MustCompile(`^(?P<instance_id>.*)-(?P<timestamp>[0-9]+)\.tar$`)
 	match := backupFileNameRegex.FindStringSubmatch(backupName)
 	if len(match) != 3 {

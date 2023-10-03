@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/env"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/cenkalti/backoff"
@@ -363,4 +365,32 @@ func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 		assert.Contains(t, envTargets, target)
 		assert.Equal(t, envData[target], "\"\"", "target %s should be empty string", target)
 	}
+}
+
+func checkBackupExist(t *testing.T, instanceId string, before, after time.Time) {
+	dataDir, err := dataDirPath()
+	require.NoError(t, err)
+	backupsDir := filepath.Join(dataDir, "backup")
+
+	dirFiles, err := os.ReadDir(backupsDir)
+	require.NoError(t, err)
+
+	var found bool
+	for _, f := range dirFiles {
+		if f.IsDir() {
+			continue
+		}
+		i, t, err := data.ParseBackupName(filepath.Base(f.Name()))
+		if err != nil {
+			continue
+		}
+		if i == instanceId &&
+			((t.Before(before) && t.After(after)) ||
+				t.Equal(before) ||
+				t.Equal(after)) {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
 }

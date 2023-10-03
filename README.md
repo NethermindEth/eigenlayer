@@ -17,6 +17,8 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
     - [Updating with explicit version](#updating-with-explicit-version)
     - [Updating with commit hash](#updating-with-commit-hash)
     - [Updating options](#updating-options)
+  - [Backup](#backup)
+  - [List backups](#list-backups)
   - [Uninstalling AVS Node Software](#uninstalling-avs-node-software)
   - [List installed instances](#list-installed-instances)
   - [Run an AVS instance](#run-an-avs-instance)
@@ -262,6 +264,37 @@ eigenlayer update mock-avs-default a3406616b848164358fdd24465b8eecda5f5ae34
 ### Updating options
 
 The `--no-prompt` flag is available to skip the options prompt, also the dynamic flags `--option.<option-name>` are available to set the option values, like in the `install` command.
+
+## Backup
+
+To backup an installed AVS Node Software, use the `eigenlayer backup` command with the AVS instance ID as an argument, as follows:
+
+```bash
+eigenlayer backup mock-avs-default
+```
+
+Output:
+
+```bash
+INFO[0000] Backing up instance mock-avs-default         
+INFO[0000] Backing up instance data...                  
+INFO[0000] Backup created with id: mock-avs-default-1696337650
+```
+
+## List backups
+
+To list all the backups, use the `eigenlayer backup ls` command, as follows:
+
+```bash
+eigenlayer backup ls
+```
+
+Output:
+
+```bash
+AVS Instance ID     TIMESTAMP              SIZE (GB)    
+mock-avs-default    2023-10-01 08:00:00    0.000009
+```
 
 ## Uninstalling AVS Node Software
 

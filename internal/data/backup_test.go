@@ -47,7 +47,7 @@ func TestParseBackupName(t *testing.T) {
 	}
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			instanceId, timestamp, err := parseBackupName(tt.backupName)
+			instanceId, timestamp, err := ParseBackupName(tt.backupName)
 			if tt.err != nil {
 				assert.ErrorIs(t, err, tt.err)
 			} else {

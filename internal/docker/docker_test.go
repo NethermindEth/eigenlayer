@@ -25,6 +25,7 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/docker/mocks"
+	"github.com/NethermindEth/eigenlayer/internal/utils"
 )
 
 // Image tests
@@ -1162,124 +1163,123 @@ func TestNetworkDisconnect(t *testing.T) {
 	}
 }
 
-// TODO: [REFACTOR] Remove this function if it's not used.
-// func TestBuildImageFromURI(t *testing.T) {
-// 	type testCase struct {
-// 		name          string
-// 		remote        string
-// 		tag           string
-// 		buildArgs     map[string]*string
-// 		setup         func(*mocks.MockAPIClient)
-// 		expectedError error
-// 	}
-// 	tests := []testCase{
-// 		{
-// 			name:   "success",
-// 			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 			tag:    "mock-avs-plugin",
-// 			setup: func(dockerClient *mocks.MockAPIClient) {
-// 				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
-// 				buildResponse := types.ImageBuildResponse{
-// 					Body: buildBody,
-// 				}
-// 				loadBody := io.NopCloser(bytes.NewReader([]byte{}))
-// 				loadResponse := types.ImageLoadResponse{
-// 					Body: loadBody,
-// 				}
-// 				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 					Tags:          []string{"mock-avs-plugin"},
-// 					Remove:        true,
-// 					ForceRemove:   true,
-// 				}).Return(buildResponse, nil)
-// 				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(loadResponse, nil)
-// 			},
-// 			expectedError: nil,
-// 		},
-// 		func(t *testing.T) testCase {
-// 			buildArgs := map[string]*string{
-// 				"key1": utils.StringPtr("value1"),
-// 				"key2": utils.StringPtr("value2"),
-// 			}
-// 			return testCase{
-// 				name:      "success, with build args",
-// 				remote:    "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 				tag:       "mock-avs-plugin",
-// 				buildArgs: buildArgs,
-// 				setup: func(dockerClient *mocks.MockAPIClient) {
-// 					buildBody := io.NopCloser(bytes.NewReader([]byte{}))
-// 					buildResponse := types.ImageBuildResponse{
-// 						Body: buildBody,
-// 					}
-// 					loadBody := io.NopCloser(bytes.NewReader([]byte{}))
-// 					loadResponse := types.ImageLoadResponse{
-// 						Body: loadBody,
-// 					}
-// 					dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 						RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 						Tags:          []string{"mock-avs-plugin"},
-// 						Remove:        true,
-// 						ForceRemove:   true,
-// 						BuildArgs:     buildArgs,
-// 					}).Return(buildResponse, nil)
-// 					dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(loadResponse, nil)
-// 				},
-// 				expectedError: nil,
-// 			}
-// 		}(t),
-// 		{
-// 			name:   "build error",
-// 			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 			tag:    "mock-avs-plugin",
-// 			setup: func(dockerClient *mocks.MockAPIClient) {
-// 				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
-// 					Tags:          []string{"mock-avs-plugin"},
-// 					Remove:        true,
-// 					ForceRemove:   true,
-// 				}).Return(types.ImageBuildResponse{}, errors.New("build error"))
-// 			},
-// 			expectedError: errors.New("build error"),
-// 		},
-// 		{
-// 			name:   "load error",
-// 			remote: "https://github.com/orgname/avs#main:plugin",
-// 			tag:    "orgname-avs-plugin",
-// 			setup: func(dockerClient *mocks.MockAPIClient) {
-// 				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
-// 				buildResponse := types.ImageBuildResponse{
-// 					Body: buildBody,
-// 				}
-// 				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
-// 					RemoteContext: "https://github.com/orgname/avs#main:plugin",
-// 					Tags:          []string{"orgname-avs-plugin"},
-// 					Remove:        true,
-// 					ForceRemove:   true,
-// 				}).Return(buildResponse, nil)
-// 				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(types.ImageLoadResponse{}, errors.New("load error"))
-// 			},
-// 			expectedError: errors.New("load error"),
-// 		},
-// 	}
+func TestBuildImageFromURI(t *testing.T) {
+	type testCase struct {
+		name          string
+		remote        string
+		tag           string
+		buildArgs     map[string]*string
+		setup         func(*mocks.MockAPIClient)
+		expectedError error
+	}
+	tests := []testCase{
+		{
+			name:   "success",
+			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+			tag:    "mock-avs-plugin",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
+				buildResponse := types.ImageBuildResponse{
+					Body: buildBody,
+				}
+				loadBody := io.NopCloser(bytes.NewReader([]byte{}))
+				loadResponse := types.ImageLoadResponse{
+					Body: loadBody,
+				}
+				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+					Tags:          []string{"mock-avs-plugin"},
+					Remove:        true,
+					ForceRemove:   true,
+				}).Return(buildResponse, nil)
+				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(loadResponse, nil)
+			},
+			expectedError: nil,
+		},
+		func(t *testing.T) testCase {
+			buildArgs := map[string]*string{
+				"key1": utils.StringPtr("value1"),
+				"key2": utils.StringPtr("value2"),
+			}
+			return testCase{
+				name:      "success, with build args",
+				remote:    "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+				tag:       "mock-avs-plugin",
+				buildArgs: buildArgs,
+				setup: func(dockerClient *mocks.MockAPIClient) {
+					buildBody := io.NopCloser(bytes.NewReader([]byte{}))
+					buildResponse := types.ImageBuildResponse{
+						Body: buildBody,
+					}
+					loadBody := io.NopCloser(bytes.NewReader([]byte{}))
+					loadResponse := types.ImageLoadResponse{
+						Body: loadBody,
+					}
+					dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+						RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+						Tags:          []string{"mock-avs-plugin"},
+						Remove:        true,
+						ForceRemove:   true,
+						BuildArgs:     buildArgs,
+					}).Return(buildResponse, nil)
+					dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(loadResponse, nil)
+				},
+				expectedError: nil,
+			}
+		}(t),
+		{
+			name:   "build error",
+			remote: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+			tag:    "mock-avs-plugin",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+					RemoteContext: "https://github.com/NethermindEth/mock-avs-pkg#main:plugin",
+					Tags:          []string{"mock-avs-plugin"},
+					Remove:        true,
+					ForceRemove:   true,
+				}).Return(types.ImageBuildResponse{}, errors.New("build error"))
+			},
+			expectedError: errors.New("build error"),
+		},
+		{
+			name:   "load error",
+			remote: "https://github.com/orgname/avs#main:plugin",
+			tag:    "orgname-avs-plugin",
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				buildBody := io.NopCloser(bytes.NewReader([]byte{}))
+				buildResponse := types.ImageBuildResponse{
+					Body: buildBody,
+				}
+				dockerClient.EXPECT().ImageBuild(context.Background(), nil, types.ImageBuildOptions{
+					RemoteContext: "https://github.com/orgname/avs#main:plugin",
+					Tags:          []string{"orgname-avs-plugin"},
+					Remove:        true,
+					ForceRemove:   true,
+				}).Return(buildResponse, nil)
+				dockerClient.EXPECT().ImageLoad(context.Background(), buildResponse.Body, true).Return(types.ImageLoadResponse{}, errors.New("load error"))
+			},
+			expectedError: errors.New("load error"),
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			ctrl := gomock.NewController(t)
-// 			dockerClient := mocks.NewMockAPIClient(ctrl)
-// 			tt.setup(dockerClient)
-// 			defer ctrl.Finish()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			tt.setup(dockerClient)
+			defer ctrl.Finish()
 
-// 			dockerManager := NewDockerManager(dockerClient)
-// 			err := dockerManager.BuildImageFromURI(tt.remote, tt.tag, tt.buildArgs)
+			dockerManager := NewDockerManager(dockerClient)
+			err := dockerManager.BuildImageFromURI(tt.remote, tt.tag, tt.buildArgs)
 
-// 			if tt.expectedError != nil {
-// 				assert.EqualError(t, err, tt.expectedError.Error())
-// 			} else {
-// 				assert.NoError(t, err)
-// 			}
-// 		})
-// 	}
-// }
+			if tt.expectedError != nil {
+				assert.EqualError(t, err, tt.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 
 func TestLoadImageContext(t *testing.T) {
 	tests := []struct {
@@ -1699,6 +1699,69 @@ func TestDockerManager_Run(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+type notFoundError struct{}
+
+func (e notFoundError) NotFound() {}
+
+func (e notFoundError) Error() string {
+	return "not found"
+}
+
+func TestImageExist(t *testing.T) {
+	image := "test-image:v1.0.0"
+
+	tc := []struct {
+		name  string
+		ok    bool
+		err   error
+		setup func(*mocks.MockAPIClient)
+	}{
+		{
+			name: "image exists",
+			ok:   true,
+			err:  nil,
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				dockerClient.EXPECT().ImageInspectWithRaw(context.Background(), image).Return(types.ImageInspect{}, nil, nil)
+			},
+		},
+		{
+			name: "image does not exist",
+			ok:   false,
+			err:  nil,
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				dockerClient.EXPECT().ImageInspectWithRaw(context.Background(), image).Return(types.ImageInspect{}, nil, notFoundError{})
+			},
+		},
+		{
+			name: "image inspect error",
+			ok:   false,
+			err:  assert.AnError,
+			setup: func(dockerClient *mocks.MockAPIClient) {
+				dockerClient.EXPECT().ImageInspectWithRaw(context.Background(), image).Return(types.ImageInspect{}, nil, assert.AnError)
+			},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			dockerClient := mocks.NewMockAPIClient(ctrl)
+			tt.setup(dockerClient)
+			defer ctrl.Finish()
+			dockerManager := NewDockerManager(dockerClient)
+
+			ok, err := dockerManager.ImageExist(image)
+
+			if tt.err != nil {
+				assert.EqualError(t, err, tt.err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.ok, ok)
 		})
 	}
 }

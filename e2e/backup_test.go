@@ -13,14 +13,14 @@ func TestBackupInstance(t *testing.T) {
 	// Test context
 	var (
 		backupErr error
-		after     time.Time
+		start     time.Time
 	)
 	// Build test case
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			after = time.Now()
+			start = time.Now()
 			err := buildMockAvsImagesLatest(t)
 			if err != nil {
 				return err
@@ -35,7 +35,7 @@ func TestBackupInstance(t *testing.T) {
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, backupErr, "backup command should succeed")
-			checkBackupExist(t, "mock-avs-default", time.Now(), after)
+			checkBackupExist(t, "mock-avs-default", start, time.Now())
 		},
 	)
 	// Run test case

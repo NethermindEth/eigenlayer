@@ -1041,16 +1041,24 @@ func (d *EgnDaemon) Backup(instanceId string) (string, error) {
 }
 
 func (d *EgnDaemon) BackupList() ([]BackupInfo, error) {
-	backupInfo, err := d.backupManager.BackupList()
+	backups, err := d.dataDir.BackupList()
 	if err != nil {
 		return nil, err
 	}
-	out := make([]BackupInfo, len(backupInfo))
-	for i, b := range backupInfo {
+	out := make([]BackupInfo, len(backups))
+	for i, b := range backups {
+		size, err := d.dataDir.BackupSize(b.Id())
+		if err != nil {
+			return nil, err
+		}
 		out[i] = BackupInfo{
-			Instance:  b.Instance,
+			Id:        b.Id(),
+			Instance:  b.InstanceId,
 			Timestamp: b.Timestamp,
-			SizeBytes: b.SizeBytes,
+			SizeBytes: size,
+			Version:   b.Version,
+			Commit:    b.Commit,
+			Url:       b.Url,
 		}
 	}
 	return out, nil

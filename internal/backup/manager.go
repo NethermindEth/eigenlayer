@@ -59,11 +59,15 @@ func (b *BackupManager) BackupInstance(instanceId string) (string, error) {
 		return "", err
 	}
 
-	backupId := data.BackupId{
+	backup := &data.Backup{
 		InstanceId: instanceId,
 		Timestamp:  time.Now(),
+		Version:    instance.Version,
+		Commit:     instance.Commit,
+		Url:        instance.URL,
 	}
-	backup, err := b.dataDir.InitBackup(backupId)
+
+	err = b.dataDir.InitBackup(backup)
 	if err != nil {
 		return "", err
 	}
@@ -82,35 +86,18 @@ func (b *BackupManager) BackupInstance(instanceId string) (string, error) {
 		return "", err
 	}
 
-	return backup.BackupId.String(), nil
-}
-
-// BackupList returns a list of all backups.
-func (b *BackupManager) BackupList() ([]BackupInfo, error) {
-	// Get the list of backup paths from the data dir
-	backups, err := b.dataDir.BackupList()
+	// Add timestamp
+	err = b.addTimestamp(backup)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	// Build backup info for each backup
-	var backupsInfo []BackupInfo
-	for _, b := range backups {
-		size, err := b.Size()
-		if err != nil {
-			return nil, err
-		}
-		backupsInfo = append(backupsInfo, BackupInfo{
-			Instance:  b.InstanceId(),
-			Timestamp: b.Timestamp(),
-			SizeBytes: size,
-		})
-	}
-	return backupsInfo, nil
+
+	return backup.Id(), nil
 }
 
-func (b *BackupManager) backupInstanceData(instanceId string, backup *data.Backup) (err error) {
+func (b *BackupManager) backupInstanceData(instanceId string, backup *data.Backup) error {
 	log.Info("Backing up instance data...")
-	backupPath := backup.Path()
+	backupPath := b.dataDir.BackupPath(backup.Id())
 	tarFile, err := b.fs.OpenFile(backupPath, os.O_RDWR, 0o644)
 	if err != nil {
 		return err
@@ -128,11 +115,42 @@ func (b *BackupManager) backupInstanceData(instanceId string, backup *data.Backu
 	return utils.TarAddDir(instancePath, filepath.Join("data"), tarFile)
 }
 
+func (b *BackupManager) addTimestamp(backup *data.Backup) error {
+	log.Infof("Adding timestamp %s...", backup.Timestamp.Format(time.DateTime))
+	backupPath := b.dataDir.BackupPath(backup.Id())
+	tarFile, err := b.fs.OpenFile(backupPath, os.O_RDWR, 0o644)
+	if err != nil {
+		return err
+	}
+	defer tarFile.Close()
+
+	err = utils.TarPrepareToAppend(tarFile)
+	if err != nil {
+		return err
+	}
+
+	timestampTmp, err := afero.TempFile(b.fs, afero.GetTempDir(b.fs, ""), "backup-timestamp-*")
+	if err != nil {
+		return err
+	}
+	defer timestampTmp.Close()
+	defer b.fs.Remove(timestampTmp.Name())
+
+	_, err = timestampTmp.WriteString(fmt.Sprintf("%d", backup.Timestamp.Unix()))
+	if err != nil {
+		return err
+	}
+
+	return utils.TarAddFile(timestampTmp.Name(), "timestamp", tarFile)
+}
+
 func (b *BackupManager) backupInstanceServiceVolumes(service types.ServiceConfig, backup *data.Backup) (err error) {
 	if len(service.Volumes) == 0 {
 		return nil
 	}
 	log.Infof("Backing up %d volumes from service \"%s\"...", len(service.Volumes), service.Name)
+	backupPath := b.dataDir.BackupPath(backup.Id())
+
 	volumes := make([]string, 0, len(service.Volumes))
 	for _, v := range service.Volumes {
 		volumes = append(volumes, v.Target)
@@ -160,7 +178,7 @@ func (b *BackupManager) backupInstanceServiceVolumes(service types.ServiceConfig
 			},
 			{
 				Type:   docker.VolumeTypeBind,
-				Source: backup.Path(),
+				Source: backupPath,
 				Target: "/backup.tar",
 			},
 		},

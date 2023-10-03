@@ -367,7 +367,9 @@ func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 	}
 }
 
-func checkBackupExist(t *testing.T, instanceId string, before, after time.Time) {
+// checkBackupExist checks that a backup exists for the given instanceId between
+// the given times a and b, inclusive.
+func checkBackupExist(t *testing.T, instanceId string, a, b time.Time) {
 	dataDir, err := dataDirPath()
 	require.NoError(t, err)
 	backupsDir := filepath.Join(dataDir, "backup")
@@ -380,14 +382,14 @@ func checkBackupExist(t *testing.T, instanceId string, before, after time.Time) 
 		if f.IsDir() {
 			continue
 		}
-		i, t, err := data.ParseBackupName(filepath.Base(f.Name()))
+		i, timestamp, err := data.ParseBackupName(filepath.Base(f.Name()))
 		if err != nil {
 			continue
 		}
 		if i == instanceId &&
-			((t.Before(before) && t.After(after)) ||
-				t.Equal(before) ||
-				t.Equal(after)) {
+			((timestamp.After(a)) && timestamp.Before(b) ||
+				timestamp.Equal(a) ||
+				timestamp.Equal(b)) {
 			found = true
 			break
 		}

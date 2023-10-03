@@ -3,24 +3,23 @@ package e2e
 import (
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBackupInstance(t *testing.T) {
 	// Test context
 	var (
+		output    []byte
 		backupErr error
-		start     time.Time
 	)
 	// Build test case
 	e2eTest := newE2ETestCase(
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			start = time.Now()
 			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
@@ -30,12 +29,18 @@ func TestBackupInstance(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			backupErr = runCommand(t, egnPath, "backup", "mock-avs-default")
+			output, backupErr = runCommandOutput(t, egnPath, "backup", "mock-avs-default")
 		},
 		// Assert
 		func(t *testing.T) {
 			assert.NoError(t, backupErr, "backup command should succeed")
-			checkBackupExist(t, "mock-avs-default", start, time.Now())
+
+			r := regexp.MustCompile(`.*"Backup created with id: (?P<backupId>[a-f0-9]+)".*`)
+			match := r.FindSubmatch(output)
+			require.Len(t, match, 2, "backup command output should match regex")
+			instanceId := string(match[1])
+
+			checkBackupExist(t, instanceId)
 		},
 	)
 	// Run test case
@@ -72,9 +77,8 @@ func TestBackupList(t *testing.T) {
 		func(t *testing.T) {
 			t.Log(string(out))
 			assert.NoError(t, backupErr, "backup ls command should succeed")
-			assert.Regexp(t, regexp.MustCompile(
-				`AVS Instance ID     TIMESTAMP              SIZE    
-mock-avs-default    .*    9KiB`),
+			assert.Regexp(t, regexp.MustCompile(`ID\s+AVS Instance ID\s+VERSION\s+COMMIT\s+TIMESTAMP\s+SIZE\s+URL\s+`+
+				`[a-f0-9]{8}\s+mock-avs-default\s+v5\.5\.1\s+d5af645fffb93e8263b099082a4f512e1917d0af\s+.*\s+10KiB\s+https://github.com/NethermindEth/mock-avs-pkg\s+`),
 				string(out))
 		},
 	)

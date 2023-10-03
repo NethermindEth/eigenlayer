@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"slices"
 	"testing"
 	"time"
 
-	"github.com/NethermindEth/eigenlayer/internal/data"
 	"github.com/NethermindEth/eigenlayer/internal/env"
 	"github.com/NethermindEth/eigenlayer/pkg/monitoring"
 	"github.com/cenkalti/backoff"
@@ -367,32 +365,10 @@ func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 	}
 }
 
-// checkBackupExist checks that a backup exists for the given instanceId between
-// the given times a and b, inclusive.
-func checkBackupExist(t *testing.T, instanceId string, a, b time.Time) {
+// TODO add doc
+func checkBackupExist(t *testing.T, backupId string) {
 	dataDir, err := dataDirPath()
 	require.NoError(t, err)
-	backupsDir := filepath.Join(dataDir, "backup")
-
-	dirFiles, err := os.ReadDir(backupsDir)
-	require.NoError(t, err)
-
-	var found bool
-	for _, f := range dirFiles {
-		if f.IsDir() {
-			continue
-		}
-		i, timestamp, err := data.ParseBackupName(filepath.Base(f.Name()))
-		if err != nil {
-			continue
-		}
-		if i == instanceId &&
-			((timestamp.After(a)) && timestamp.Before(b) ||
-				timestamp.Equal(a) ||
-				timestamp.Equal(b)) {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found)
+	backupPath := filepath.Join(dataDir, "backup", backupId+".tar")
+	assert.FileExists(t, backupPath)
 }

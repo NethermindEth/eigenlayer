@@ -16,7 +16,8 @@ import (
 
 const (
 	SnapshotterVersion       = "v0.1.0"
-	SnapshotterRemoteContext = "github.com/NethermindEth/docker-volumes-snapshotter.git#" + SnapshotterVersion
+	SnapshotterRepo          = "github.com/NethermindEth/docker-volumes-snapshotter"
+	SnapshotterRemoteContext = SnapshotterRepo + ".git#" + SnapshotterVersion
 	SnapshotterImage         = "eigenlayer-snapshotter:" + SnapshotterVersion
 )
 
@@ -178,6 +179,7 @@ func (b *BackupManager) buildSnapshotterImage() error {
 	}
 	if !ok {
 		log.Infof("Building snapshotter image \"%s\" from \"%s\" ...", SnapshotterImage, SnapshotterRemoteContext)
+		log.Infof("To learn more about the snapshotter, visit https://%s/tree/%s", SnapshotterRepo, SnapshotterVersion)
 		err = b.dockerMgr.BuildImageFromURI(SnapshotterRemoteContext, SnapshotterImage, nil)
 		if err != nil {
 			return fmt.Errorf("%w: %s", data.ErrCreatingBackup, err.Error())

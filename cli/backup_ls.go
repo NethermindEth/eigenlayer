@@ -30,23 +30,38 @@ func BackupLsCmd(d daemon.Daemon) *cobra.Command {
 
 func printBackupTable(backups []daemon.BackupInfo, out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 4, ' ', 0)
-	fmt.Fprintln(w, "AVS Instance ID\tTIMESTAMP\tSIZE\t")
+	fmt.Fprintln(w, "ID\tAVS Instance ID\tVERSION\tCOMMIT\tTIMESTAMP\tSIZE\tURL\t")
 	for _, b := range backups {
 		fmt.Fprintln(w, backupTableItem{
+			id:        b.Id,
 			instance:  b.Instance,
 			timestamp: b.Timestamp.Format(time.DateTime),
 			size:      datasize.Size(b.SizeBytes).String(),
+			version:   b.Version,
+			commit:    b.Commit,
+			url:       b.Url,
 		})
 	}
 	w.Flush()
 }
 
 type backupTableItem struct {
+	id        string
 	instance  string
 	timestamp string
 	size      string
+	version   string
+	commit    string
+	url       string
+}
+
+func minifiedId(id string) string {
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
 }
 
 func (b backupTableItem) String() string {
-	return fmt.Sprintf("%s\t%s\t%s\t", b.instance, b.timestamp, b.size)
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t", minifiedId(b.id), b.instance, b.version, b.commit, b.timestamp, b.size, b.url)
 }

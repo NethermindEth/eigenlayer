@@ -225,3 +225,58 @@ func TarAddDir(srcPath, prefix string, tarFile io.Writer) error {
 	})
 	return err
 }
+
+// TarAddFile add a file to a tar file. The file is placed at dest path.
+func TarAddFile(src, dest string, tarFile io.Writer) error {
+	tarWriter := tar.NewWriter(tarFile)
+	defer tarWriter.Close()
+
+	fi, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if fi.IsDir() {
+		return errors.New("source path is a directory")
+	}
+
+	// generate tar header
+	header, err := tar.FileInfoHeader(fi, src)
+	if err != nil {
+		return err
+	}
+
+	header.Name = dest
+
+	// write header
+	if err := tarWriter.WriteHeader(header); err != nil {
+		return err
+	}
+
+	data, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(tarWriter, data); err != nil {
+		return err
+	}
+	return data.Close()
+}
+
+func TarReadFile(src string, tarFile io.Reader) ([]byte, error) {
+	tarReader := tar.NewReader(tarFile)
+
+	for {
+		header, err := tarReader.Next()
+		if err != nil {
+			return nil, err
+		}
+		if header.Name == src {
+			data, err := io.ReadAll(tarReader)
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
+		}
+	}
+}

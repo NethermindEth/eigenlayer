@@ -91,7 +91,7 @@ func (b *BackupManager) BackupList() ([]BackupInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Get the backup info for each backup path
+	// Build backup info for each backup
 	var backupsInfo []BackupInfo
 	for _, b := range backups {
 		size, err := b.Size()

@@ -21,7 +21,7 @@ func TestBackupInstance(t *testing.T) {
 		// Arrange
 		func(t *testing.T, egnPath string) error {
 			start = time.Now()
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -53,7 +53,7 @@ func TestBackupList(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}

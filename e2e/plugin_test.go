@@ -28,7 +28,7 @@ func TestPlugin_LocalInstall(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			if err := os.MkdirAll(pkgDir, 0o755); err != nil {
@@ -101,7 +101,10 @@ func TestPlugin_Install_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -148,7 +151,10 @@ func TestPlugin_Volume_File(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -213,7 +219,10 @@ func TestPlugin_Volume_Existing_Dir(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -280,7 +289,10 @@ func TestPlugin_Volume_NonExisting_Dir(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -342,7 +354,10 @@ func TestPlugin_Install_Run_HostNetwork(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			return runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
@@ -385,7 +400,10 @@ func TestPlugin_ExitsWithError(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
+				return err
+			}
+			if err := buildPluginImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())

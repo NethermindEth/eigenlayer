@@ -163,3 +163,80 @@ func TestBackupFromTar(t *testing.T) {
 		},
 		*b)
 }
+
+func TestLoadBackupTarStateJson(t *testing.T) {
+	fs := afero.NewOsFs()
+	tarFile, err := afero.TempFile(fs, t.TempDir(), "backup-*.tar")
+	require.NoError(t, err)
+	defer tarFile.Close()
+	tarWriter := tar.NewWriter(tarFile)
+	tarAddStateJson(t, tarWriter, []byte(`
+	{
+		"name": "mock-avs",
+		"url": "https://github.com/NethermindEth/mock-avs-pkg",
+		"version": "v5.5.0",
+		"spec_version": "v0.1.0",
+		"commit": "a3406616b848164358fdd24465b8eecda5f5ae34",
+		"profile": "option-returner",
+		"tag": "second",
+		"monitoring": {
+		  "targets": [
+			{
+			  "service": "main-service",
+			  "port": "8080",
+			  "path": "/metrics"
+			}
+		  ]
+		},
+		"api": {
+		  "service": "main-service",
+		  "port": "8080"
+		},
+		"plugin": {
+		  "image": "mock-avs-plugin:v0.1.0"
+		}
+	  }
+	`))
+	got, err := loadBackupTarStateJson(fs, tarFile.Name())
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, Instance{
+		Name:        "mock-avs",
+		Tag:         "second",
+		URL:         "https://github.com/NethermindEth/mock-avs-pkg",
+		Version:     "v5.5.0",
+		SpecVersion: "v0.1.0",
+		Commit:      "a3406616b848164358fdd24465b8eecda5f5ae34",
+		Profile:     "option-returner",
+		MonitoringTargets: MonitoringTargets{
+			Targets: []MonitoringTarget{
+				{
+					Service: "main-service",
+					Port:    "8080",
+					Path:    "/metrics",
+				},
+			},
+		},
+		APITarget: &APITarget{
+			Service: "main-service",
+			Port:    "8080",
+		},
+		Plugin: &Plugin{
+			Image: "mock-avs-plugin:v0.1.0",
+		},
+	}, *got)
+}
+
+func TestLoadBackupTarTimestamp(t *testing.T) {
+	fs := afero.NewOsFs()
+	tarFile, err := afero.TempFile(fs, t.TempDir(), "backup-*.tar")
+	require.NoError(t, err)
+	defer tarFile.Close()
+	tarWriter := tar.NewWriter(tarFile)
+	timestamp := time.Unix(1696367916, 0)
+	tarAddTimestamp(t, tarWriter, timestamp)
+	got, err := loadBackupTarTimestamp(fs, tarFile.Name())
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.True(t, timestamp.Equal(got))
+}

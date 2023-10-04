@@ -2,6 +2,7 @@ package utils
 
 import (
 	"archive/tar"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -210,6 +211,76 @@ func TestTarAddDir(t *testing.T) {
 	// Test EOF
 	_, err = tarReader.Next()
 	require.Equal(t, io.EOF, err, "expected EOF")
+}
+
+func TestTarAddFile(t *testing.T) {
+	// Create temporary directory and file
+	tmpDir := t.TempDir()
+	tmpFile, err := os.CreateTemp(tmpDir, "test-*.txt")
+	require.NoError(t, err)
+	_, err = tmpFile.WriteString("This is a test file")
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		src      string
+		dest     string
+		expected []byte
+		wantErr  bool
+	}{
+		{
+			name:     "add file to tar",
+			src:      tmpFile.Name(),
+			dest:     "testfile.txt",
+			expected: []byte("This is a test file"),
+			wantErr:  false,
+		},
+		{
+			name:     "add nonexistent file to tar",
+			src:      filepath.Join(tmpDir, "nonexistent.txt"),
+			dest:     "nonexistent.txt",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "add directory to tar",
+			src:      tmpDir,
+			dest:     "testdata",
+			expected: nil,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temporary tar file
+			tmpTarFile, err := os.CreateTemp(t.TempDir(), "test-*.tar")
+			require.NoError(t, err)
+			defer os.Remove(tmpTarFile.Name())
+
+			// Add file to tar
+			err = TarAddFile(tt.src, tt.dest, tmpTarFile)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			// Read tar file
+			tmpTarFile.Seek(0, 0)
+			tr := tar.NewReader(tmpTarFile)
+
+			// Check tar contents
+			header, err := tr.Next()
+			require.NoError(t, err)
+			assert.Equal(t, tt.dest, header.Name)
+
+			buf := new(bytes.Buffer)
+			_, err = io.Copy(buf, tr)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, buf.Bytes())
+		})
+	}
 }
 
 func assertEqualDirs(t *testing.T, dir1, dir2 string) {

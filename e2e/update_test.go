@@ -20,11 +20,11 @@ func TestUpdate(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesCustomTag(t, "v0.1.0")
+			err := buildOptionReturnerImage(t, "v0.1.0")
 			if err != nil {
 				return err
 			}
-			err = buildMockAvsImagesLatest(t)
+			err = buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -57,11 +57,11 @@ func TestUpdate_Run(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesCustomTag(t, "v0.1.0")
+			err := buildOptionReturnerImage(t, "v0.1.0")
 			if err != nil {
 				return err
 			}
-			err = buildMockAvsImagesLatest(t)
+			err = buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -96,7 +96,7 @@ func TestUpdate_SameVersion(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -132,7 +132,7 @@ func TestUpdate_OldVersion(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -168,7 +168,7 @@ func TestUpdate_SameCommit(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -204,7 +204,7 @@ func TestUpdate_OldCommit(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}

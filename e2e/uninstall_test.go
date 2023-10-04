@@ -18,7 +18,7 @@ func Test_Uninstall(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -51,7 +51,7 @@ func Test_Uninstall_After_Stop(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, egnPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}

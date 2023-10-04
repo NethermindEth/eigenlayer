@@ -22,7 +22,7 @@ func TestLocalInstall(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -66,7 +66,7 @@ func TestLocalInstallNotRunning(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -107,7 +107,7 @@ func TestLocalInstallWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -160,7 +160,7 @@ func TestLocalInstallInvalidManifest(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -207,7 +207,7 @@ func TestLocalInstallInvalidManifestCleanup(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -255,7 +255,7 @@ func TestLocalInstallInvalidManifestCleanupWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -309,7 +309,7 @@ func TestLocalInstallInvalidComposeCleanup(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -356,7 +356,7 @@ func TestLocalInstall_DuplicatedContainerNameWithMonitoring(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")
@@ -418,7 +418,7 @@ func TestLocalInstall_ProfileWithHiddenOptionsNotSet(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)
@@ -477,7 +477,7 @@ func TestLocalInstall_OptionsWithoutDefault(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildHealthCheckerImageLatest(t); err != nil {
 				return err
 			}
 			err := os.MkdirAll(pkgDir, 0o755)

@@ -68,9 +68,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				}
 
 				password, err := p.InputHiddenString("Enter password to encrypt the ecdsa private key:", "",
-					func(password string) error {
-						return nil
-					},
+					validatePassword,
 				)
 				if err != nil {
 					return err
@@ -104,9 +102,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 					return errors.New("key name already exists. Please choose a different name")
 				}
 				password, err := p.InputHiddenString("Enter password to encrypt the bls private key:", "",
-					func(password string) error {
-						return nil
-					},
+					validatePassword,
 				)
 				if err != nil {
 					return err
@@ -184,4 +180,11 @@ func writeBytesToFile(keyName string, data []byte) error {
 func checkIfKeyExists(keyName string) bool {
 	_, err := os.Stat(OperatorKeyFolder + "/" + keyName)
 	return !os.IsNotExist(err)
+}
+
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return errors.New("password should be of length 8 or more")
+	}
+	return nil
 }

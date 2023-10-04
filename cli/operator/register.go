@@ -108,6 +108,11 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
+			keyPair, err := bls.ReadPrivateKeyFromFile(operatorCfg.BlsPrivateKeyStorePath, blsKeyPassword)
+			if err != nil {
+				return err
+			}
+
 			ethClient, err := eth.NewClient(operatorCfg.EthRPCUrl)
 			if err != nil {
 				return err
@@ -137,11 +142,6 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 			}
 
 			_, err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
-			if err != nil {
-				return err
-			}
-
-			keyPair, err := bls.ReadPrivateKeyFromFile(operatorCfg.BlsPrivateKeyStorePath, blsKeyPassword)
 			if err != nil {
 				return err
 			}

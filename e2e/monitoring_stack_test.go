@@ -133,7 +133,7 @@ func TestMonitoring_Restart(t *testing.T) {
 		t,
 		// Arrange
 		func(t *testing.T, egnPath string) error {
-			if err := buildMockAvsImagesLatest(t); err != nil {
+			if err := buildOptionReturnerImageLatest(t); err != nil {
 				return err
 			}
 			err := runCommand(t, egnPath, "init-monitoring")

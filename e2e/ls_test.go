@@ -41,7 +41,7 @@ func TestLs_NotRunning(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, eigenlayerPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func TestLs_RunningHealthy(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, eigenlayerPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -99,7 +99,7 @@ func TestLs_RunningPartiallyHealthy(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, eigenlayerPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -134,7 +134,7 @@ func TestLs_RunningUnhealthy(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, eigenlayerPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func TestLs_Comment(t *testing.T) {
 	)
 	e2eTest := newE2ETestCase(t,
 		func(t *testing.T, eigenlayerPath string) error {
-			err := buildMockAvsImagesLatest(t)
+			err := buildOptionReturnerImageLatest(t)
 			if err != nil {
 				return err
 			}

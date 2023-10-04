@@ -35,30 +35,71 @@ func runCommandOutput(t *testing.T, path string, args ...string) ([]byte, error)
 	return out, err
 }
 
-func buildMockAvsImagesLatest(t *testing.T) error {
+func buildOptionReturnerImageLatest(t *testing.T) error {
 	t.Helper()
-	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	ok, err := imageExists(t, common.OptionReturnerImage.FullImage())
 	if err != nil {
 		return err
 	}
-	err = runCommand(t, "docker", "build", "-t", common.PluginImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:plugin")
-	if err != nil {
-		return err
+	if !ok {
+		return runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
 	}
-	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+	return nil
 }
 
-func buildMockAvsImagesCustomTag(t *testing.T, tag string) error {
+func buildOptionReturnerImage(t *testing.T, version string) error {
 	t.Helper()
-	err := runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	ok, err := imageExists(t, common.OptionReturnerImage.Image()+":"+version)
 	if err != nil {
 		return err
 	}
-	err = runCommand(t, "docker", "build", "-t", common.PluginImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:plugin")
+	if !ok {
+		return runCommand(t, "docker", "build", "-t", common.OptionReturnerImage.Image()+":"+version, "https://github.com/NethermindEth/mock-avs.git#main:option-returner")
+	}
+	return nil
+}
+
+func buildHealthCheckerImageLatest(t *testing.T) error {
+	t.Helper()
+	ok, err := imageExists(t, common.HealthCheckerImage.FullImage())
 	if err != nil {
 		return err
 	}
-	return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.Image()+":"+tag, "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+	if !ok {
+		return runCommand(t, "docker", "build", "-t", common.HealthCheckerImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:health-checker")
+	}
+	return nil
+}
+
+func buildPluginImageLatest(t *testing.T) error {
+	t.Helper()
+	ok, err := imageExists(t, common.PluginImage.FullImage())
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return runCommand(t, "docker", "build", "-t", common.PluginImage.FullImage(), "https://github.com/NethermindEth/mock-avs.git#main:plugin")
+	}
+	return nil
+}
+
+func imageExists(t *testing.T, image string) (bool, error) {
+	t.Helper()
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dockerClient.Close()
+
+	_, _, err = dockerClient.ImageInspectWithRaw(context.Background(), image)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	t.Log("Image exists " + image)
+	return true, nil
 }
 
 func repoPath(t *testing.T) string {

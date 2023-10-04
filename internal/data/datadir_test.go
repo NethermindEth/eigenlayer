@@ -1,10 +1,12 @@
 package data
 
 import (
+	"archive/tar"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -951,6 +953,139 @@ func TestMonitoringStack(t *testing.T) {
 	verify(t, monitoringStack)
 }
 
+func TestDataDir_BackupList(t *testing.T) {
+	type testData struct {
+		backup    Backup
+		state     []byte
+		timestamp time.Time
+	}
+	tc := []struct {
+		name string
+		data []testData
+		err  error
+	}{
+		{
+			name: "success",
+			data: []testData{
+				{
+					backup: Backup{
+						InstanceId: "mock-avs-default",
+						Timestamp:  time.Unix(1696420902, 0),
+						Version:    "v5.5.1",
+						Commit:     "d5af645fffb93e8263b099082a4f512e1917d0af",
+						Url:        "https://github.com/NethermindEth/mock-avs-pkg",
+					},
+					state: []byte(`
+					{
+						"name": "mock-avs",
+						"url": "https://github.com/NethermindEth/mock-avs-pkg",
+						"version": "v5.5.1",
+						"spec_version": "v0.1.0",
+						"commit": "d5af645fffb93e8263b099082a4f512e1917d0af",
+						"profile": "option-returner",
+						"tag": "default",
+						"monitoring": {
+						  "targets": [
+							{
+							  "service": "main-service",
+							  "port": "8080",
+							  "path": "/metrics"
+							}
+						  ]
+						},
+						"api": {
+						  "service": "main-service",
+						  "port": "8080"
+						},
+						"plugin": {
+						  "image": "mock-avs-plugin:v0.2.0"
+						}
+					  }
+					`),
+					timestamp: time.Unix(1696420902, 0),
+				},
+				{
+					backup: Backup{
+						InstanceId: "mock-avs-second",
+						Timestamp:  time.Unix(1696421646, 0),
+						Version:    "v5.5.0",
+						Commit:     "a3406616b848164358fdd24465b8eecda5f5ae34",
+						Url:        "https://github.com/NethermindEth/mock-avs-pkg",
+					},
+					state: []byte(`
+					{
+						"name": "mock-avs",
+						"url": "https://github.com/NethermindEth/mock-avs-pkg",
+						"version": "v5.5.0",
+						"spec_version": "v0.1.0",
+						"commit": "a3406616b848164358fdd24465b8eecda5f5ae34",
+						"profile": "option-returner",
+						"tag": "second",
+						"monitoring": {
+						  "targets": [
+							{
+							  "service": "main-service",
+							  "port": "8080",
+							  "path": "/metrics"
+							}
+						  ]
+						},
+						"api": {
+						  "service": "main-service",
+						  "port": "8080"
+						},
+						"plugin": {
+						  "image": "mock-avs-plugin:v0.1.0"
+						}
+					  }
+					`),
+					timestamp: time.Unix(1696421646, 0),
+				},
+			},
+			err: nil,
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := afero.NewOsFs()
+			dataDirPath, err := afero.TempDir(fs, "", "datadir")
+			require.NoError(t, err)
+			dataDir, err := NewDataDir(dataDirPath, fs, nil)
+			require.NoError(t, err)
+
+			backups := make([]Backup, 0, len(tt.data))
+
+			for _, d := range tt.data {
+				err = dataDir.InitBackup(&d.backup)
+				require.NoError(t, err)
+				backupTarPath := dataDir.BackupPath(d.backup.Id())
+				backupTarFile, err := fs.OpenFile(backupTarPath, os.O_WRONLY, 0o644)
+				require.NoError(t, err)
+				tarWriter := tar.NewWriter(backupTarFile)
+				tarAddStateJson(t, tarWriter, d.state)
+				tarAddTimestamp(t, tarWriter, d.timestamp)
+				err = tarWriter.Close()
+				require.NoError(t, err)
+				backups = append(backups, d.backup)
+			}
+
+			got, err := dataDir.BackupList()
+
+			for i := 0; i < len(got); i++ {
+				got[i].Id()
+			}
+
+			if tt.err != nil {
+				require.Error(t, err)
+				assert.EqualError(t, err, tt.err.Error())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, backups, got)
+			}
+		})
+	}
+}
+
 func TestRemoveMonitoringStack(t *testing.T) {
 	// Create monitoring stack
 	// Create a memory filesystem
@@ -994,4 +1129,33 @@ func TestRemoveMonitoringStackError(t *testing.T) {
 	// Remove monitoring stack
 	err = dataDir.RemoveMonitoringStack()
 	require.ErrorIs(t, err, ErrMonitoringStackNotFound)
+}
+
+func tarAddStateJson(t *testing.T, tarWriter *tar.Writer, state []byte) {
+	t.Helper()
+	header := &tar.Header{
+		Name:    "data/state.json",
+		Size:    int64(len(state)),
+		Mode:    0o644,
+		ModTime: time.Now(),
+	}
+	err := tarWriter.WriteHeader(header)
+	require.NoError(t, err)
+	_, err = tarWriter.Write(state)
+	require.NoError(t, err)
+}
+
+func tarAddTimestamp(t *testing.T, tarWriter *tar.Writer, timestamp time.Time) {
+	t.Helper()
+	data := strconv.FormatInt(timestamp.Unix(), 10)
+	header := &tar.Header{
+		Name:    "timestamp",
+		Size:    int64(len(data)),
+		Mode:    0o644,
+		ModTime: time.Now(),
+	}
+	err := tarWriter.WriteHeader(header)
+	require.NoError(t, err)
+	_, err = tarWriter.Write([]byte(data))
+	require.NoError(t, err)
 }

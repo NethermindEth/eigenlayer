@@ -29,7 +29,6 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
   - [Running a Plugin](#running-a-plugin)
     - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
 
-
 ## Dependencies
 
 This tool depends on [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) in order to manage the installation and running of EigenLayer nodes. Please make sure that you have both Docker and Docker Compose installed and configured properly before using this tool.
@@ -43,7 +42,8 @@ First, install the Go programming language following the [official instructions]
 This command will install the `eigenlayer` executable along with the library and its dependencies in your system:
 
 > As the repository is private, you need to set the `GOPRIVATE` variable properly by running the following command: `export GOPRIVATE=github.com/NethermindEth/eigenlayer,$GOPRIVATE`. Git will automatically resolve the private access if your Git user has all the required permissions over the repository.
-```
+
+```bash
 go install github.com/NethermindEth/eigenlayer/cmd/eigenlayer@latest
 ```
 
@@ -71,7 +71,7 @@ go build -o build/eigenlayer cmd/eigenlayer/main.go
 
 or if you have `make` installed:
 
-```
+```bash
 git clone https://github.com/NethermindEth/eigenlayer.git
 cd eigenlayer
 make build
@@ -80,9 +80,9 @@ make build
 The executable will be in the `build` folder.
 
 ---
-In case you want the binary in your PATH (or if you used the [Using Go](#using-go) method and you don't have `$GOBIN` in your PATH), please copy the binary to `/usr/local/bin`:
+In case you want the binary in your PATH (or if you used the [Using Go](#install-eigenlayer-cli-using-go) method and you don't have `$GOBIN` in your PATH), please copy the binary to `/usr/local/bin`:
 
-```
+```bash
 # Using Go
 sudo cp $GOPATH/bin/eigenlayer /usr/local/bin/
 
@@ -169,8 +169,8 @@ INFO[0002] The installed node software has a plugin.
 
 Notice the usage of:
 
-* `--profile` to select the `option-returner` profile without prompt.
-* `--no-prompt` to skip options prompts.
+- `--profile` to select the `option-returner` profile without prompt.
+- `--no-prompt` to skip options prompts.
 
 In this case, the `option-returner` profile uses all the default values. To set option values, use the `--option.<option-name>` dynamic flags. For instance:
 
@@ -230,7 +230,7 @@ eigenlayer update mock-avs-default
 
 Output:
 
-```
+```log
 INFO[0000] Pulling package...                           
 INFO[0000] Package pulled successfully                  
 INFO[0000] Package version changed: v5.4.0 -> v5.5.0    
@@ -275,7 +275,7 @@ eigenlayer backup mock-avs-default
 
 Output:
 
-```bash
+```log
 INFO[0000] Backing up instance mock-avs-default         
 INFO[0000] Backing up instance data...                  
 INFO[0000] Backup created with id: mock-avs-default-1696337650
@@ -292,8 +292,8 @@ eigenlayer backup ls
 Output:
 
 ```bash
-AVS Instance ID     TIMESTAMP              SIZE (GB)    
-mock-avs-default    2023-10-01 08:00:00    0.000009
+ID          AVS Instance ID     VERSION    COMMIT                                      TIMESTAMP              SIZE     URL                                              
+6ee67470    mock-avs-default    v5.5.1     d5af645fffb93e8263b099082a4f512e1917d0af    2023-10-04 13:41:06    10KiB    https://github.com/NethermindEth/mock-avs-pkg
 ```
 
 ## Uninstalling AVS Node Software
@@ -347,7 +347,7 @@ AVS instance logs could be retrieved using the `eigenlayer logs` command. Logs a
 eigenlayer logs mock-avs-default
 ```
 
-```bash
+```log
 option-returner: INFO:     Started server process [1]
 option-returner: INFO:     Waiting for application startup.
 option-returner: INFO:     Application startup complete.
@@ -389,7 +389,7 @@ eigenlayer plugin mock-avs-default
 
 Output:
 
-```bash
+```log
 INFO[0001] Running plugin with image eigen-plugin-mock-avs-default on network eigenlayer
 INFO[0002]
 AVS is up

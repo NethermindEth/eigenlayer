@@ -446,7 +446,7 @@ You can register your operator using the below command
 ```bash
 eigenlayer operator register operator-config.yaml
 ```
-A sample yaml [config file](cli/operator/config/operator-config-example.yaml) and [metadata](cli/operator/config/metadata.json) is provided for reference. You can also create empty config files by using commands referred in [this section](#sample-config-creation). Fill in the required details to register the operator.
+A sample yaml [config file](cli/operator/config/operator-config-example.yaml) and [metadata](cli/operator/config/metadata-example.json) is provided for reference. You can also create empty config files by using commands referred in [this section](#sample-config-creation). Fill in the required details to register the operator.
 Make sure that if you use `local_keystore` as signer, you give the path to the keys created in above section.
 
 You can check the registration status of your operator using

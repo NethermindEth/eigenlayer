@@ -26,7 +26,7 @@ func StatusCmd() *cobra.Command {
 		Long: `
 		Check the registration status of operator to Eigenlayer.
 
-		It expects the same configuration yaml file as arugment to register command
+		It expects the same configuration yaml file as argument to register command
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags

@@ -7,7 +7,7 @@ operator:
 # EigenLayer Slasher contract address
 el_slasher_address: 
 
-# Addres of BLS Public Key Compendium contract
+# Address of BLS Public Key Compendium contract
 bls_public_key_compendium_address:
 
 # ETH RPC URL

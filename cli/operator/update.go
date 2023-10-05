@@ -32,7 +32,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 		Updates the operator metadata onchain which includes 
 			- metadata url
 			- delegation approver address
-			- earnings reciver address
+			- earnings receiver address
 			- staker opt out window blocks
 
 		Requires the same file used for registration as argument

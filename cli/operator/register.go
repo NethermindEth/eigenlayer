@@ -33,7 +33,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 		Use:   "register [flags] <configuration-file>",
 		Short: "Register the operator and the BLS public key in the Eigenlayer contracts",
 		Long: `
-		Register command expectes a yaml config file as an arguemnt
+		Register command expects a yaml config file as an argument
 		to successfully register an operator address to eigenlayer
 
 		This will register operator to DelegationManager and will register

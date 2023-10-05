@@ -19,25 +19,23 @@ import (
 
 func UpdateCmd(p prompter.Prompter) *cobra.Command {
 	var (
-		configurationFilePath string
-		help                  bool
-		operatorCfg           types.OperatorConfig
-		signerTypeFlag        string
-		signerType            types.SignerType
-		privateKeyHex         string
+		help           bool
+		operatorCfg    types.OperatorConfig
+		signerTypeFlag string
+		signerType     types.SignerType
+		privateKeyHex  string
 	)
 	cmd := cobra.Command{
-		Use:   "update [flags]",
+		Use:   "update [flags] <configuration-file>",
 		Short: "Updates the operator metadata",
 		Long: `
 		Updates the operator metadata onchain which includes 
 			- metadata url
 			- delegation approver address
-			- earnings reciver address
+			- earnings receiver address
 			- staker opt out window blocks
 
-		Requires the same file used for registration as a flag input to
-		--configuration-file
+		Requires the same file used for registration as argument
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
@@ -57,9 +55,16 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 				return nil
 			}
 
+			// Validate args
+			args = cmd.Flags().Args()
+			if len(args) != 1 {
+				return fmt.Errorf("%w: accepts 1 arg, received %d", ErrInvalidNumberOfArgs, len(args))
+			}
+
+			configurationFilePath := args[0]
 			err = eigensdkUtils.ReadYamlConfig(configurationFilePath, &operatorCfg)
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: with error %s", ErrInvalidYamlFile, err)
 			}
 
 			fmt.Printf("Operator configuration file read successfully %s\n", operatorCfg.Operator.Address)
@@ -119,7 +124,6 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&configurationFilePath, "configuration-file", "", "Path to the configuration file")
 	cmd.Flags().StringVar(&signerTypeFlag, "signer-type", "", "Signer type (private_key, local_keystore)")
 	cmd.Flags().StringVar(&privateKeyHex, "private-key-hex", "", "Private key hex (used only with private_key signer type)")
 

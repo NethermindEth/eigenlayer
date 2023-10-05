@@ -23,18 +23,17 @@ import (
 
 func RegisterCmd(p prompter.Prompter) *cobra.Command {
 	var (
-		configurationFilePath string
-		help                  bool
-		operatorCfg           types.OperatorConfig
-		signerTypeFlag        string
-		signerType            types.SignerType
-		privateKeyHex         string
+		help           bool
+		operatorCfg    types.OperatorConfig
+		signerTypeFlag string
+		signerType     types.SignerType
+		privateKeyHex  string
 	)
 	cmd := cobra.Command{
-		Use:   "register [flags]",
+		Use:   "register [flags] <configuration-file>",
 		Short: "Register the operator and the BLS public key in the Eigenlayer contracts",
 		Long: `
-		Register command expectes a yaml config file with --configuration-file
+		Register command expects a yaml config file as an argument
 		to successfully register an operator address to eigenlayer
 
 		This will register operator to DelegationManager and will register
@@ -58,6 +57,14 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return nil
 			}
 
+			// Validate args
+			args = cmd.Flags().Args()
+			if len(args) != 1 {
+				return fmt.Errorf("%w: accepts 1 arg, received %d", ErrInvalidNumberOfArgs, len(args))
+			}
+
+			configurationFilePath := args[0]
+
 			err = eigensdkUtils.ReadYamlConfig(configurationFilePath, &operatorCfg)
 			if err != nil {
 				return err
@@ -67,10 +74,10 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 
 			err = operatorCfg.Operator.Validate()
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: with error %s", ErrInvalidYamlFile, err)
 			}
 
-			fmt.Printf("Operator file correct")
+			fmt.Printf("Operator file validated successfully")
 
 			signerType, err = validateSignerType(signerTypeFlag, operatorCfg)
 			if err != nil {
@@ -148,7 +155,6 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&configurationFilePath, "configuration-file", "", "Path to the configuration file")
 	cmd.Flags().StringVar(&signerTypeFlag, "signer-type", "", "Signer type (private_key, local_keystore)")
 	cmd.Flags().StringVar(&privateKeyHex, "private-key-hex", "", "Private key hex (used only with private_key signer type)")
 

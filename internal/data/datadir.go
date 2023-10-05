@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NethermindEth/docker-volumes-snapshotter/pkg/backuptar"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
-	"github.com/NethermindEth/eigenlayer/internal/utils"
 	"github.com/spf13/afero"
 )
 
@@ -113,6 +113,21 @@ func (d *DataDir) InstancePath(instanceId string) (string, error) {
 	return instancePath, nil
 }
 
+func (d *DataDir) ReplaceInstanceDirFromTar(instanceId, tarPath, srcPath string) error {
+	// Clear instance dir
+	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
+	err := d.fs.RemoveAll(instancePath)
+	if err != nil {
+		return err
+	}
+	// Create instance dir
+	err = d.fs.MkdirAll(instancePath, 0o755)
+	if err != nil {
+		return err
+	}
+	return backuptar.ExtractDir(tarPath, srcPath, instancePath)
+}
+
 // RemoveInstance removes the instance with the given id.
 func (d *DataDir) RemoveInstance(instanceId string) error {
 	instancePath := filepath.Join(d.path, nodesDirName, instanceId)
@@ -197,6 +212,21 @@ func (d *DataDir) BackupSize(backupId string) (int64, error) {
 	return backupStat.Size(), nil
 }
 
+// Backup returns the backup with the given id. If the backup does not exist,
+// an ErrBackupNotFound error is returned.
+func (d *DataDir) Backup(backupId string) (*Backup, error) {
+	backups, err := d.BackupList()
+	if err != nil {
+		return nil, err
+	}
+	for _, backup := range backups {
+		if backup.Id() == backupId {
+			return &backup, nil
+		}
+	}
+	return nil, ErrBackupNotFound
+}
+
 // HasBackup returns true if the backup with the given id exists.
 func (d *DataDir) HasBackup(backupId string) (bool, error) {
 	_, err := d.fs.Stat(d.BackupPath(backupId))
@@ -231,7 +261,8 @@ func (d *DataDir) InitBackup(b *Backup) error {
 		return err
 	}
 	// Initialize backup tar file
-	return utils.TarInit(d.fs, d.BackupPath(b.Id()))
+	return backuptar.InitBackupTar(d.BackupPath(b.Id()))
+	// return utils.TarInit(d.fs, d.BackupPath(b.Id()))
 }
 
 func (d *DataDir) backupsDir() string {

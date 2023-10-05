@@ -65,7 +65,7 @@ func main() {
 	}
 
 	// Backup manager
-	backupMgr := backup.NewBackupManager(fs, dataDir, dockerManager)
+	backupMgr := backup.NewBackupManager(fs, dataDir, dockerManager, composeManager)
 
 	// Initialize daemon
 	daemon, err := daemon.NewEgnDaemon(dataDir, composeManager, dockerManager, monitoringManager, backupMgr, locker)

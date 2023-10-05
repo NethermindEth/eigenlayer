@@ -18,4 +18,5 @@ var (
 	ErrBackupAlreadyExists         = errors.New("backup already exists")
 	ErrCreatingBackup              = errors.New("failed creating backup")
 	ErrInvalidBackupName           = errors.New("invalid backup name")
+	ErrBackupNotFound              = errors.New("backup not found")
 )

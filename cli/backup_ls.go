@@ -69,13 +69,13 @@ type backupTableItem struct {
 	url       string
 }
 
-func minifiedId(id string) string {
-	if len(id) > 8 {
-		return id[:8]
-	}
-	return id
-}
+// func minifiedId(id string) string {
+// 	if len(id) > 8 {
+// 		return id[:8]
+// 	}
+// 	return id
+// }
 
 func (b backupTableItem) String() string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t", minifiedId(b.id), b.instance, b.version, b.commit, b.timestamp, b.size, b.url)
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t", b.id, b.instance, b.version, b.commit, b.timestamp, b.size, b.url)
 }

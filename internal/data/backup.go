@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/NethermindEth/eigenlayer/internal/utils"
+	"github.com/NethermindEth/docker-volumes-snapshotter/pkg/backuptar"
 	"github.com/spf13/afero"
 )
 
@@ -75,11 +76,30 @@ func loadBackupTarStateJson(fs afero.Fs, tarPath string) (*Instance, error) {
 		return nil, err
 	}
 	defer tarFile.Close()
-	// Load state.json
-	stateData, err := utils.TarReadFile("data/state.json", tarFile)
+
+	stateTmp, err := afero.TempFile(fs, "", "state-*.json")
 	if err != nil {
 		return nil, err
 	}
+	defer stateTmp.Close()
+	defer fs.Remove(stateTmp.Name())
+
+	// Load state.json
+	err = backuptar.ExtractFile(tarPath, "data/state.json", stateTmp.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = stateTmp.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	stateData, err := io.ReadAll(stateTmp)
+	if err != nil {
+		return nil, err
+	}
+
 	var instance Instance
 	return &instance, json.Unmarshal(stateData, &instance)
 }
@@ -91,11 +111,30 @@ func loadBackupTarTimestamp(fs afero.Fs, tarPath string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	defer tarFile.Close()
-	// Load timestamp
-	timestampData, err := utils.TarReadFile("timestamp", tarFile)
+
+	timestampTmp, err := afero.TempFile(fs, "", "state-*.json")
 	if err != nil {
 		return time.Time{}, err
 	}
+	defer timestampTmp.Close()
+	defer fs.Remove(timestampTmp.Name())
+
+	// Load timestamp
+	err = backuptar.ExtractFile(tarPath, "timestamp", timestampTmp.Name())
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	_, err = timestampTmp.Seek(0, 0)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	timestampData, err := io.ReadAll(timestampTmp)
+	if err != nil {
+		return time.Time{}, err
+	}
+
 	timestampInt, err := strconv.ParseInt(string(timestampData), 10, 64)
 	if err != nil {
 		return time.Time{}, err

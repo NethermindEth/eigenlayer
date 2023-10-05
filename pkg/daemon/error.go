@@ -17,6 +17,7 @@ var (
 	ErrInvalidUpdateCommit        = errors.New("invalid update commit")
 	ErrOptionNotSet               = errors.New("option not set")
 	ErrVersionAlreadyInstalled    = errors.New("version already installed")
+	ErrBackupNotFound             = errors.New("backup not found")
 )
 
 // InvalidOptionValueError is returned when an Option's value is invalid.

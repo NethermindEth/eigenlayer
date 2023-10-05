@@ -1037,7 +1037,52 @@ func (d *EgnDaemon) NodeLogs(ctx context.Context, w io.Writer, instanceID string
 }
 
 func (d *EgnDaemon) Backup(instanceId string) (string, error) {
+	if !d.HasInstance(instanceId) {
+		return "", fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceId)
+	}
+	log.Infof("Stopping instance %s", instanceId)
+	err := d.Stop(instanceId)
+	if err != nil {
+		return "", err
+	}
 	return d.backupManager.BackupInstance(instanceId)
+}
+
+func (d *EgnDaemon) Restore(backupId string, run bool) error {
+	// Check if the backup exists
+	ok, err := d.dataDir.HasBackup(backupId)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrBackupNotFound, backupId)
+	}
+	// Get backup information
+	backup, err := d.dataDir.Backup(backupId)
+	if err != nil {
+		return err
+	}
+	// Check if the instance exists
+	if d.dataDir.HasInstance(backup.InstanceId) {
+		log.Infof("Instance %s already exists. Uninstalling it", backup.InstanceId)
+		err = d.Uninstall(backup.InstanceId)
+		if err != nil {
+			return err
+		}
+		log.Info("Instance uninstalled")
+	}
+
+	err = d.backupManager.RestoreInstance(backupId)
+	if err != nil {
+		return err
+	}
+	if run {
+		err = d.Run(backup.InstanceId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (d *EgnDaemon) BackupList() ([]BackupInfo, error) {

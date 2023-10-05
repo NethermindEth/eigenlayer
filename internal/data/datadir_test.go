@@ -855,7 +855,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 			name: "success, backup dir does not exist",
 			err:  nil,
 			setup: func() *DataDir {
-				fs := afero.NewMemMapFs()
+				fs := afero.NewOsFs()
 				testDir := t.TempDir()
 				return &DataDir{
 					path: testDir,
@@ -867,7 +867,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 			name: "success, backup file does not exist",
 			err:  nil,
 			setup: func() *DataDir {
-				fs := afero.NewMemMapFs()
+				fs := afero.NewOsFs()
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)
@@ -881,7 +881,7 @@ func TestDataDir_InitBackup(t *testing.T) {
 			name: "error, backup file exists",
 			err:  ErrBackupAlreadyExists,
 			setup: func() *DataDir {
-				fs := afero.NewMemMapFs()
+				fs := afero.NewOsFs()
 				testDir := t.TempDir()
 				err := fs.MkdirAll(filepath.Join(testDir, backupDir), 0o755)
 				require.NoError(t, err)

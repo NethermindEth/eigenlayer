@@ -1,6 +1,6 @@
 # Eigenlayer CLI
 
-Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine.
+Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine. For more information on Eigenlayer, Eigenlayer Node Software, and what this tool does, check our [documentation](https://www.eigenlayer.xyz)
 
 - [Eigenlayer CLI](#eigenlayer-cli)
   - [Dependencies](#dependencies)
@@ -28,6 +28,11 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
   - [Clean Up Monitoring Stack](#clean-up-monitoring-stack)
   - [Running a Plugin](#running-a-plugin)
     - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
+  - [Create and List Keys](#create-and-list-keys)
+    - [Create keys](#create-keys)
+    - [List keys](#list-keys)
+  - [Operator registration](#operator-registration)
+    - [Sample config creation](#sample-config-creation)
 
 ## Dependencies
 

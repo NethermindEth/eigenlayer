@@ -1,0 +1,25 @@
+operator:
+  address: 
+  earnings_receiver_address: 
+  delegation_approver_address: 
+  metadata_url: https://example.com/metadata.json
+
+# EigenLayer Slasher contract address
+el_slasher_address: 
+
+# Address of BLS Public Key Compendium contract
+bls_public_key_compendium_address:
+
+# ETH RPC URL
+eth_rpc_url: http://localhost:8545
+
+# Signer Type to use
+# Supported values: private_key, local_keystore
+signer_type: local_keystore
+
+# Full path to private key store file if you are using local_keystore signer type
+private_key_store_path: <path-to>/test.ecdsa.key.json
+
+bls_private_key_store_path: <path-to>/test.bls.key.json
+
+chain_id: 31337

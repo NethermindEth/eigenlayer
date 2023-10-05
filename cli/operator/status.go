@@ -17,17 +17,16 @@ import (
 
 func StatusCmd() *cobra.Command {
 	var (
-		configurationFilePath string
-		help                  bool
-		operatorCfg           types.OperatorConfig
+		help        bool
+		operatorCfg types.OperatorConfig
 	)
 	cmd := cobra.Command{
-		Use:   "status [flags]",
+		Use:   "status <configuration-file>",
 		Short: "Check if the operator is registered and get the operator details",
 		Long: `
 		Check the registration status of operator to Eigenlayer.
 
-		It expects the same configuration yaml file as input to register command
+		It expects the same configuration yaml file as argument to register command
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags
@@ -46,6 +45,14 @@ func StatusCmd() *cobra.Command {
 			if help {
 				return nil
 			}
+
+			// Validate args
+			args = cmd.Flags().Args()
+			if len(args) != 1 {
+				return fmt.Errorf("%w: accepts 1 arg, received %d", ErrInvalidNumberOfArgs, len(args))
+			}
+
+			configurationFilePath := args[0]
 
 			err = eigensdkUtils.ReadYamlConfig(configurationFilePath, &operatorCfg)
 			if err != nil {
@@ -103,8 +110,6 @@ func StatusCmd() *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&configurationFilePath, "configuration-file", "", "Path to the configuration file")
 
 	return &cmd
 }

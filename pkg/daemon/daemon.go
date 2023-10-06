@@ -77,7 +77,8 @@ type Daemon interface {
 	// will be returned.
 	Backup(instanceId string) (backupId string, err error)
 
-	// TODO: add documentation
+	// Restore restores the backup with the given ID. If run is true, the instance
+	// will be run after the restore.
 	Restore(backupId string, run bool) error
 
 	// BackupList returns a list of all the backups and their information.

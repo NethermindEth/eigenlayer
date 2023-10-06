@@ -3,7 +3,7 @@
 
 export GOPATH=$(CURDIR)
 export HOME=$(CURDIR)
-export DEB_BUILD_OPTIONS = noautodbgsym
+export DEB_BUILD_MAINT_OPTIONS = noautodbgsym
 PKGDIR=debian/eigenlayer
 
 %:

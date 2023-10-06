@@ -1,6 +1,6 @@
 # Eigenlayer CLI
 
-Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine.
+Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine. For more information on Eigenlayer, Eigenlayer Node Software, and what this tool does, check our [documentation](https://www.eigenlayer.xyz)
 
 - [Eigenlayer CLI](#eigenlayer-cli)
   - [Dependencies](#dependencies)
@@ -28,6 +28,11 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
   - [Clean Up Monitoring Stack](#clean-up-monitoring-stack)
   - [Running a Plugin](#running-a-plugin)
     - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
+  - [Create and List Keys](#create-and-list-keys)
+    - [Create keys](#create-keys)
+    - [List keys](#list-keys)
+  - [Operator registration](#operator-registration)
+    - [Sample config creation](#sample-config-creation)
 
 ## Dependencies
 
@@ -196,6 +201,7 @@ In this case, the `main-port` has a value of 8081 instead of the default value o
 ### From local directory
 
 > THIS INSTALLATION METHOD IS INSECURE
+> 
 
 Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs-pkg` to a local directory, and use it as a local package.
 
@@ -351,7 +357,7 @@ eigenlayer logs mock-avs-default
 option-returner: INFO:     Started server process [1]
 option-returner: INFO:     Waiting for application startup.
 option-returner: INFO:     Application startup complete.
-option-returner: INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+option-returner: INFO:     Uvicorn running on <http://0.0.0.0:8080> (Press CTRL+C to quit)
 option-returner: INFO:     172.20.0.3:59224 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
 option-returner: INFO:     172.20.0.3:59224 - "GET / HTTP/1.1" 200 OK
 option-returner: INFO:     172.20.0.3:40780 - "GET /metrics HTTP/1.1" 307 Temporary Redirect

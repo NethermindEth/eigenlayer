@@ -160,8 +160,9 @@ Options of the new version can be specified using the --option.<option-name> fla
 			}
 
 			// Backup instance
+			var backupId string
 			if backup {
-				backupId, err := d.Backup(instanceId)
+				backupId, err = d.Backup(instanceId)
 				if err != nil {
 					return err
 				}
@@ -171,7 +172,7 @@ Options of the new version can be specified using the --option.<option-name> fla
 			// Uninstall current instance
 			err = uninstallPackage(d, instanceId)
 			if err != nil {
-				return err
+				return abortWithRestore(d, backupId)
 			}
 
 			// Install new instance's version
@@ -185,7 +186,7 @@ Options of the new version can be specified using the --option.<option-name> fla
 				Options: pullResult.MergedOptions,
 			})
 			if err != nil {
-				return err
+				return abortWithRestore(d, backupId)
 			}
 			if newInstanceId != instanceId {
 				// NOTE: I think this never happens but it could be useful to check
@@ -207,6 +208,11 @@ Options of the new version can be specified using the --option.<option-name> fla
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts.")
 	cmd.Flags().BoolVar(&backup, "backup", false, "backup current instance before updating.")
 	return &cmd
+}
+
+func abortWithRestore(d daemon.Daemon, backupId string) error {
+	log.Info("Trying to restore backup...")
+	return d.Restore(backupId, false)
 }
 
 func pullUpdate(d daemon.Daemon, instanceID, version, commit string) (daemon.PullUpdateResult, error) {

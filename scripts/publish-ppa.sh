@@ -22,7 +22,7 @@ cd ..
 echo 'Signing package'
 debsign -p 'gpg --batch --yes --no-tty --pinentry-mode loopback --passphrase-file /tmp/PASSPHRASE' -S -k $PPA_GPG_KEYID eigenlayer_${SVERSION}_source.changes
 echo 'Uploading'
-dput --force --dinstall --debug --lintian ppa:nethermindeth/eigenlayer eigenlayer_${SVERSION}_source.changes
+dput --force --dinstall --debug ppa:nethermindeth/eigenlayer eigenlayer_${SVERSION}_source.changes
 echo "Publishing Eigenlayer to PPA complete"
 echo 'Cleanup'
 rm -r eigenlayer_$SVERSION*

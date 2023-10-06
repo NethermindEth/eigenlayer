@@ -23,7 +23,9 @@ jobs:
       VERSION: ${{ github.event.inputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -69,7 +71,9 @@ jobs:
       VERSION: ${{ github.event.inputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -109,8 +113,9 @@ jobs:
         run: |
           sudo apt update && sudo apt install golang-go debhelper libdebhelper-perl build-essential devscripts rsync -y
       - name: Checking out Eigenlayer repository
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
+          ref: main
           path: eigenlayer
       - uses: actions/setup-go@v3
         with:

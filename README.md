@@ -19,6 +19,7 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
     - [Updating options](#updating-options)
   - [Backup](#backup)
   - [List backups](#list-backups)
+  - [Restore](#restore)
   - [Uninstalling AVS Node Software](#uninstalling-avs-node-software)
   - [List installed instances](#list-installed-instances)
   - [Run an AVS instance](#run-an-avs-instance)
@@ -201,7 +202,7 @@ In this case, the `main-port` has a value of 8081 instead of the default value o
 ### From local directory
 
 > THIS INSTALLATION METHOD IS INSECURE
-> 
+>
 
 Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs-pkg` to a local directory, and use it as a local package.
 
@@ -300,6 +301,20 @@ Output:
 ```bash
 ID          AVS Instance ID     VERSION    COMMIT                                      TIMESTAMP              SIZE     URL                                              
 6ee67470    mock-avs-default    v5.5.1     d5af645fffb93e8263b099082a4f512e1917d0af    2023-10-04 13:41:06    10KiB    https://github.com/NethermindEth/mock-avs-pkg
+```
+
+## Restore
+
+To restore a backup, use the `eigenlayer restore` command with the backup ID as an argument, as follows:
+
+```bash
+eigenlayer restore <backup-id>
+```
+
+If the AVS instance id of the backup exists, then the command will uninstall it before restoring the backup. If the AVS instance does not exist, then the command will create it. To run the restored instance after the backup, use the `--run` flag as follows:
+
+```bash
+eigenlayer restore --run <backup-id>
 ```
 
 ## Uninstalling AVS Node Software
@@ -423,46 +438,60 @@ AVS is up
 
 In this case, the plugin container receives the `--port 8080` arguments. Note that this is not a flag of the `eigenlayer plugin` command.
 
-
 ## Create and List Keys
+
 ### Create keys
+
 You can create encrypted ecdsa and bls keys using the cli which will be needed for operator registration and other onchain calls
+
 ```bash
 eigenlayer operator keys create  --key-type ecdsa [keyname]
 eigenlayer operator keys create  --key-type bls [keyname]
 ```
+
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.
 It will also show the private key only once, so that you can back it up in case you lose the password or keyfile.
 
 ### List keys
+
 You can also list you created key using
+
 ```bash
 eigenlayer operator keys list
 ```
+
 It will show all the keys created with this command with the public key
 
 ## Operator registration
+
 You can register your operator using the below command
+
 ```bash
 eigenlayer operator register operator-config.yaml
 ```
+
 A sample yaml [config file](cli/operator/config/operator-config-example.yaml) and [metadata](cli/operator/config/metadata-example.json) is provided for reference. You can also create empty config files by using commands referred in [this section](#sample-config-creation). Fill in the required details to register the operator.
 Make sure that if you use `local_keystore` as signer, you give the path to the keys created in above section.
 
 You can check the registration status of your operator using
+
 ```bash
 eigenlayer operator status operator-config.yaml
 ```
 
 You can also update the operator metadata using
+
 ```bash
 eigenlayer operator update operator-config.yaml
 ```
 
 ### Sample config creation
+
 If you need to create a new config file for registration and metadata you can use
+
 ```bash
 eigenlayer operator config create
 ```
+
 It will create two file: `operator.yaml` and `metadata.json`
-After filling the details in `metadata.json`, please upload this into a publicly accessible location and fill that url in `operator.yaml`. A valid metadata url is required for successful registration. 
+After filling the details in `metadata.json`, please upload this into a publicly accessible location and fill that url in `operator.yaml`. A valid metadata url is required for successful registration.

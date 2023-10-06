@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	passwordvalidator "github.com/wagslane/go-password-validator"
+
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -24,35 +26,68 @@ const (
 
 	KeyTypeECDSA = "ecdsa"
 	KeyTypeBLS   = "bls"
+
+	// MinEntropyBits For password validation
+	MinEntropyBits = 70
 )
 
 func CreateCmd(p prompter.Prompter) *cobra.Command {
-	var keyType string
+	var (
+		keyType  string
+		insecure bool
+		help     bool
+	)
 
 	cmd := cobra.Command{
-		Use:   "create --key-type <key-type> <keyname>",
+		Use:   "create --key-type <key-type> [flags] <keyname>",
 		Short: "Used to create encrypted keys in local keystore",
 		Long: `
-		Used to create ecdsa and bls key in local keystore
+Used to create ecdsa and bls key in local keystore
 
-		keyname is required
+keyname is required
 
-		use --key-type ecdsa/bls to create ecdsa/bls key. 
-		It will prompt for password to encrypt the key, which is optional but highly recommended.
+use --key-type ecdsa/bls to create ecdsa/bls key. 
+It will prompt for password to encrypt the key, which is optional but highly recommended.
+If you want to create a key with weak/no password, use --insecure flag. Do NOT use those keys in production
 
-		This command will create keys in ./operator_keys/ location
+This command will create keys in ./operator_keys/ location
 		`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			keyName := args[0]
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Parse static flags
+			cmd.DisableFlagParsing = false
+			cmd.FParseErrWhitelist.UnknownFlags = true // Don't show error for unknown flags to allow dynamic flags
+			err := cmd.ParseFlags(args)
+			if err != nil {
+				return err
+			}
 
+			// Skip execution if help flag is set
+			help, err = cmd.Flags().GetBool("help")
+			if err != nil {
+				return err
+			}
+			if help {
+				return nil
+			}
+
+			// Validate args
+			args = cmd.Flags().Args()
+			if len(args) != 1 {
+				return fmt.Errorf("%w: accepts 1 arg, received %d", ErrInvalidNumberOfArgs, len(args))
+			}
+
+			keyName := args[0]
 			if len(keyName) == 0 {
-				return errors.New("key name cannot be empty")
+				return ErrEmptyKeyName
 			}
 
 			if match, _ := regexp.MatchString("\\s", keyName); match {
-				return errors.New("key name contains whitespace")
+				return ErrKeyContainsWhitespaces
 			}
-
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			keyName := args[0]
 			basePath, _ := os.Getwd()
 
 			switch keyType {
@@ -68,7 +103,12 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				}
 
 				password, err := p.InputHiddenString("Enter password to encrypt the ecdsa private key:", "",
-					validatePassword,
+					func(s string) error {
+						if insecure {
+							return nil
+						}
+						return validatePassword(s)
+					},
 				)
 				if err != nil {
 					return err
@@ -102,7 +142,12 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 					return errors.New("key name already exists. Please choose a different name")
 				}
 				password, err := p.InputHiddenString("Enter password to encrypt the bls private key:", "",
-					validatePassword,
+					func(s string) error {
+						if insecure {
+							return nil
+						}
+						return validatePassword(s)
+					},
 				)
 				if err != nil {
 					return err
@@ -122,13 +167,14 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 				fmt.Println("BLS Pub key: " + blsKeyPair.PubKey.String())
 				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
 			default:
-				return errors.New("key type must be either 'ecdsa' or 'bls'")
+				return ErrInvalidKeyType
 			}
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&keyType, "key-type", "", "Type of key you want to create. Currently supports 'ecdsa' and 'bls'")
+	cmd.Flags().BoolVarP(&insecure, "insecure", "i", false, "Use this flag to skip password validation")
 
 	return &cmd
 }
@@ -183,8 +229,9 @@ func checkIfKeyExists(keyName string) bool {
 }
 
 func validatePassword(password string) error {
-	if len(password) < 8 {
-		return errors.New("password should be of length 8 or more")
+	err := passwordvalidator.Validate(password, MinEntropyBits)
+	if err != nil {
+		fmt.Println("if you want to create keys for testing with weak/no password, use --insecure flag. Do NOT use those keys in production")
 	}
-	return nil
+	return err
 }

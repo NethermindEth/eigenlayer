@@ -6,7 +6,6 @@ on:
       tag:
         description: The version number (e.g. v1.2.3) of the release you want to push
         required: true
-        default: master
 
 permissions:
   contents: write
@@ -76,9 +75,7 @@ jobs:
         with:
           path: /tmp/artifacts
       - name: Generate changelog 
-        run: |
-          awk '/## \[Unreleased\]/ {flag=1;next} /## \[/ {flag=0} flag' CHANGELOG.md > /tmp/changelog
-          echo -e "## [${{env.VERSION}}]\n$(cat /tmp/changelog)" > /tmp/changelog
+        run: awk '/## \[v[0-9]+\.[0-9]+\.[0-9]+\]/ {if (flag) exit; flag=1} flag' CHANGELOG.md > /tmp/changelog
       - name: Create pre-release
         uses: ncipollo/release-action@v1
         with:
@@ -117,7 +114,7 @@ jobs:
           path: eigenlayer
       - uses: actions/setup-go@v3
         with:
-          go-version: "1.20.7"
+          go-version: "1.21.0"
       - name: Run publish PPA script
         env:
           GOPATH: /home/runner/go

@@ -11,7 +11,7 @@ func RestoreCmd(d daemon.Daemon) *cobra.Command {
 		run      bool
 	)
 	cmd := cobra.Command{
-		Use:   "restore <backup-id>",
+		Use:   "restore [flags] <backup-id>",
 		Short: "Restore an instance from a backup",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {

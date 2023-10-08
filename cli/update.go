@@ -172,7 +172,10 @@ Options of the new version can be specified using the --option.<option-name> fla
 			// Uninstall current instance
 			err = uninstallPackage(d, instanceId)
 			if err != nil {
-				return abortWithRestore(d, backupId)
+				if backup {
+					return abortWithRestore(d, backupId, err)
+				}
+				return err
 			}
 
 			// Install new instance's version
@@ -186,7 +189,10 @@ Options of the new version can be specified using the --option.<option-name> fla
 				Options: pullResult.MergedOptions,
 			})
 			if err != nil {
-				return abortWithRestore(d, backupId)
+				if backup {
+					return abortWithRestore(d, backupId, err)
+				}
+				return err
 			}
 			if newInstanceId != instanceId {
 				// NOTE: I think this never happens but it could be useful to check
@@ -210,8 +216,9 @@ Options of the new version can be specified using the --option.<option-name> fla
 	return &cmd
 }
 
-func abortWithRestore(d daemon.Daemon, backupId string) error {
-	log.Info("Trying to restore backup...")
+func abortWithRestore(d daemon.Daemon, backupId string, updateErr error) error {
+	log.Errorf("Update process fails with error: %s", updateErr.Error())
+	log.Infof("Restoring instance from backup %s...", backupId)
 	return d.Restore(backupId, false)
 }
 

@@ -57,6 +57,100 @@ func TestRestore(t *testing.T) {
 	e2eTest.run()
 }
 
+func TestRestore_InstanceExists(t *testing.T) {
+	// Test context
+	var (
+		backupId   string
+		restoreErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, eigenlayerPath string) error {
+			// Build option returner image
+			err := buildOptionReturnerImageLatest(t)
+			if err != nil {
+				return err
+			}
+			// Install option returner AVS
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
+			if err != nil {
+				return err
+			}
+			// Backup AVS
+			backupOut, err := runCommandOutput(t, eigenlayerPath, "backup", "mock-avs-default")
+			if err != nil {
+				return err
+			}
+			// Parse backup id
+			r := regexp.MustCompile(`.*Backup created with id: (?P<backup_id>[a-f0-9]+).*`)
+			matches := r.FindSubmatch(backupOut)
+			require.Len(t, matches, 2)
+			backupId = string(matches[1])
+			return nil
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			restoreErr = runCommand(t, egnPath, "restore", backupId)
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, restoreErr, "restore command should not fail")
+			checkInstanceExists(t, "mock-avs-default")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
+func TestRestore_InstanceExistsRunning(t *testing.T) {
+	// Test context
+	var (
+		backupId   string
+		restoreErr error
+	)
+	// Build test case
+	e2eTest := newE2ETestCase(
+		t,
+		// Arrange
+		func(t *testing.T, eigenlayerPath string) error {
+			// Build option returner image
+			err := buildOptionReturnerImageLatest(t)
+			if err != nil {
+				return err
+			}
+			// Install option returner AVS
+			err = runCommand(t, eigenlayerPath, "install", "--profile", "option-returner", "--no-prompt", "--yes", "--version", common.MockAvsPkg.Version(), "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3", common.MockAvsPkg.Repo())
+			if err != nil {
+				return err
+			}
+			// Backup AVS
+			backupOut, err := runCommandOutput(t, eigenlayerPath, "backup", "mock-avs-default")
+			if err != nil {
+				return err
+			}
+			// Parse backup id
+			r := regexp.MustCompile(`.*Backup created with id: (?P<backup_id>[a-f0-9]+).*`)
+			matches := r.FindSubmatch(backupOut)
+			require.Len(t, matches, 2)
+			backupId = string(matches[1])
+			return runCommand(t, eigenlayerPath, "run", "mock-avs-default")
+		},
+		// Act
+		func(t *testing.T, egnPath string) {
+			restoreErr = runCommand(t, egnPath, "restore", backupId)
+		},
+		// Assert
+		func(t *testing.T) {
+			assert.NoError(t, restoreErr, "restore command should not fail")
+			checkInstanceExists(t, "mock-avs-default")
+		},
+	)
+	// Run test case
+	e2eTest.run()
+}
+
 func TestRestore_Run(t *testing.T) {
 	// Test context
 	var (

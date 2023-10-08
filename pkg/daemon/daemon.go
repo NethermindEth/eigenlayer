@@ -77,8 +77,10 @@ type Daemon interface {
 	// will be returned.
 	Backup(instanceId string) (backupId string, err error)
 
-	// Restore restores the backup with the given ID. If run is true, the instance
-	// will be run after the restore.
+	// Restore restores the backup with the given ID. If the AVS instance id of
+	// the backup exists, then the command will uninstall it before restoring
+	// the backup. If the AVS instance does not exist, then the command will
+	// create it. If run is true, the instance will be run after the restore.
 	Restore(backupId string, run bool) error
 
 	// BackupList returns a list of all the backups and their information.

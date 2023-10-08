@@ -35,8 +35,8 @@ func TestBackupLs(t *testing.T) {
 			stdErr: nil,
 			stdOut: []byte(
 				"ID          AVS Instance ID     VERSION    COMMIT                                      TIMESTAMP              SIZE     URL                                              \n" +
-					"33de69fe    mock-avs-default    v5.5.0     a3406616b848164358fdd24465b8eecda5f5ae34    2023-10-03 21:18:36    10KiB    https://github.com/NethermindEth/mock-avs-pkg    \n" +
-					"7ba32f63    mock-avs-second     v5.5.1     d5af645fffb93e8263b099082a4f512e1917d0af    2023-10-04 07:12:19    10KiB    https://github.com/NethermindEth/mock-avs-pkg    \n",
+					"7ba32f63    mock-avs-second     v5.5.1     d5af645fffb93e8263b099082a4f512e1917d0af    2023-10-04 07:12:19    10KiB    https://github.com/NethermindEth/mock-avs-pkg    \n" +
+					"33de69fe    mock-avs-default    v5.5.0     a3406616b848164358fdd24465b8eecda5f5ae34    2023-10-03 21:18:36    10KiB    https://github.com/NethermindEth/mock-avs-pkg    \n",
 			),
 			mocker: func(d *mocks.MockDaemon) {
 				d.EXPECT().BackupList().Return([]daemon.BackupInfo{

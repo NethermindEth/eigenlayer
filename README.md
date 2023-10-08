@@ -311,7 +311,7 @@ To restore a backup, use the `eigenlayer restore` command with the backup ID as 
 eigenlayer restore <backup-id>
 ```
 
-If the AVS instance id of the backup exists, then the command will uninstall it before restoring the backup. If the AVS instance does not exist, then the command will create it. To run the restored instance after the backup, use the `--run` flag as follows:
+If the AVS instance id of the backup exists, then the command will uninstall it before restoring the backup. If the AVS instance does not exist, then the command will create it. To run the restored instance after the restore process, use the `--run` flag as follows:
 
 ```bash
 eigenlayer restore --run <backup-id>

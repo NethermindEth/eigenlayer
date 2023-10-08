@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"slices"
 	"text/tabwriter"
 	"time"
 
@@ -21,11 +22,24 @@ func BackupLsCmd(d daemon.Daemon) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			sortBackupsByTimestamp(backups)
 			printBackupTable(backups, cmd.OutOrStdout())
 			return nil
 		},
 	}
 	return &cmd
+}
+
+func sortBackupsByTimestamp(backups []daemon.BackupInfo) {
+	slices.SortFunc(backups, func(a, b daemon.BackupInfo) int {
+		if a.Timestamp.After(b.Timestamp) {
+			return -1
+		} else if a.Timestamp.Before(b.Timestamp) {
+			return 1
+		} else {
+			return 0
+		}
+	})
 }
 
 func printBackupTable(backups []daemon.BackupInfo, out io.Writer) {

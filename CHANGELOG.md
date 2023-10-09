@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Added
+
+- Sort backup `ls` command results by date. ([#95](https://github.com/NethermindEth/eigenlayer/pull/95))
+- Enforce and validate password on key creation. ([#89](https://github.com/NethermindEth/eigenlayer/pull/89))
+- Add `restore` command. ([#90](https://github.com/NethermindEth/eigenlayer/pull/90))
+  - Upgrade `update` command to support backing up the old instance and restoring from a backup if the update fails.
+
+### Fixed
+
+- Update and review Release pipeline ppa packaging. ([#94](https://github.com/NethermindEth/eigenlayer/pull/94))
+
 ## [v0.1.0] - 2023-10-05
 
 ### Added

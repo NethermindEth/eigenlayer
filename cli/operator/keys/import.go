@@ -98,9 +98,7 @@ This command will import keys in ./operator_keys/ location
 					return errors.New("key name already exists. Please choose a different name")
 				}
 
-				if strings.HasPrefix(privateKey, "0x") {
-					privateKey = privateKey[2:]
-				}
+				privateKey = strings.TrimPrefix(privateKey, "0x")
 
 				privateKeyPair, err := crypto.HexToECDSA(privateKey)
 				if err != nil {

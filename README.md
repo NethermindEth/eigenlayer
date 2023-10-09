@@ -455,7 +455,7 @@ You can import existing ecdsa and bls keys using the cli which will be needed fo
 
 ```bash
 eigenlayer operator keys import --key-type ecdsa [keyname] [privatekey]
-eigenlayer operator keys create --key-type bls [keyname] [privatekey]
+eigenlayer operator keys import --key-type bls [keyname] [privatekey]
 ```
 
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.

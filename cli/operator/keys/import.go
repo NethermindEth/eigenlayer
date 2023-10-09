@@ -41,7 +41,7 @@ use --key-type ecdsa/bls to create ecdsa/bls key.
 It will prompt for password to encrypt the key, which is optional but highly recommended.
 If you want to import a key with weak/no password, use --insecure flag. Do NOT use those keys in production
 
-This command will create keys in ./operator_keys/ location
+This command will import keys in ./operator_keys/ location
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Parse static flags

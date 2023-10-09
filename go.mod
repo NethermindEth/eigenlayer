@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/Layr-Labs/eigensdk-go v0.0.3
+	github.com/Layr-Labs/eigensdk-go v0.0.4
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/compose-spec/compose-go v1.18.3
@@ -24,6 +24,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	github.com/thoas/go-funk v0.9.3
+	github.com/wagslane/go-password-validator v0.3.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	golang.org/x/mod v0.12.0

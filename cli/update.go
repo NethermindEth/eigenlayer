@@ -41,7 +41,12 @@ current one. If it's not the case, the process will fail. If is necessary to cha
 profiles between versions, the user should install the new version and profile
 using the install command and then uninstall the current version.
 
-Options of the new version can be specified using the --option.<option-name> flag.`,
+Options of the new version can be specified using the --option.<option-name> flag.
+
+To avoid any data loss during the update process, the user can specify the --backup
+flag. In this case, the current instance will be backed up before uninstalling it,
+and if the update process fails, the instance will be restored. Also, the backup
+could be restored manually using the 'eigenlayer restore' command.`,
 		Example: `
 - Updating to the latest version:
 	
@@ -217,7 +222,7 @@ Options of the new version can be specified using the --option.<option-name> fla
 }
 
 func abortWithRestore(d daemon.Daemon, backupId string, updateErr error) error {
-	log.Errorf("Update process fails with error: %s", updateErr.Error())
+	log.Errorf("Update process failed with error: %s", updateErr.Error())
 	log.Infof("Restoring instance from backup %s...", backupId)
 	return d.Restore(backupId, false)
 }

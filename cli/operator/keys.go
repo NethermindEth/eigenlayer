@@ -15,6 +15,7 @@ func KeysCmd(p prompter.Prompter) *cobra.Command {
 	cmd.AddCommand(
 		keys.CreateCmd(p),
 		keys.ListCmd(p),
+		keys.ImportCmd(p),
 	)
 
 	return &cmd

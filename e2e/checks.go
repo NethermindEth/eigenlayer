@@ -2,7 +2,9 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"maps"
 	"net/url"
 	"path/filepath"
 	"slices"
@@ -363,6 +365,18 @@ func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 		assert.Contains(t, envTargets, target)
 		assert.Equal(t, envData[target], "\"\"", "target %s should be empty string", target)
 	}
+}
+
+// checkEnvValues checks that the given environment variable are set to the
+// given values in the instance .env file
+func checkEnvValues(t *testing.T, instanceId string, e map[string]string) {
+	assert.True(t, maps.Equal(e, loadEnv(t, instanceId)), "env values should be equal")
+}
+
+// checkStateJson checks that the given JSON data is equal to the instance
+// state.json
+func checkStateJson(t *testing.T, instanceId string, s json.RawMessage) {
+	assert.Equal(t, s, loadStateJSON(t, instanceId), "state.json should be equal")
 }
 
 // TODO add doc

@@ -17,9 +17,12 @@ import (
 
 	"github.com/NethermindEth/eigenlayer/internal/common"
 	"github.com/NethermindEth/eigenlayer/internal/data"
+	"github.com/NethermindEth/eigenlayer/internal/env"
 	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 )
 
 func runCommand(t *testing.T, path string, args ...string) error {
@@ -304,4 +307,43 @@ func changeHealthStatus(t *testing.T, containerID string, port int, networkName 
 		return fmt.Errorf("expected response code %d, got %d", 200, response.StatusCode)
 	}
 	return nil
+}
+
+func loadEnv(t *testing.T, instanceId string) map[string]string {
+	dataDir, err := dataDirPath()
+	require.NoError(t, err)
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does exist and is not empty
+	instancePath := filepath.Join(nodesDir, instanceId)
+	require.DirExists(t, instancePath)
+	require.FileExists(t, filepath.Join(instancePath, ".env"))
+
+	// Load .env file
+	fs := afero.NewOsFs()
+	envData, err := env.LoadEnv(fs, filepath.Join(instancePath, ".env"))
+	require.NoError(t, err)
+	return envData
+}
+
+func loadStateJSON(t *testing.T, instanceId string) json.RawMessage {
+	dataDir, err := dataDirPath()
+	require.NoError(t, err)
+	nodesDir := filepath.Join(dataDir, "nodes")
+
+	// Check instance directory does exist and is not empty
+	instancePath := filepath.Join(nodesDir, instanceId)
+	require.DirExists(t, instancePath)
+	statePath := filepath.Join(instancePath, "state.json")
+	require.FileExists(t, statePath)
+
+	// Load state.json file
+	fs := afero.NewOsFs()
+	stateData, err := afero.ReadFile(fs, statePath)
+	require.NoError(t, err)
+
+	var stateRaw json.RawMessage
+	err = json.Unmarshal(stateData, &stateRaw)
+	require.NoError(t, err)
+	return stateRaw
 }

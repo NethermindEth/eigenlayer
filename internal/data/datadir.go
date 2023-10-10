@@ -9,6 +9,7 @@ import (
 	"github.com/NethermindEth/docker-volumes-snapshotter/pkg/backuptar"
 	"github.com/NethermindEth/eigenlayer/internal/locker"
 	"github.com/NethermindEth/eigenlayer/internal/package_handler"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -156,6 +157,7 @@ func (d *DataDir) InitTemp(id string) (string, error) {
 		return "", err
 	}
 	// Clear temp dir if it already exists
+	logrus.Debugf("Temp dir %s already exists, removing its content", id)
 	err = d.fs.RemoveAll(tempPath)
 	if err != nil {
 		return "", err

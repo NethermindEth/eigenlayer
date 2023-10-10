@@ -561,14 +561,8 @@ func (d *EgnDaemon) localInstall(pkgTar io.Reader, options LocalInstallOptions) 
 	// Init package handler from temp path
 	pkgHandler := package_handler.NewPackageHandler(tempPath)
 
-	// Get Name
-	name, err := pkgHandler.Name()
-	if err != nil {
-		return "", tID, err
-	}
-
 	// Get Instance ID
-	instanceID := data.InstanceId(name, options.Tag)
+	instanceID := data.InstanceId(options.Name, options.Tag)
 	// Check if instance already exists
 	if d.dataDir.HasInstance(instanceID) {
 		return instanceID, "", fmt.Errorf("%w: %s", ErrInstanceAlreadyExists, instanceID)

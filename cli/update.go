@@ -270,9 +270,9 @@ func runInstance(d daemon.Daemon, instanceID string, p prompter.Prompter, yes, n
 	if yes {
 		log.Infof("Running instance %s ...", instanceID)
 		err = d.Run(instanceID)
-	}
-	if err == nil {
-		log.Infof("Instance %s running successfully", instanceID)
+		if err == nil {
+			log.Infof("Instance %s running successfully", instanceID)
+		}
 	}
 	return err
 }

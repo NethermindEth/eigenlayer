@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enforce and validate password on key creation. ([#89](https://github.com/NethermindEth/eigenlayer/pull/89))
 - Add `restore` command. ([#90](https://github.com/NethermindEth/eigenlayer/pull/90))
   - Upgrade `update` command to support backing up the old instance and restoring from a backup if the update fails.
+- Add `keys import` command  ([#97](https://github.com/NethermindEth/eigenlayer/pull/97))
 
 ### Fixed
 

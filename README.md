@@ -445,8 +445,59 @@ In this case, the plugin container receives the `--port 8080` arguments. Note th
 You can create encrypted ecdsa and bls keys using the cli which will be needed for operator registration and other onchain calls
 
 ```bash
-eigenlayer operator keys create  --key-type ecdsa [keyname]
-eigenlayer operator keys create  --key-type bls [keyname]
+eigenlayer operator keys create --key-type ecdsa [keyname]
+eigenlayer operator keys create --key-type bls [keyname]
+```
+- `keyname` - This will be the name of the created key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
+
+This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.
+It will also show the private key only once, so that you can back it up in case you lose the password or keyfile.
+
+Example:
+
+Input command
+```bash
+eigenlayer operator keys create --key-type ecdsa test
+```
+Output
+```bash
+? Enter password to encrypt the ecdsa private key: *******
+ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
+Please backup the above private key hex in safe place.
+
+Key location: ./operator_keys/test.ecdsa.key.json
+a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
+0x9F664973BF656d6077E66973c474cB58eD5E97E1
+```
+
+### Import keys
+
+You can import existing ecdsa and bls keys using the cli which will be needed for operator registration and other onchain calls
+
+```bash
+eigenlayer operator keys import --key-type ecdsa [keyname] [privatekey]
+eigenlayer operator keys import --key-type bls [keyname] [privatekey]
+```
+- `keyname` - This will be the name of the imported key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
+- `privatekey` - This will be the private key of the key to be imported.
+  - For ecdsa key, it should be in hex format
+  - For bls key, it should be a large number
+
+Example:
+
+Input command
+```bash
+eigenlayer operator keys import --key-type ecdsa test 6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
+```
+Output
+```bash
+? Enter password to encrypt the ecdsa private key: *******
+ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
+Please backup the above private key hex in safe place.
+
+Key location: ./operator_keys/test.ecdsa.key.json
+a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
+0x9F664973BF656d6077E66973c474cB58eD5E97E1
 ```
 
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.

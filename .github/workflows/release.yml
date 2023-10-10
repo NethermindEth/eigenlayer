@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: develop
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -73,7 +73,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: develop
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -115,7 +115,7 @@ jobs:
       - name: Checking out Eigenlayer repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: develop
           path: eigenlayer
       - uses: actions/setup-go@v3
         with:

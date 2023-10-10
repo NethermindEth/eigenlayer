@@ -155,7 +155,12 @@ func (d *DataDir) InitTemp(id string) (string, error) {
 		}
 		return "", err
 	}
-	return "", ErrTempDirAlreadyExists
+	// Clear temp dir if it already exists
+	err = d.fs.RemoveAll(tempPath)
+	if err != nil {
+		return "", err
+	}
+	return tempPath, d.fs.MkdirAll(tempPath, 0o755)
 }
 
 // RemoveTemp removes the temporary directory with the given id.

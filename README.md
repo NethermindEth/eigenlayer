@@ -31,6 +31,7 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
     - [Passing arguments to the plugin](#passing-arguments-to-the-plugin)
   - [Create and List Keys](#create-and-list-keys)
     - [Create keys](#create-keys)
+    - [Import keys](#import-keys)
     - [List keys](#list-keys)
   - [Operator registration](#operator-registration)
     - [Sample config creation](#sample-config-creation)
@@ -107,13 +108,13 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/
 ### Linux/amd64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-amd64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.2.0/eigenlayer-linux-amd64 --output eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.1.0/eigenlayer-linux-arm64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.2.0/eigenlayer-linux-arm64 --output eigenlayer
 ```
 
 ## Install an AVS

@@ -29,14 +29,11 @@ func ImportCmd(p prompter.Prompter) *cobra.Command {
 		Long: `
 Used to import ecdsa and bls key in local keystore
 
-Command:
-	eigenlayer operator keys import --key-type <key-type> <keyname> <private-key>
+keyname (required) - This will be name of the imported key file. It will be saved as <keyname>.ecdsa.key.json or <keyname>.bls.key.json
 
-keyname and private-key is required
-
-use --key-type ecdsa/bls to create ecdsa/bls key. 
-- ecdsa - private-key should be hex encoded private key
-- bls - private-key should be bls private key
+use --key-type ecdsa/bls to import ecdsa/bls key. 
+- ecdsa - <private-key> should be plaintext hex encoded private key
+- bls - <private-key> should be plaintext bls private key
 
 It will prompt for password to encrypt the key, which is optional but highly recommended.
 If you want to import a key with weak/no password, use --insecure flag. Do NOT use those keys in production

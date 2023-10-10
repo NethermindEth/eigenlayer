@@ -44,7 +44,7 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 		Long: `
 Used to create ecdsa and bls key in local keystore
 
-keyname is required
+keyname (required) - This will be name of the created key file. It will be saved as <keyname>.ecdsa.key.json or <keyname>.bls.key.json
 
 use --key-type ecdsa/bls to create ecdsa/bls key. 
 It will prompt for password to encrypt the key, which is optional but highly recommended.

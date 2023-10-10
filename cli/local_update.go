@@ -24,7 +24,7 @@ func LocalUpdateCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		Use:   "local-update [flags] <instance_id> <dir-path>",
 		Short: "Update an instance to a new version from a local directory.",
 		Long: `
-!!! THIS INSTALLATION METHOD IS INSECURE !!!
+!!! THIS UPDATE METHOD IS INSECURE !!!
 !!! USE ONLY FOR DEVELOPMENT PURPOSES !!!
 
 Updates an AVS node software from a new package in a local directory.

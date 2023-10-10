@@ -7,7 +7,6 @@ var (
 	ErrInstanceNotFound            = errors.New("instance not found")
 	ErrInvalidInstance             = errors.New("invalid instance")
 	ErrInvalidInstanceDir          = errors.New("invalid instance directory")
-	ErrTempDirAlreadyExists        = errors.New("temp directory already exists")
 	ErrTempDirDoesNotExist         = errors.New("temp directory does not exist")
 	ErrTempIsNotDir                = errors.New("temp is not a directory")
 	ErrMonitoringStackNotFound     = errors.New("monitoring stack not found")

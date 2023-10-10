@@ -540,8 +540,8 @@ func TestDataDir_InitTemp(t *testing.T) {
 				name:    "already exists",
 				path:    path,
 				id:      "temp-dir-id",
-				want:    "",
-				wantErr: ErrTempDirAlreadyExists,
+				want:    filepath.Join(path, tempDir, "temp-dir-id"),
+				wantErr: nil,
 			}
 		}(),
 	}

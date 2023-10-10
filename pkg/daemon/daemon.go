@@ -20,6 +20,10 @@ type Daemon interface {
 	// the result of merging both packages configs.
 	PullUpdate(instanceID string, ref PullTarget) (PullUpdateResult, error)
 
+	// LocalPullUpdate loads a node software package from a local tarball and
+	// returns the result of merging both packages configs.
+	LocalPullUpdate(instanceID string, pkgTar io.Reader) (PullUpdateResult, error)
+
 	// Install downloads and installs a node software package using the provided options,
 	// and returns the instance ID of the installed package. Make sure to call Pull
 	// before calling Install to ensure that the package is downloaded.

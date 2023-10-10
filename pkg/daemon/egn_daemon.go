@@ -466,6 +466,88 @@ func (d *EgnDaemon) PullUpdate(instanceID string, ref PullTarget) (PullUpdateRes
 	}, nil
 }
 
+func (d *EgnDaemon) LocalPullUpdate(instanceID string, pkgTar io.Reader) (PullUpdateResult, error) {
+	// Get instance to update
+	if !d.dataDir.HasInstance(instanceID) {
+		return PullUpdateResult{}, fmt.Errorf("%w: %s", ErrInstanceNotFound, instanceID)
+	}
+	instance, err := d.dataDir.Instance(instanceID)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+
+	// Decompress package to temp folder
+	tID := tempID(instanceID)
+	tempPath, err := d.dataDir.InitTemp(tID)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	err = utils.DecompressTarGz(pkgTar, tempPath)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+
+	// Init package handler from temp path
+	pkgHandler := package_handler.NewPackageHandler(tempPath)
+
+	// In the regular update process, a version and commit precedence check is
+	// done. In this case we can not do that check because is a local update
+	// designed for development purposes.
+
+	// Get new options
+	profileNew, err := pkgHandler.Profile(instance.Profile)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	optionsNew, err := optionsFromProfile(profileNew)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	// Get old options with its values
+	profileOld, err := instance.ProfileFile()
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	optionsOld, err := optionsFromProfile(profileOld)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	valuesOld, err := instance.Env()
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+	for _, o := range optionsOld {
+		if v, ok := valuesOld[o.Target()]; ok {
+			err := o.Set(v)
+			if err != nil {
+				return PullUpdateResult{}, fmt.Errorf("error setting old option value: %v", err)
+			}
+		} else {
+			return PullUpdateResult{}, fmt.Errorf("%w: old option %s", ErrOptionWithoutValue, o.Name())
+		}
+	}
+
+	mergedOptions, err := mergeOptions(optionsOld, optionsNew)
+	if err != nil {
+		return PullUpdateResult{}, err
+	}
+
+	return PullUpdateResult{
+		Name:          instance.Name,
+		Tag:           instance.Tag,
+		Url:           instance.URL,
+		Profile:       instance.Profile,
+		HasPlugin:     instance.Plugin != nil,
+		OldVersion:    instance.Version,
+		NewVersion:    "local",
+		OldCommit:     instance.Commit,
+		NewCommit:     "local",
+		OldOptions:    optionsOld,
+		NewOptions:    optionsNew,
+		MergedOptions: mergedOptions,
+	}, nil
+}
+
 // mergeOptions merges the old options with the new ones following the next rules:
 //
 //  1. New option is not present in the old options: New option is added to the

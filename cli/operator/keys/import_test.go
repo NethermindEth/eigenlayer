@@ -1,9 +1,13 @@
 package keys
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 
 	prompterMock "github.com/NethermindEth/eigenlayer/cli/prompter/mocks"
 	"github.com/golang/mock/gomock"
@@ -125,6 +129,16 @@ func TestImportCmd(t *testing.T) {
 				// Check if the error indicates that the file does not exist
 				if os.IsNotExist(err) {
 					assert.Failf(t, "file does not exist", "file %s does not exist", tt.keyPath)
+				}
+
+				if tt.args[1] == KeyTypeECDSA {
+					key, err := GetECDSAPrivateKey(tt.keyPath, "")
+					assert.NoError(t, err)
+					assert.Equal(t, strings.Trim(tt.args[3], "0x"), hex.EncodeToString(key.D.Bytes()))
+				} else if tt.args[1] == KeyTypeBLS {
+					key, err := bls.ReadPrivateKeyFromFile(tt.keyPath, "")
+					assert.NoError(t, err)
+					assert.Equal(t, tt.args[3], key.PrivKey.String())
 				}
 			} else {
 				assert.EqualError(t, err, tt.err.Error())

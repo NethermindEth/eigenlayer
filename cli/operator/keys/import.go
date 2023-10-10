@@ -24,7 +24,7 @@ func ImportCmd(p prompter.Prompter) *cobra.Command {
 		Long: `
 Used to import ecdsa and bls key in local keystore
 
-keyname (required) - This will be name of the imported key file. It will be saved as <keyname>.ecdsa.key.json or <keyname>.bls.key.json
+keyname (required) - This will be the name of the imported key file. It will be saved as <keyname>.ecdsa.key.json or <keyname>.bls.key.json
 
 use --key-type ecdsa/bls to import ecdsa/bls key. 
 - ecdsa - <private-key> should be plaintext hex encoded private key

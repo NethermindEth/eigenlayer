@@ -448,7 +448,7 @@ You can create encrypted ecdsa and bls keys using the cli which will be needed f
 eigenlayer operator keys create --key-type ecdsa [keyname]
 eigenlayer operator keys create --key-type bls [keyname]
 ```
-- `keyname` - This will be name of the created key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
+- `keyname` - This will be the name of the created key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
 
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.
 It will also show the private key only once, so that you can back it up in case you lose the password or keyfile.
@@ -478,7 +478,7 @@ You can import existing ecdsa and bls keys using the cli which will be needed fo
 eigenlayer operator keys import --key-type ecdsa [keyname] [privatekey]
 eigenlayer operator keys import --key-type bls [keyname] [privatekey]
 ```
-- `keyname` - This will be name of the imported key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
+- `keyname` - This will be the name of the imported key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
 - `privatekey` - This will be the private key of the key to be imported.
   - For ecdsa key, it should be in hex format
   - For bls key, it should be a large number

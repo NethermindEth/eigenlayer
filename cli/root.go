@@ -24,6 +24,7 @@ func RootCmd(d daemon.Daemon, p prompter.Prompter) *cobra.Command {
 		InitMonitoringCmd(d),
 		CleanMonitoringCmd(d),
 		UpdateCmd(d, p),
+		LocalUpdateCmd(d, p),
 		BackupCmd(d),
 		RestoreCmd(d),
 		OperatorCmd(p),

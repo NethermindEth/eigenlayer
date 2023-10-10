@@ -69,7 +69,7 @@ func TestImportCmd(t *testing.T) {
 		},
 		{
 			name: "invalid password based on validation function - bls",
-			args: []string{"--key-type", "bls", "test", "privkey"},
+			args: []string{"--key-type", "bls", "test", "123"},
 			err:  ErrInvalidPassword,
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", ErrInvalidPassword)

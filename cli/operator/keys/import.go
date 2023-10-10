@@ -1,17 +1,12 @@
 package keys
 
 import (
-	"crypto/ecdsa"
-	"encoding/hex"
-	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
@@ -86,90 +81,24 @@ This command will import keys in ./operator_keys/ location
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyName := args[0]
 			privateKey := args[1]
-			basePath, _ := os.Getwd()
 
 			switch keyType {
 			case KeyTypeECDSA:
-				keyFileName := keyName + ".ecdsa.key.json"
-				if checkIfKeyExists(keyFileName) {
-					return errors.New("key name already exists. Please choose a different name")
-				}
-
 				privateKey = strings.TrimPrefix(privateKey, "0x")
-
 				privateKeyPair, err := crypto.HexToECDSA(privateKey)
 				if err != nil {
 					return err
 				}
-
-				password, err := p.InputHiddenString("Enter password to encrypt the ecdsa private key:", "",
-					func(s string) error {
-						if insecure {
-							return nil
-						}
-						return validatePassword(s)
-					},
-				)
-				if err != nil {
-					return err
-				}
-
-				err = WriteEncryptedECDSAPrivateKeyToPath(keyFileName, privateKeyPair, password)
-				if err != nil {
-					return err
-				}
-
-				privateKeyHex := hex.EncodeToString(privateKeyPair.D.Bytes())
-				// TODO: display it using `less` of `vi` so that it is not saved in terminal history
-				fmt.Println("ECDSA Private Key (Hex): ", privateKeyHex)
-				fmt.Println("Please backup the above private key hex in safe place.")
-				fmt.Println()
-				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
-				publicKey := privateKeyPair.Public()
-				publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-				if !ok {
-					return err
-				}
-				publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-				fmt.Println(hexutil.Encode(publicKeyBytes)[4:])
-				address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
-				fmt.Println(address)
-
-				return nil
+				return saveEcdsaKey(keyName, p, privateKeyPair, insecure)
 			case KeyTypeBLS:
-				keyFileName := keyName + ".bls.key.json"
-				if checkIfKeyExists(keyFileName) {
-					return errors.New("key name already exists. Please choose a different name")
-				}
-				password, err := p.InputHiddenString("Enter password to encrypt the bls private key:", "",
-					func(s string) error {
-						if insecure {
-							return nil
-						}
-						return validatePassword(s)
-					},
-				)
-				if err != nil {
-					return err
-				}
 				blsKeyPair, err := bls.NewKeyPairFromString(privateKey)
 				if err != nil {
 					return err
 				}
-				err = blsKeyPair.SaveToFile(OperatorKeyFolder+"/"+keyFileName, password)
-				if err != nil {
-					return err
-				}
-				// TODO: display it using `less` of `vi` so that it is not saved in terminal history
-				fmt.Println("BLS Private Key: " + blsKeyPair.PrivKey.String())
-				fmt.Println("Please backup the above private key in safe place.")
-				fmt.Println()
-				fmt.Println("BLS Pub key: " + blsKeyPair.PubKey.String())
-				fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
+				return saveBlsKey(keyName, p, blsKeyPair, insecure)
 			default:
 				return ErrInvalidKeyType
 			}
-			return nil
 		},
 	}
 

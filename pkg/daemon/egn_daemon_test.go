@@ -2891,6 +2891,7 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}, nil),
 					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().ImageExist(common.PluginImage.FullImage()).Return(true, nil),
 					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.RunOptions{
 						Network: "network-el",
 						Args:    []string{"arg1", "arg2"},
@@ -2908,6 +2909,104 @@ func TestRunPlugin(t *testing.T) {
 						},
 					}),
 					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
+				)
+			},
+		},
+		{
+			name:       `pull image if does not exist`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"profile": "option-returner",
+					"url": "`+common.MockAvsPkg.Repo()+`",
+					"plugin": {
+						"image": "`+common.PluginImage.FullImage()+`"
+					}
+				}`)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{
+						{
+							Id: "abc123",
+						},
+					}, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().ImageExist(common.PluginImage.FullImage()).Return(false, nil),
+					d.dockerManager.EXPECT().Pull(common.PluginImage.FullImage()).Return(nil),
+					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.RunOptions{
+						Network: "network-el",
+						Args:    []string{"arg1", "arg2"},
+						Mounts: []docker.Mount{
+							{
+								Type:   docker.VolumeTypeBind,
+								Source: "/tmp",
+								Target: "/tmp",
+							},
+							{
+								Type:   docker.VolumeTypeVolume,
+								Source: "volume1",
+								Target: "/tmp/volume1",
+							},
+						},
+					}),
+					d.dockerManager.EXPECT().ImageRemove(common.PluginImage.FullImage()).Return(nil),
+				)
+			},
+		},
+		{
+			name:       `pull image error`,
+			instanceId: "mock-avs-default",
+			args:       []string{"arg1", "arg2"},
+			options: RunPluginOptions{
+				Binds: map[string]string{
+					"/tmp": "/tmp",
+				},
+				Volumes: map[string]string{
+					"volume1": "/tmp/volume1",
+				},
+			},
+			wantErr: true,
+			mocker: func(t *testing.T, d *mockerData) {
+				initInstanceDir(t, d.fs, d.dataDir.Path(), "mock-avs-default", `{
+					"name": "mock-avs",
+					"tag": "default",
+					"version": "`+common.MockAvsPkg.Version()+`",
+					"profile": "option-returner",
+					"url": "`+common.MockAvsPkg.Repo()+`",
+					"plugin": {
+						"image": "`+common.PluginImage.FullImage()+`"
+					}
+				}`)
+				gomock.InOrder(
+					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.composeManager.EXPECT().PS(compose.DockerComposePsOptions{
+						FilterRunning: true,
+						Path:          filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", "docker-compose.yml"),
+						Format:        "json",
+					}).Return([]compose.ComposeService{
+						{
+							Id: "abc123",
+						},
+					}, nil),
+					d.dockerManager.EXPECT().ContainerNetworks("abc123").Return([]string{"network-el"}, nil),
+					d.dockerManager.EXPECT().ImageExist(common.PluginImage.FullImage()).Return(false, nil),
+					d.dockerManager.EXPECT().Pull(common.PluginImage.FullImage()).Return(assert.AnError),
 				)
 			},
 		},
@@ -2937,6 +3036,7 @@ func TestRunPlugin(t *testing.T) {
 				}`)
 				gomock.InOrder(
 					d.locker.EXPECT().New(filepath.Join(d.dataDir.Path(), "nodes", "mock-avs-default", ".lock")).Return(d.locker),
+					d.dockerManager.EXPECT().ImageExist(common.PluginImage.FullImage()).Return(true, nil),
 					d.dockerManager.EXPECT().Run(common.PluginImage.FullImage(), docker.RunOptions{
 						Network: docker.NetworkHost,
 						Args:    []string{"arg1", "arg2"},

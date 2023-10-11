@@ -131,7 +131,12 @@ could be restored manually using the 'eigenlayer restore' command.`,
 
 			// Build dynamic flags with the profile options
 			for _, o := range pullResult.MergedOptions {
-				cmd.Flags().String("option."+o.Name(), o.Default(), o.Help())
+				v, err := o.Value()
+				if err != nil {
+					cmd.Flags().String("option."+o.Name(), o.Default(), o.Help())
+				} else {
+					cmd.Flags().String("option."+o.Name(), v, o.Help())
+				}
 			}
 
 			// Parse dynamic flags

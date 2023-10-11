@@ -28,4 +28,7 @@ type DockerManager interface {
 
 	// ImageRemove removes the given image.
 	ImageRemove(image string) error
+
+	// ImageExists checks if the given image exists.
+	ImageExist(image string) (bool, error)
 }

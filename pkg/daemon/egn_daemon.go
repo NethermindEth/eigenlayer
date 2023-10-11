@@ -962,11 +962,19 @@ func (d *EgnDaemon) RunPlugin(instanceId string, pluginArgs []string, options Ru
 		}
 		network = networks[0]
 	}
-	// XXX: Pull is removed to support local images that are already pulled
-	// err = d.docker.Pull(instance.Plugin.Image)
-	// if err != nil {
-	// 	return err
-	// }
+
+	// Pull image if it does not exist
+	ok, err := d.docker.ImageExist(instance.Plugin.Image)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		err = d.docker.Pull(instance.Plugin.Image)
+		if err != nil {
+			return err
+		}
+	}
+
 	if !options.NoDestroyImage {
 		defer func() {
 			if err := d.docker.ImageRemove(instance.Plugin.Image); err != nil {

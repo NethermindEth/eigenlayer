@@ -17,9 +17,8 @@ clean:
 binary-arch: clean
 	dh_prep
 	dh_installdirs
-	cd $(GOPATH)/src/github.com/NethermindEth/eigenlayer/cmd/eigenlayer/ && go install > /dev/null 2>&1
 	mkdir -p $(PKGDIR)/usr/bin
-	cp $(GOPATH)/bin/* $(PKGDIR)/usr/bin/
+	go build -o $(PKGDIR)/usr/bin/eigenlayer $(GOPATH)/src/github.com/NethermindEth/eigenlayer/cmd/eigenlayer/main.go
 	dh_strip --no-automatic-dbgsym
 	dh_compress
 	dh_fixperms

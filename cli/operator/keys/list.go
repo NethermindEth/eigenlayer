@@ -27,6 +27,8 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 				return err
 			}
 
+			// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
+			basePath, _ := os.Getwd()
 			for _, file := range files {
 				keySplits := strings.Split(file.Name(), ".")
 				fileName := keySplits[0]
@@ -40,6 +42,7 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 						return err
 					}
 					fmt.Println("Address: 0x" + address)
+					fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + file.Name())
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				case KeyTypeBLS:
@@ -49,6 +52,7 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 						return err
 					}
 					fmt.Println("Public Key: " + pubKey)
+					fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + file.Name())
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				}

@@ -88,7 +88,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
-			llog, err := eigensdkLogger.NewZapLogger(eigensdkLogger.Development)
+			logger, err := eigensdkLogger.NewZapLogger(eigensdkLogger.Development)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
 				ethClient,
 				ethClient,
-				llog)
+				logger)
 			if err != nil {
 				return err
 			}
@@ -133,7 +133,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				elContractsClient,
 				ethClient,
 				localSigner,
-				llog,
+				logger,
 				noopMetrics,
 			)
 			if err != nil {
@@ -142,7 +142,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 
 			reader, err := elContracts.NewELChainReader(
 				elContractsClient,
-				llog,
+				logger,
 				ethClient,
 			)
 			if err != nil {
@@ -160,14 +160,14 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 					return err
 				}
 			} else {
-				llog.Info("Operator is already registered")
+				logger.Info("Operator is already registered")
 			}
 
 			_, err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
-			llog.Info("Operator is registered and bls key added successfully")
+			logger.Info("Operator is registered and bls key added successfully")
 			return nil
 		},
 	}

@@ -77,7 +77,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				return fmt.Errorf("%w: with error %s", ErrInvalidYamlFile, err)
 			}
 
-			fmt.Printf("Operator file validated successfully")
+			fmt.Println("Operator file validated successfully")
 
 			signerType, err = validateSignerType(signerTypeFlag, operatorCfg)
 			if err != nil {
@@ -136,21 +136,38 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				llog,
 				noopMetrics,
 			)
-
 			if err != nil {
 				return err
 			}
 
-			_, err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
+			reader, err := elContracts.NewELChainReader(
+				elContractsClient,
+				llog,
+				ethClient,
+			)
 			if err != nil {
 				return err
+			}
+
+			status, err := reader.IsOperatorRegistered(context.Background(), operatorCfg.Operator)
+			if err != nil {
+				return err
+			}
+
+			if !status {
+				_, err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
+				if err != nil {
+					return err
+				}
+			} else {
+				llog.Info("Operator is already registered")
 			}
 
 			_, err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Operator registered successfully")
+			llog.Info("Operator is registered and bls key added successfully")
 			return nil
 		},
 	}

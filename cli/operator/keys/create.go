@@ -115,6 +115,7 @@ This command will create keys in ./operator_keys/ location
 }
 
 func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insecure bool) error {
+	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
 	basePath, _ := os.Getwd()
 	keyFileName := keyName + ".bls.key.json"
 	if checkIfKeyExists(keyFileName) {
@@ -146,6 +147,7 @@ func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insec
 }
 
 func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.PrivateKey, insecure bool) error {
+	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
 	basePath, _ := os.Getwd()
 	keyFileName := keyName + ".ecdsa.key.json"
 	if checkIfKeyExists(keyFileName) {

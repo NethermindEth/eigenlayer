@@ -78,7 +78,7 @@ func TestBackupList(t *testing.T) {
 			t.Log(string(out))
 			assert.NoError(t, backupErr, "backup ls command should succeed")
 			assert.Regexp(t, regexp.MustCompile(`ID\s+AVS Instance ID\s+VERSION\s+COMMIT\s+TIMESTAMP\s+SIZE\s+URL\s+`+
-				`[a-f0-9]+\s+mock-avs-default\s+v5\.5\.1\s+d5af645fffb93e8263b099082a4f512e1917d0af\s+.*\s+10KiB\s+https://github.com/NethermindEth/mock-avs-pkg\s+`),
+				`[a-f0-9]+\s+mock-avs-default\s+`+common.MockAvsPkg.Version()+`\s+`+common.MockAvsPkg.CommitHash()+`\s+.*\s+10KiB\s+https://github.com/NethermindEth/mock-avs-pkg\s+`),
 				string(out))
 		},
 	)

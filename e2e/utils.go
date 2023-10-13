@@ -270,6 +270,25 @@ func getAVSHealth(t *testing.T, url string) (int, error) {
 	return response.StatusCode, nil
 }
 
+func getAVSVersion(t *testing.T, ip, port string) (string, error) {
+	t.Helper()
+	response, err := http.Get(fmt.Sprintf("http://%s:%s/eigen/node/version", ip, port))
+	if err != nil {
+		return "", err
+	}
+	if response.StatusCode != 200 {
+		return "", fmt.Errorf("expected response code %d, got %d", 200, response.StatusCode)
+	}
+	var r struct {
+		Version string `json:"version"`
+	}
+	bodyData, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	return r.Version, json.Unmarshal(bodyData, &r)
+}
+
 func waitHealthy(t *testing.T, containerID string, port int, networkName string, timeout time.Duration) error {
 	containerIP, err := getContainerIPByName(containerID, networkName)
 	if err != nil {

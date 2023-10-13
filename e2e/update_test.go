@@ -79,6 +79,7 @@ func TestUpdate_Run(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", common.MockAvsPkg.Version())
 		},
 	)
 	// Run test case
@@ -114,6 +115,7 @@ func TestUpdate_SameVersion(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", version)
 		},
 	)
 	// Run test case
@@ -150,6 +152,7 @@ func TestUpdate_OldVersion(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", installVersion)
 		},
 	)
 	// Run test case
@@ -186,6 +189,7 @@ func TestUpdate_SameCommit(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", common.MockAvsPkg.Version())
 		},
 	)
 	// Run test case
@@ -222,6 +226,7 @@ func TestUpdate_OldCommit(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", installVersion)
 		},
 	)
 	// Run test case

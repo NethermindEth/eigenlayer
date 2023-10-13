@@ -38,7 +38,7 @@ func TestLocalUpdate(t *testing.T) {
 				return err
 			}
 			// Local install initial version
-			err = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
+			err = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
 			if err != nil {
 				return err
 			}
@@ -92,7 +92,7 @@ func TestLocalUpdate_Run(t *testing.T) {
 				return err
 			}
 			// Local install initial version
-			err = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug", "--option.test-option-hidden", "12345678", "--option.test-option-enum-hidden", "option3")
+			err = runCommand(t, egnPath, "local-install", pkgDir, "--profile", "option-returner", "--run", "--log-debug")
 			if err != nil {
 				return err
 			}
@@ -115,6 +115,7 @@ func TestLocalUpdate_Run(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", updateVersion)
 		},
 	)
 	// Run test case
@@ -151,7 +152,7 @@ func TestLocalUpdate_SamePackage(t *testing.T) {
 		},
 		// Act
 		func(t *testing.T, egnPath string) {
-			updateError = runCommand(t, egnPath, "local-update", "--yes", "--no-prompt", "--option.test-option-hidden", "12345678", "mock-avs-default", pkgDir)
+			updateError = runCommand(t, egnPath, "local-update", "--yes", "--no-prompt", "mock-avs-default", pkgDir)
 		},
 		// Assert
 		func(t *testing.T) {
@@ -161,6 +162,7 @@ func TestLocalUpdate_SamePackage(t *testing.T) {
 			optionReturnerIP, err := getContainerIPByName("option-returner", "eigenlayer")
 			require.NoError(t, err, "failed to get option-returner container IP")
 			checkAVSHealth(t, optionReturnerIP, "8080", 200)
+			checkAVSVersion(t, optionReturnerIP, "8080", common.MockAvsPkg.Version())
 		},
 	)
 	// Run test case

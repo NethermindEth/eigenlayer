@@ -336,6 +336,29 @@ func checkAVSHealth(t *testing.T, ip string, port string, wantCode int) {
 	assert.Equal(t, wantCode, responseCode, "AVS health should be %d, but it is %d", wantCode, responseCode)
 }
 
+func checkAVSVersion(t *testing.T, ip string, port string, wantVersion string) {
+	t.Logf("Checking AVS version")
+	var (
+		timeOut time.Duration = 30 * time.Second
+		version               = ""
+		err     error
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	b := backoff.WithContext(backoff.NewExponentialBackOff(), ctx)
+	err = backoff.Retry(func() error {
+		version, err = getAVSVersion(t, ip, port)
+		if err != nil {
+			return err
+		}
+		if version != wantVersion {
+			return fmt.Errorf("expected version %s, got %s", wantVersion, version)
+		}
+		return nil
+	}, b)
+	assert.NoErrorf(t, err, "AVS version should be %s", wantVersion)
+}
+
 func checkEnvTargets(t *testing.T, instanceId string, targets ...string) {
 	// Check nodes folder exists
 	dataDir, err := dataDirPath()

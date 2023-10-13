@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `local-update` command. ([#98](https://github.com/NethermindEth/eigenlayer/pull/98))
+
 ## [v0.2.1] - 2023-10-11 
 
 ### Fixed

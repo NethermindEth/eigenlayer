@@ -184,7 +184,7 @@ It will also show the private key only once, so that you can back it up in case 
 
 ### List keys
 
-You can also list you created key using
+You can also list your created keys using
 
 ```bash
 eigenlayer operator keys list
@@ -230,7 +230,7 @@ After filling the details in `metadata.json`, please upload this into a publicly
 
 AVS Node software can be installed from a Git repository, such as GitHub, or from a local directory, as long as the package adheres to the packaging specification.
 
-> Each AVS profiles defines a set of services using Docker Compose. For security reasons, building Docker images is not supported, and profiles cannot use the `build` option in their `docker-compose.yml` files. Only the `image` option is supported. This applies to the plugin as well. In the `manifest.yml` file, the `plugin` option only supports the `image` field, which should contain a Docker image name as its value, rather than a reference to a Dockerfile.
+> Each AVS profile defines a set of services using Docker Compose. For security reasons, building Docker images is not supported, and profiles cannot use the `build` option in their `docker-compose.yml` files. Only the `image` option is supported. This applies to the plugin as well. In the `manifest.yml` file, the `plugin` option only supports the `image` field, which should contain a Docker image name as its value, rather than a reference to a Dockerfile.
 
 Further details on how to proceed in each case are provided below.
 
@@ -364,7 +364,7 @@ INFO[0000] Instance mock-avs-default running successfully
 
 ### Updating with explicit version
 
-To update to an specific version, pass the version as an argument. The new version mus be greater than the current version following the [semver](https://semver.org/) specification. For instance:
+To update to a specific version, pass the version as an argument. The new version must be greater than the current version following the [semver](https://semver.org/) specification. For instance:
 
 ```bash
 eigenlayer update mock-avs-default v5.5.0

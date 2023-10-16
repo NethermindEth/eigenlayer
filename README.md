@@ -23,6 +23,7 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
     - [Updating with explicit version](#updating-with-explicit-version)
     - [Updating with commit hash](#updating-with-commit-hash)
     - [Updating options](#updating-options)
+    - [Updating from local directory](#updating-from-local-directory)
   - [Backup](#backup)
   - [List backups](#list-backups)
   - [Restore](#restore)
@@ -127,6 +128,7 @@ You can create encrypted ecdsa and bls keys using the cli which will be needed f
 eigenlayer operator keys create --key-type ecdsa [keyname]
 eigenlayer operator keys create --key-type bls [keyname]
 ```
+
 - `keyname` - This will be the name of the created key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
 
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.
@@ -135,10 +137,13 @@ It will also show the private key only once, so that you can back it up in case 
 Example:
 
 Input command
+
 ```bash
 eigenlayer operator keys create --key-type ecdsa test
 ```
+
 Output
+
 ```bash
 ? Enter password to encrypt the ecdsa private key: *******
 ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
@@ -157,6 +162,7 @@ You can import existing ecdsa and bls keys using the cli which will be needed fo
 eigenlayer operator keys import --key-type ecdsa [keyname] [privatekey]
 eigenlayer operator keys import --key-type bls [keyname] [privatekey]
 ```
+
 - `keyname` - This will be the name of the imported key file. It will be saved as `<keyname>.ecdsa.key.json` or `<keyname>.bls.key.json`
 - `privatekey` - This will be the private key of the key to be imported.
   - For ecdsa key, it should be in hex format
@@ -165,10 +171,13 @@ eigenlayer operator keys import --key-type bls [keyname] [privatekey]
 Example:
 
 Input command
+
 ```bash
 eigenlayer operator keys import --key-type ecdsa test 6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
 ```
+
 Output
+
 ```bash
 ? Enter password to encrypt the ecdsa private key: *******
 ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
@@ -313,6 +322,7 @@ In this case, the `main-port` has a value of 8081 instead of the default value o
 
 > THIS INSTALLATION METHOD IS INSECURE
 >
+> This method is useful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository.
 
 Installing from a local directory can be helpful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository. To install an AVS Node Software from a local directory, use the `eigenlayer local-install` command. To illustrate local installation, let's clone the `mock-avs-pkg` to a local directory, and use it as a local package.
 
@@ -381,6 +391,22 @@ eigenlayer update mock-avs-default a3406616b848164358fdd24465b8eecda5f5ae34
 ### Updating options
 
 The `--no-prompt` flag is available to skip the options prompt, also the dynamic flags `--option.<option-name>` are available to set the option values, like in the `install` command.
+
+### Updating from local directory
+
+> THIS UPDATE METHOD IS INSECURE
+>
+> This method is useful for AVS developers who want to test Node Software packaging before releasing it to a public Git repository, and should be used only for development purposes with installations from local directories. To know more about how to install from a local directory, check the [From local directory](#from-local-directory) section.
+
+To update from a local directory, use the `eigenlayer local-update` command. In this case the version or commit hash is not required, as the `local-update` assumes the the local directory is the version you want to update.
+
+For instance, if the `mock-avs-pkg` instance is installed, and you want to update it from the local directory `mock-avs-pkg-update`, use the following command:
+
+```bash
+eigenlayer local-update mock-avs-pkg ../mock-avs-pkg-update
+```
+
+For local updates, the `--no-prompt` and `--option.<option-name>` flags are also available.
 
 ## Backup
 

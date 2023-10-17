@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
@@ -22,13 +23,16 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 		It will only list keys created in the default folder (./operator_keys/)
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			files, err := os.ReadDir(OperatorKeyFolder + "/")
+			homePath, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			keyStorePath := filepath.Clean(filepath.Join(homePath, OperatorKeyFolder))
+			files, err := os.ReadDir(keyStorePath)
 			if err != nil {
 				return err
 			}
 
-			// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
-			basePath, _ := os.Getwd()
 			for _, file := range files {
 				keySplits := strings.Split(file.Name(), ".")
 				fileName := keySplits[0]
@@ -37,22 +41,24 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 				switch keyType {
 				case KeyTypeECDSA:
 					fmt.Println("Key Type: ECDSA")
-					address, err := GetAddress(OperatorKeyFolder + "/" + file.Name())
+					keyFilePath := filepath.Join(keyStorePath, file.Name())
+					address, err := GetAddress(filepath.Clean(keyFilePath))
 					if err != nil {
 						return err
 					}
 					fmt.Println("Address: 0x" + address)
-					fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + file.Name())
+					fmt.Println("Key location: " + keyFilePath)
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				case KeyTypeBLS:
 					fmt.Println("Key Type: BLS")
-					pubKey, err := GetPubKey(OperatorKeyFolder + "/" + file.Name())
+					keyFilePath := filepath.Join(keyStorePath, file.Name())
+					pubKey, err := GetPubKey(filepath.Clean(keyFilePath))
 					if err != nil {
 						return err
 					}
 					fmt.Println("Public Key: " + pubKey)
-					fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + file.Name())
+					fmt.Println("Key location: " + keyFilePath)
 					fmt.Println("====================================================================================")
 					fmt.Println()
 				}

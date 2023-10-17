@@ -88,7 +88,6 @@ This command will create keys in ./operator_keys/ location
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyName := args[0]
-
 			switch keyType {
 			case KeyTypeECDSA:
 				privateKey, err := crypto.GenerateKey()
@@ -115,7 +114,6 @@ This command will create keys in ./operator_keys/ location
 }
 
 func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insecure bool) error {
-	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
 	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -151,7 +149,6 @@ func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insec
 }
 
 func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.PrivateKey, insecure bool) error {
-	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
 	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -217,7 +214,6 @@ func WriteEncryptedECDSAPrivateKeyToPath(fileLoc string, privateKey *ecdsa.Priva
 }
 
 func writeBytesToFile(fileLoc string, data []byte) error {
-	filepath.Dir(fileLoc)
 	err := os.Mkdir(filepath.Dir(fileLoc), 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err

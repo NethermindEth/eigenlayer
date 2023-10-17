@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	OperatorKeyFolder = "operator_keys"
+	OperatorKeystoreSubFolder = ".eigenlayer/operator_keys"
 
 	KeyTypeECDSA = "ecdsa"
 	KeyTypeBLS   = "bls"
@@ -88,7 +88,6 @@ This command will create keys in ./operator_keys/ location
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyName := args[0]
-
 			switch keyType {
 			case KeyTypeECDSA:
 				privateKey, err := crypto.GenerateKey()
@@ -115,10 +114,13 @@ This command will create keys in ./operator_keys/ location
 }
 
 func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insecure bool) error {
-	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
-	basePath, _ := os.Getwd()
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	keyFileName := keyName + ".bls.key.json"
-	if checkIfKeyExists(keyFileName) {
+	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeystoreSubFolder, keyFileName))
+	if checkIfKeyExists(fileLoc) {
 		return errors.New("key name already exists. Please choose a different name")
 	}
 	password, err := p.InputHiddenString("Enter password to encrypt the bls private key:", "",
@@ -133,7 +135,7 @@ func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insec
 		return err
 	}
 
-	err = keyPair.SaveToFile(OperatorKeyFolder+"/"+keyFileName, password)
+	err = keyPair.SaveToFile(fileLoc, password)
 	if err != nil {
 		return err
 	}
@@ -142,15 +144,18 @@ func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insec
 	fmt.Println("Please backup the above private key in safe place.")
 	fmt.Println()
 	fmt.Println("BLS Pub key: " + keyPair.PubKey.String())
-	fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
+	fmt.Println("Key location: " + fileLoc)
 	return nil
 }
 
 func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.PrivateKey, insecure bool) error {
-	// TODO: Path should be relative to user home dir https://github.com/NethermindEth/eigenlayer/issues/109
-	basePath, _ := os.Getwd()
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	keyFileName := keyName + ".ecdsa.key.json"
-	if checkIfKeyExists(keyFileName) {
+	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeystoreSubFolder, keyFileName))
+	if checkIfKeyExists(fileLoc) {
 		return errors.New("key name already exists. Please choose a different name")
 	}
 
@@ -166,7 +171,7 @@ func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.Private
 		return err
 	}
 
-	err = WriteEncryptedECDSAPrivateKeyToPath(keyFileName, privateKey, password)
+	err = WriteEncryptedECDSAPrivateKeyToPath(fileLoc, privateKey, password)
 	if err != nil {
 		return err
 	}
@@ -176,7 +181,7 @@ func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.Private
 	fmt.Println("ECDSA Private Key (Hex): ", privateKeyHex)
 	fmt.Println("Please backup the above private key hex in safe place.")
 	fmt.Println()
-	fmt.Println("Key location: " + basePath + "/" + OperatorKeyFolder + "/" + keyFileName)
+	fmt.Println("Key location: " + fileLoc)
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -189,7 +194,7 @@ func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.Private
 	return nil
 }
 
-func WriteEncryptedECDSAPrivateKeyToPath(keyName string, privateKey *ecdsa.PrivateKey, password string) error {
+func WriteEncryptedECDSAPrivateKeyToPath(fileLoc string, privateKey *ecdsa.PrivateKey, password string) error {
 	UUID, err := uuid.NewRandom()
 	if err != nil {
 		return err
@@ -205,15 +210,15 @@ func WriteEncryptedECDSAPrivateKeyToPath(keyName string, privateKey *ecdsa.Priva
 		return err
 	}
 
-	return writeBytesToFile(keyName, encryptedBytes)
+	return writeBytesToFile(fileLoc, encryptedBytes)
 }
 
-func writeBytesToFile(keyName string, data []byte) error {
-	err := os.Mkdir(OperatorKeyFolder, 0o755)
+func writeBytesToFile(fileLoc string, data []byte) error {
+	err := os.MkdirAll(filepath.Dir(fileLoc), 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
-	file, err := os.Create(filepath.Clean(OperatorKeyFolder + "/" + keyName))
+	file, err := os.Create(fileLoc)
 	if err != nil {
 		fmt.Println("file create error")
 		return err
@@ -233,8 +238,8 @@ func writeBytesToFile(keyName string, data []byte) error {
 	return err
 }
 
-func checkIfKeyExists(keyName string) bool {
-	_, err := os.Stat(OperatorKeyFolder + "/" + keyName)
+func checkIfKeyExists(fileLoc string) bool {
+	_, err := os.Stat(fileLoc)
 	return !os.IsNotExist(err)
 }
 

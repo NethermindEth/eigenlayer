@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Pull plugin image if does not exist locally ([#101](https://github.com/NethermindEth/eigenlayer/pull/101))
-
+- Updated keystore folder relative to user's HOME directory ([#118](https://github.com/NethermindEth/eigenlayer/pull/118))
 ## [v0.2.0] - 2023-10-10
 
 ### Added

@@ -27,7 +27,7 @@ func ListCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			keyStorePath := filepath.Clean(filepath.Join(homePath, OperatorKeyFolder))
+			keyStorePath := filepath.Clean(filepath.Join(homePath, OperatorKeystoreSubFolder))
 			files, err := os.ReadDir(keyStorePath)
 			if err != nil {
 				return err

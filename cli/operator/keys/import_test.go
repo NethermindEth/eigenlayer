@@ -92,7 +92,7 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
-			keyPath: filepath.Clean(homePath + "/" + OperatorKeyFolder + "/test.ecdsa.key.json"),
+			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
 		},
 		{
 			name: "valid ecdsa key import with 0x prefix",
@@ -101,7 +101,7 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
-			keyPath: filepath.Clean(homePath + "/" + OperatorKeyFolder + "/test.ecdsa.key.json"),
+			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
 		},
 		{
 			name: "valid bls key import",
@@ -110,7 +110,7 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
-			keyPath: filepath.Clean(homePath + "/" + OperatorKeyFolder + "/test.bls.key.json"),
+			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),
 		},
 	}
 	for _, tt := range tests {

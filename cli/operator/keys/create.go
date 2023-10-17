@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	OperatorKeyFolder = ".eigenlayer/operator_keys"
+	OperatorKeystoreSubFolder = ".eigenlayer/operator_keys"
 
 	KeyTypeECDSA = "ecdsa"
 	KeyTypeBLS   = "bls"
@@ -119,7 +119,7 @@ func saveBlsKey(keyName string, p prompter.Prompter, keyPair *bls.KeyPair, insec
 		return err
 	}
 	keyFileName := keyName + ".bls.key.json"
-	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeyFolder, keyFileName))
+	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeystoreSubFolder, keyFileName))
 	if checkIfKeyExists(fileLoc) {
 		return errors.New("key name already exists. Please choose a different name")
 	}
@@ -154,7 +154,7 @@ func saveEcdsaKey(keyName string, p prompter.Prompter, privateKey *ecdsa.Private
 		return err
 	}
 	keyFileName := keyName + ".ecdsa.key.json"
-	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeyFolder, keyFileName))
+	fileLoc := filepath.Clean(filepath.Join(homePath, OperatorKeystoreSubFolder, keyFileName))
 	if checkIfKeyExists(fileLoc) {
 		return errors.New("key name already exists. Please choose a different name")
 	}

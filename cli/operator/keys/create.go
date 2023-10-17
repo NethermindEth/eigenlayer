@@ -214,7 +214,7 @@ func WriteEncryptedECDSAPrivateKeyToPath(fileLoc string, privateKey *ecdsa.Priva
 }
 
 func writeBytesToFile(fileLoc string, data []byte) error {
-	err := os.Mkdir(filepath.Dir(fileLoc), 0o755)
+	err := os.MkdirAll(filepath.Dir(fileLoc), 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}

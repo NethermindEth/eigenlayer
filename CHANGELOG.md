@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.0] - 2023-10-19
 ### Added
 
 - Add `local-update` command. ([#98](https://github.com/NethermindEth/eigenlayer/pull/98))
+- Updated eigensdk to [v0.0.5](https://github.com/Layr-Labs/eigensdk-go/releases/tag/v0.0.5) ([#120](https://github.com/NethermindEth/eigenlayer/pull/120))
 
 ## [v0.2.1] - 2023-10-11 
 
@@ -17,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pull plugin image if does not exist locally ([#101](https://github.com/NethermindEth/eigenlayer/pull/101))
 - Updated keystore folder relative to user's HOME directory ([#118](https://github.com/NethermindEth/eigenlayer/pull/118))
-- Updated eigensdk to [v0.0.5](https://github.com/Layr-Labs/eigensdk-go/releases/tag/v0.0.5) ([#120](https://github.com/NethermindEth/eigenlayer/pull/120))
+
 ## [v0.2.0] - 2023-10-10
 
 ### Added

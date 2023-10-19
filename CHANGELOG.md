@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.1] - 2023-10-19
+### Fixed
+- Updated eigensdk to [v0.0.6](https://github.com/Layr-Labs/eigensdk-go/releases/tag/v0.0.6) ([#122](https://github.com/NethermindEth/eigenlayer/pull/122)) 
 ## [v0.3.0] - 2023-10-19
 ### Added
 

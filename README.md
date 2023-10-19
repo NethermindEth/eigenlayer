@@ -109,13 +109,13 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/
 ### Linux/amd64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.3.0/eigenlayer-linux-amd64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.3.1/eigenlayer-linux-amd64 --output eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.3.0/eigenlayer-linux-arm64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.3.1/eigenlayer-linux-arm64 --output eigenlayer
 ```
 
 ## Create and List Keys

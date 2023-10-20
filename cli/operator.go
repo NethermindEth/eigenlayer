@@ -16,7 +16,7 @@ func OperatorCmd(p prompter.Prompter) *cobra.Command {
 		operator.RegisterCmd(p),
 		operator.UpdateCmd(p),
 		operator.StatusCmd(),
-		operator.ConfigCmd(),
+		operator.ConfigCmd(p),
 		operator.KeysCmd(p),
 	)
 	return &cmd

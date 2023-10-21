@@ -53,14 +53,14 @@ func GetMetrics() (hardwareMetrics HardwareMetrics, err error) {
 	cpuCores := runtime.NumCPU()
 	hardwareMetrics.CPU = float64(cpuCores)
 
-	// Total Memory RAM
-	// memInfo := &syscall.Sysinfo_t{}
-	// err = syscall.Sysinfo(memInfo)
-	// if err != nil {
-	// 	return hardwareMetrics, fmt.Errorf("failed to get memory info: %w", err)
-	// }
-	// totalMemory := float64(memInfo.Totalram*uint64(memInfo.Unit)) / (1024 * 1024) // Convert to Mb
-	// hardwareMetrics.RAM = totalMemory
+	Total Memory RAM
+	memInfo := &syscall.Sysinfo_t{}
+	err = syscall.Sysinfo(memInfo)
+	if err != nil {
+		return hardwareMetrics, fmt.Errorf("failed to get memory info: %w", err)
+	}
+	totalMemory := float64(memInfo.Totalram*uint64(memInfo.Unit)) / (1024 * 1024) // Convert to Mb
+	hardwareMetrics.RAM = totalMemory
 
 	// Disk Free Space
 	wd, err := os.Getwd()

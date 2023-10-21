@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"os"
 	"regexp"
@@ -40,7 +39,6 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 
 			if populate {
 				op, err = promptOperatorInfo(&op, p)
-				fmt.Println("op: ", op)
 				if err != nil {
 					return err
 				}

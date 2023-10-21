@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
@@ -155,18 +156,22 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 			}
 
 			if !status {
-				_, err = elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
+				receipt, err := elWriter.RegisterAsOperator(ctx, operatorCfg.Operator)
 				if err != nil {
 					return err
 				}
+				logger.Info("Operator registration transaction at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+
 			} else {
 				logger.Info("Operator is already registered")
 			}
 
-			_, err = elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
+			receipt, err := elWriter.RegisterBLSPublicKey(ctx, keyPair, operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
+			logger.Info("Operator bls key added transaction at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+
 			logger.Info("Operator is registered and bls key added successfully")
 			return nil
 		},
@@ -246,5 +251,20 @@ func getSigner(p prompter.Prompter, signerType types.SignerType, privateKeyHex s
 
 	default:
 		return nil, fmt.Errorf("invalid signer type %s", signerType)
+	}
+}
+
+func getTransactionLink(txHash string, chainId *big.Int) string {
+	// Create chainId for eth and goerli
+	ethChainId := big.NewInt(1)
+	goerliChainId := big.NewInt(5)
+
+	// Return link of chainId is a live network
+	if chainId.Cmp(ethChainId) == 0 {
+		return fmt.Sprintf("https://etherscan.io/tx/%s", txHash)
+	} else if chainId.Cmp(goerliChainId) == 0 {
+		return fmt.Sprintf("https://goerli.etherscan.io/tx/%s", txHash)
+	} else {
+		return txHash
 	}
 }

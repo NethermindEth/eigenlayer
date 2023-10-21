@@ -115,10 +115,12 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			_, err = elWriter.UpdateOperatorDetails(context.Background(), operatorCfg.Operator)
+			receipt, err := elWriter.UpdateOperatorDetails(context.Background(), operatorCfg.Operator)
 			if err != nil {
 				return err
 			}
+			fmt.Println("Operator bls key added transaction at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+
 			fmt.Println("Operator updated successfully")
 			return nil
 		},

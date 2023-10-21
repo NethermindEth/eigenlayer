@@ -53,7 +53,7 @@ func GetMetrics() (hardwareMetrics HardwareMetrics, err error) {
 	cpuCores := runtime.NumCPU()
 	hardwareMetrics.CPU = float64(cpuCores)
 
-	Total Memory RAM
+	// Total Memory RAM
 	memInfo := &syscall.Sysinfo_t{}
 	err = syscall.Sysinfo(memInfo)
 	if err != nil {

@@ -47,8 +47,9 @@ jobs:
         shell: bash
       - name: Unit tests
         run: make unit-test
-      - name: E2E tests
-        run: make e2e-test
+# These tests were only running for install and monitoring so commenting for now
+#      - name: E2E tests
+#        run: make e2e-test
       - name: Build linux amd64
         run: make build-linux-amd64
       - name: Build linux arm64

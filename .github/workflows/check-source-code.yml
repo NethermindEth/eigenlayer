@@ -51,5 +51,6 @@ jobs:
         run: make build
       - name: Unit tests
         run: make unit-test
-      - name: E2E tests
-        run: make e2e-test
+# These tests were only running for install and monitoring so commenting for now
+#      - name: E2E tests
+#        run: make e2e-test

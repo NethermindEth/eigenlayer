@@ -5,17 +5,14 @@ import (
 	"errors"
 	"math/big"
 	"os"
-	"regexp"
-	"strings"
 
 	eigensdkTypes "github.com/Layr-Labs/eigensdk-go/types"
+	eigenSdkUtils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/NethermindEth/eigenlayer/cli/prompter"
 	"github.com/NethermindEth/eigenlayer/internal/types"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
-
-const zeroAddress = "0x0000000000000000000000000000000000000000"
 
 func CreateCmd(p prompter.Prompter) *cobra.Command {
 	cmd := cobra.Command{
@@ -94,7 +91,13 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 	if gateApproval {
 		delegationApprover, err := p.InputString("Enter your staker approver address:", "", "",
 			func(s string) error {
-				return validateAddress(s)
+				isValidAddress := eigenSdkUtils.IsValidEthereumAddress(s)
+
+				if !isValidAddress {
+					return errors.New("address is invalid")
+				}
+
+				return nil
 			},
 		)
 		if err != nil {
@@ -102,11 +105,11 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 		}
 		config.Operator.DelegationApproverAddress = delegationApprover
 	} else {
-		config.Operator.DelegationApproverAddress = zeroAddress
+		config.Operator.DelegationApproverAddress = eigensdkTypes.ZeroAddress
 	}
 
 	// Prompt and set earnings address
-	earningsAddress, err := p.InputString("Enter your earnings address:", config.Operator.Address, "",
+	earningsAddress, err := p.InputString("Enter your earnings address (default to your operator address):", config.Operator.Address, "",
 		func(s string) error {
 			return validateAddressIsNonZeroAndValid(s)
 		},
@@ -117,7 +120,7 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 	config.Operator.EarningsReceiverAddress = earningsAddress
 
 	// Prompt for eth node
-	rpcUrl, err := p.InputString("Enter your rpc url:", "", "",
+	rpcUrl, err := p.InputString("Enter your rpc url:", "http://localhost:8545", "",
 		func(s string) error { return nil },
 	)
 	if err != nil {
@@ -162,22 +165,14 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 }
 
 func validateAddressIsNonZeroAndValid(address string) error {
-	if address == zeroAddress {
+	if address == eigensdkTypes.ZeroAddress {
 		return errors.New("address is 0")
 	}
 
-	return validateAddress(address)
-}
+	addressIsValid := eigenSdkUtils.IsValidEthereumAddress(address)
 
-func validateAddress(address string) error {
-	// Remove 0x
-	address = strings.TrimPrefix(address, "0x")
-
-	// Check if address has 40 hexadecimal characters
-	isValid, _ := regexp.MatchString("^[0-9a-fA-F]{40}$", address)
-
-	if !isValid {
-		return errors.New("invalid address")
+	if !addressIsValid {
+		return errors.New("address is invalid")
 	}
 
 	return nil

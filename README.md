@@ -188,10 +188,16 @@ You can register your operator using the below command
 eigenlayer operator register operator-config.yaml
 ```
 
-A sample yaml [config file](cli/operator/config/operator-config-example.yaml) and [metadata](cli/operator/config/metadata-example.json) is provided for reference. You can also create empty config files by using commands referred in [this section](#sample-config-creation). Fill in the required details to register the operator.
+A sample yaml [operator-config.yaml](cli/operator/config/operator-config-example.yaml) is provided for reference. 
+You can also create empty config files by using commands referred in [this section](#sample-config-creation). Fill in the required details to register the operator.
+
+A public metadata url is required to register the operator. 
+After creating and filling the [metadata](cli/operator/config/metadata-example.json) file, you can it to a publicly accessible location and give the url in the config file.
+You are also required to upload the image of the operator to a publicly accessible location and give the url in the metadata file.
+
 Make sure that if you use `local_keystore` as signer, you give the path to the keys created in above section.
 
-You can check the registration status of your operator using
+After you complete the registration, you can check the registration status of your operator using
 
 ```bash
 eigenlayer operator status operator-config.yaml

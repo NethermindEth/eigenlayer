@@ -1,7 +1,10 @@
+# To learn more about these fields
+# https://github:com/Layr-Labs/eigenlayer-contracts/blob/master/src/contracts/interfaces/IDelegationManager:sol:
 operator:
-  address: 
+  address:
   earnings_receiver_address: 
-  delegation_approver_address: 
+  delegation_approver_address:
+  staker_opt_out_window_blocks:
   metadata_url: https://example.com/metadata.json
 
 # EigenLayer Slasher contract address
@@ -14,12 +17,14 @@ bls_public_key_compendium_address:
 eth_rpc_url: http://localhost:8545
 
 # Signer Type to use
-# Supported values: private_key, local_keystore
+# Supported values: local_keystore
 signer_type: local_keystore
 
-# Full path to private key store file if you are using local_keystore signer type
+# Full path to ecdsa private key store file
 private_key_store_path: <path-to>/test.ecdsa.key.json
 
+# Full path to bls private key store file
 bls_private_key_store_path: <path-to>/test.bls.key.json
 
-chain_id: 31337
+# Chain ID: 1 for mainnet, 5 for Goerli, 31337 for local
+chain_id: 5

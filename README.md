@@ -1,6 +1,6 @@
 # Eigenlayer CLI
 
-Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, manages, and monitors EigenLayer nodes on your local machine. For more information on Eigenlayer, Eigenlayer Node Software, and what this tool does, check our [documentation](https://www.eigenlayer.xyz)
+Eigenlayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 
 
 - [Eigenlayer CLI](#eigenlayer-cli)
   - [Dependencies](#dependencies)
@@ -16,9 +16,32 @@ Eigenlayer is a setup wizard for EigenLayer Node Software. The tool installs, ma
   - [Operator registration](#operator-registration)
     - [Sample config creation](#sample-config-creation)
 
-## Dependencies
+## Supported Operating Systems
+| Operating System | Architecture |
+|------------------|--------------|
+| Linux            | amd64        |
+| Linux            | arm64        |
 
-This tool depends on [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) in order to manage the installation and running of EigenLayer nodes. Please make sure that you have both Docker and Docker Compose installed and configured properly before using this tool.
+
+## Install `eigenlayer` CLI using a binary
+
+The `eigenlayer` CLI tool versions are managed with GitHub releases. To install it, you can download the binary directly from the release assets manually, or by using the following command replacing the `<VERSION>` and `<ARCH>` with the proper values:
+
+```bash
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
+```
+
+### Linux/amd64
+
+```bash
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.1/eigenlayer-linux-amd64 --output eigenlayer
+```
+
+### Linux/arm64
+
+```bash
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.1/eigenlayer-linux-arm64 --output eigenlayer
+```
 
 ## Install `eigenlayer` CLI using Go
 
@@ -75,26 +98,6 @@ sudo cp $GOPATH/bin/eigenlayer /usr/local/bin/
 
 # Build from source
 sudo cp eigenlayer/build/eigenlayer /usr/local/bin/
-```
-
-## Install `eigenlayer` CLI using a binary
-
-The `eigenlayer` CLI tool versions are managed with GitHub releases. To install it, you can download the binary directly from the release assets manually, or by using the following command replacing the `<VERSION>` and `<ARCH>` with the proper values:
-
-```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
-```
-
-### Linux/amd64
-
-```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.0/eigenlayer-linux-amd64 --output eigenlayer
-```
-
-### Linux/arm64
-
-```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.0/eigenlayer-linux-arm64 --output eigenlayer
 ```
 
 ## Create and List Keys
@@ -182,7 +185,9 @@ It will show all the keys created with this command with the public key
 
 ## Operator registration
 
-You can register your operator using the below command
+You can register your operator using the below command. 
+Operator registration requires an operator to have both ecdsa and bls keys. 
+
 
 ```bash
 eigenlayer operator register operator-config.yaml
@@ -193,7 +198,7 @@ You can also create empty config files by using commands referred in [this secti
 
 A public metadata url is required to register the operator. 
 After creating and filling the [metadata](cli/operator/config/metadata-example.json) file, you can it to a publicly accessible location and give the url in the config file.
-You are also required to upload the image of the operator to a publicly accessible location and give the url in the metadata file.
+You are also required to upload the image of the operator to a publicly accessible location and give the url in the metadata file. We only support `.png` images for now. 
 
 Make sure that if you use `local_keystore` as signer, you give the path to the keys created in above section.
 

@@ -1,5 +1,7 @@
-# To learn more about these fields
-# https://github:com/Layr-Labs/eigenlayer-contracts/blob/master/src/contracts/interfaces/IDelegationManager:sol:
+# All the below fields are required for successful operator registration.
+
+# To learn more about operator fields
+# https://github.com/Layr-Labs/eigenlayer-contracts/blob/92ccacc868785350973afc15e90a18dcd39fbc0b/src/contracts/interfaces/IDelegationManager.sol#L21:
 operator:
   address:
   earnings_receiver_address: 
@@ -8,22 +10,24 @@ operator:
   metadata_url: https://example.com/metadata.json
 
 # EigenLayer Slasher contract address
+# This will be provided by EigenLayer team
 el_slasher_address: 
 
 # Address of BLS Public Key Compendium contract
+# This will be provided by EigenLayer team
 bls_public_key_compendium_address:
 
-# ETH RPC URL
+# ETH RPC URL to the ethereum node you are using for on-chain operations
 eth_rpc_url: http://localhost:8545
 
 # Signer Type to use
 # Supported values: local_keystore
 signer_type: local_keystore
 
-# Full path to ecdsa private key store file
+# Full path to local ecdsa private key store file
 private_key_store_path: <path-to>/test.ecdsa.key.json
 
-# Full path to bls private key store file
+# Full path to local bls private key store file
 bls_private_key_store_path: <path-to>/test.bls.key.json
 
 # Chain ID: 1 for mainnet, 5 for Goerli, 31337 for local

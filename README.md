@@ -185,7 +185,9 @@ It will show all the keys created with this command with the public key
 
 ## Operator registration
 
-You can register your operator using the below command
+You can register your operator using the below command. 
+Operator registration requires an operator to have both ecdsa and bls keys. 
+
 
 ```bash
 eigenlayer operator register operator-config.yaml
@@ -196,7 +198,7 @@ You can also create empty config files by using commands referred in [this secti
 
 A public metadata url is required to register the operator. 
 After creating and filling the [metadata](cli/operator/config/metadata-example.json) file, you can it to a publicly accessible location and give the url in the config file.
-You are also required to upload the image of the operator to a publicly accessible location and give the url in the metadata file.
+You are also required to upload the image of the operator to a publicly accessible location and give the url in the metadata file. We only support `.png` images for now. 
 
 Make sure that if you use `local_keystore` as signer, you give the path to the keys created in above section.
 

@@ -1,8 +1,8 @@
-# Eigenlayer CLI
+# EigenLayer CLI
 
-Eigenlayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 
+EigenLayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 
 
-- [Eigenlayer CLI](#eigenlayer-cli)
+- [EigenLayer CLI](#eigenlayer-cli)
   - [Dependencies](#dependencies)
   - [Install `eigenlayer` CLI using Go](#install-eigenlayer-cli-using-go)
   - [Install `eigenlayer` CLI from source](#install-eigenlayer-cli-from-source)
@@ -100,8 +100,7 @@ sudo cp $GOPATH/bin/eigenlayer /usr/local/bin/
 sudo cp eigenlayer/build/eigenlayer /usr/local/bin/
 ```
 
-## Create and List Keys
-
+## Create or Import Keys
 ### Create keys
 
 You can create encrypted ecdsa and bls keys using the cli which will be needed for operator registration and other onchain calls
@@ -184,10 +183,10 @@ eigenlayer operator keys list
 It will show all the keys created with this command with the public key
 
 ## Operator registration
+>ECDSA and BLS keys are required for operator registration. 
+You may choose to either [create](#create-keys) your own set of keys using the EigenLayer CLI (recommended for first time users) or [import](#import-keys) your existing keys (recommended for advanced users who already have keys created).
 
-You can register your operator using the below command. 
-Operator registration requires an operator to have both ecdsa and bls keys. 
-
+You can register your operator using the command below.
 
 ```bash
 eigenlayer operator register operator-config.yaml

@@ -186,7 +186,7 @@ It will show all the keys created with this command with the public key
 >ECDSA and BLS keys are required for operator registration. 
 You may choose to either [create](#create-keys) your own set of keys using the EigenLayer CLI (recommended for first time users) or [import](#import-keys) your existing keys (recommended for advanced users who already have keys created).
 
-You can register your operator using the below command.
+You can register your operator using the command below.
 
 ```bash
 eigenlayer operator register operator-config.yaml

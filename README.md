@@ -1,8 +1,8 @@
-# Eigenlayer CLI
+# EigenLayer CLI
 
-Eigenlayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 
+EigenLayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 
 
-- [Eigenlayer CLI](#eigenlayer-cli)
+- [EigenLayer CLI](#eigenlayer-cli)
   - [Dependencies](#dependencies)
   - [Install `eigenlayer` CLI using Go](#install-eigenlayer-cli-using-go)
   - [Install `eigenlayer` CLI from source](#install-eigenlayer-cli-from-source)

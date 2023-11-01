@@ -12,7 +12,7 @@ cd /home/runner/work/eigenlayer/eigenlayer/eigenlayer
 export SVERSION=${VERSION#v}
 echo "eigenlayer ($SVERSION) jammy; urgency=medium
 
-  * Eigenlayer ($SVERSION release)
+  * EigenLayer ($SVERSION release)
 
  -- Nethermind <devops@nethermind.io>  $( date -R )" > /home/runner/work/eigenlayer/eigenlayer/eigenlayer/build/package/debian/debian/changelog
 

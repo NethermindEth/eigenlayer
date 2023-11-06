@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.2] 2023-11-05
+- dependency updated ([#137](https://github.com/NethermindEth/eigenlayer/pull/137))
+
 ## [v0.4.1] - 2023-10-31
 - Update eigensdk - support only png images for metadata ([#134](https://github.com/NethermindEth/eigenlayer/pull/134)
 - prompt operator for creating config files ([#125](https://github.com/NethermindEth/eigenlayer/pull/125))

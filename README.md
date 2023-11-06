@@ -34,13 +34,13 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/
 ### Linux/amd64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.1/eigenlayer-linux-amd64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.2/eigenlayer-linux-amd64 --output eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.1/eigenlayer-linux-arm64 --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.2/eigenlayer-linux-arm64 --output eigenlayer
 ```
 
 ## Install `eigenlayer` CLI using Go

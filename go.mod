@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/Layr-Labs/eigensdk-go v0.0.7
-	github.com/NethermindEth/docker-volumes-snapshotter v0.2.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/compose-spec/compose-go v1.18.3
@@ -106,6 +105,7 @@ require (
 )
 
 require (
+	github.com/NethermindEth/docker-volumes-snapshotter v0.2.1-0.20231009154258-63034b9c6340 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.7.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

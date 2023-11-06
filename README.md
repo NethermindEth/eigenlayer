@@ -124,7 +124,7 @@ eigenlayer operator keys create --key-type ecdsa test
 ```
 
 Output
-
+This outputs the public key and the ethereum address associated with the key. This will also be your operator address.
 ```bash
 ? Enter password to encrypt the ecdsa private key: *******
 ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
@@ -134,6 +134,7 @@ Key location: ./operator_keys/test.ecdsa.key.json
 a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
 0x9F664973BF656d6077E66973c474cB58eD5E97E1
 ```
+
 
 ### Import keys
 

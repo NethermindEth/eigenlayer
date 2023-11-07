@@ -160,7 +160,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				logger.Info("Operator registration transaction at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+				logger.Infof("Operator registration transaction at: %s", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
 
 			} else {
 				logger.Info("Operator is already registered")
@@ -170,7 +170,7 @@ func RegisterCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logger.Info("Operator bls key added transaction at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+			logger.Infof("Operator bls key added transaction at: %s", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
 
 			logger.Info("Operator is registered and bls key added successfully")
 			return nil

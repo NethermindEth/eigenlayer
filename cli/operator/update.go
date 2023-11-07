@@ -77,7 +77,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			llog, err := eigensdkLogger.NewZapLogger(eigensdkLogger.Development)
+			logger, err := eigensdkLogger.NewZapLogger(eigensdkLogger.Development)
 			if err != nil {
 				return err
 			}
@@ -97,7 +97,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 				common.HexToAddress(operatorCfg.BlsPublicKeyCompendiumAddress),
 				ethClient,
 				ethClient,
-				llog,
+				logger,
 			)
 			if err != nil {
 				return err
@@ -108,7 +108,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 				elContractsClient,
 				ethClient,
 				localSigner,
-				llog,
+				logger,
 				noopMetrics,
 			)
 
@@ -119,7 +119,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Operator details updated at:", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
+			logger.Infof("Operator details updated at: %s", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
 
 			fmt.Println("Operator updated successfully")
 			return nil

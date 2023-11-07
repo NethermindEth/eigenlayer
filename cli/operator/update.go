@@ -121,7 +121,7 @@ func UpdateCmd(p prompter.Prompter) *cobra.Command {
 			}
 			logger.Infof("Operator details updated at: %s", getTransactionLink(receipt.TxHash.String(), &operatorCfg.ChainId))
 
-			fmt.Println("Operator updated successfully")
+			logger.Info("Operator updated successfully")
 			return nil
 		},
 	}

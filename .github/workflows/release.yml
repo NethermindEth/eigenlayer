@@ -64,9 +64,61 @@ jobs:
         with:
           name: eigenlayer-${{env.VERSION}}-linux-arm64
           path: bin/eigenlayer-linux-arm64
+  eigenlayer-ubuntu-20-04:
+    name: Build eigenlayer
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04 ]
+        go: [ "1.21" ]
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ github.event.inputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Install dependencies
+        run: make install-deps
+      - name: Generate mocks
+        run: make generate
+      - name: Check go mod status
+        run: |
+          make gomod_tidy
+          if [[ ! -z $(git status -s | grep 'go.mod') ]] || [[ ! -z $(git status -s | grep 'go.sum') ]];
+          then
+            echo "Changes on go.mod or go.sum files - state is not clean:"
+            git status -s
+            git diff "$GITHUB_SHA"
+            exit 1
+          fi
+        shell: bash
+      - name: Unit tests
+        run: make unit-test
+      # These tests were only running for install and monitoring so commenting for now
+      #      - name: E2E tests
+      #        run: make e2e-test
+      - name: Build linux amd64
+        run: make build-linux-amd64
+      - name: Build linux arm64
+        run: make build-linux-arm64
+      - name: Upload eigenlayer-linux-amd64
+        uses: actions/upload-artifact@v3
+        with:
+          name: eigenlayer-${{env.VERSION}}-linux-amd64-ubuntu-20-04
+          path: bin/eigenlayer-linux-amd64-ubuntu-20-04
+      - name: Upload eigenlayer-linux-arm64
+        uses: actions/upload-artifact@v3
+        with:
+          name: eigenlayer-${{env.VERSION}}-linux-arm64-ubuntu-20-04
+          path: bin/eigenlayer-linux-arm64-ubuntu-20-04
   publish-github:
     name: Pre-release eigenlayer and upload binaries to GitHub
-    needs: eigenlayer-linux
+    needs: [ eigenlayer-linux, eigenlayer-ubuntu-20-04]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.inputs.tag }}

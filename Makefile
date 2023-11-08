@@ -11,7 +11,7 @@ build: ## Compile the binary
 	@go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 
 build-linux-amd64: ## Compile the binary for amd64
-	@env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/$(APP_NAME)-linux-amd64 cmd/$(APP_NAME)/main.go
+	@env GOOS=linux GOARCH=amd64 go build -o bin/$(APP_NAME)-linux-amd64 cmd/$(APP_NAME)/main.go
 
 build-linux-arm64: ## Compile the binary for arm64
 	@env GOOS=linux GOARCH=arm64 go build -o bin/$(APP_NAME)-linux-arm64 cmd/$(APP_NAME)/main.go

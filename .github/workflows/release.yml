@@ -110,12 +110,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: eigenlayer-${{env.VERSION}}-linux-amd64-ubuntu-20-04
-          path: bin/eigenlayer-linux-amd64-ubuntu-20-04
+          path: bin/eigenlayer-linux-amd64
       - name: Upload eigenlayer-linux-arm64
         uses: actions/upload-artifact@v3
         with:
           name: eigenlayer-${{env.VERSION}}-linux-arm64-ubuntu-20-04
-          path: bin/eigenlayer-linux-arm64-ubuntu-20-04
+          path: bin/eigenlayer-linux-arm64
   publish-github:
     name: Pre-release eigenlayer and upload binaries to GitHub
     needs: [ eigenlayer-linux, eigenlayer-ubuntu-20-04]

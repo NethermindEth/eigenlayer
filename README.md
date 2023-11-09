@@ -31,18 +31,21 @@ The `eigenlayer` CLI tool versions are managed with GitHub releases. To install 
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ### Linux/amd64
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-amd64 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-arm64 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 **_Note: If you are using `Ubuntu 20.04`, you can also use the below command to install the binary:_**
@@ -50,11 +53,13 @@ curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eig
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-amd64-ubuntu-20-04 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ### Linux/arm64 (Ubuntu 20.04)
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-arm64-ubuntu-20-04 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ## Install `eigenlayer` CLI using Go

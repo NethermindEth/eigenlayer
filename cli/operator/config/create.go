@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 
@@ -62,6 +63,10 @@ func CreateCmd(p prompter.Prompter) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			fmt.Println("Created operator.yaml and metadata.json files. Please fill in the smart contract configuration details(el_slasher_address and bls_public_key_compendium_address) provided by EigenLayer team. ")
+			fmt.Println("Please fill in the metadata.json file and upload it to a public url. Then update the operator.yaml file with the url (metadata_url).")
+			fmt.Println("Once you have filled in the operator.yaml file, you can register your operator using the configuration file.")
 			return nil
 		},
 	}
@@ -120,7 +125,7 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 	config.Operator.EarningsReceiverAddress = earningsAddress
 
 	// Prompt for eth node
-	rpcUrl, err := p.InputString("Enter your rpc url:", "http://localhost:8545", "",
+	rpcUrl, err := p.InputString("Enter your ETH rpc url:", "http://localhost:8545", "",
 		func(s string) error { return nil },
 	)
 	if err != nil {
@@ -160,6 +165,8 @@ func promptOperatorInfo(config *types.OperatorConfig, p prompter.Prompter) (type
 	case "local":
 		config.ChainId = *big.NewInt(31337)
 	}
+
+	config.SignerType = types.LocalKeystoreSigner
 
 	return *config, nil
 }

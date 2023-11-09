@@ -3,20 +3,20 @@ include .env
 .DEFAULT_GOAL 	:= help
 .PHONY: generate build build-linux build-docker install run gomod_tidy format staticcheck test codecov-test pre-commit install-deps install-gofumpt install-mockgen install-staticcheck help
 
-generate:
+generate: install-mockgen
 	@go generate ./...
 
-build: generate ## Compile the binary
+build: ## Compile the binary
 	@mkdir -p bin
 	@go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 
-build-linux-amd64: generate ## Compile the binary for amd64
+build-linux-amd64: ## Compile the binary for amd64
 	@env GOOS=linux GOARCH=amd64 go build -o bin/$(APP_NAME)-linux-amd64 cmd/$(APP_NAME)/main.go
 
-build-linux-arm64: generate ## Compile the binary for arm64
+build-linux-arm64: ## Compile the binary for arm64
 	@env GOOS=linux GOARCH=arm64 go build -o bin/$(APP_NAME)-linux-arm64 cmd/$(APP_NAME)/main.go
 
-build-linux: generate ## Compile the binary for linux
+build-linux: ## Compile the binary for linux
 	@env GOOS=linux go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 
 build-docker: build-linux ## Build docker image

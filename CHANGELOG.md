@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.3] 2023-11-08
+- support for ubuntu 20.04 binaries ([#140](https://github.com/NethermindEth/eigenlayer/pull/140))
+
 ## [v0.4.2] 2023-11-05
 - dependency updated ([#137](https://github.com/NethermindEth/eigenlayer/pull/137))
 

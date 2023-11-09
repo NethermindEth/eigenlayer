@@ -9,6 +9,8 @@ EigenLayer CLI is used to manage core operator functionalities like local key ma
   - [Install `eigenlayer` CLI using a binary](#install-eigenlayer-cli-using-a-binary)
     - [Linux/amd64](#linuxamd64)
     - [Linux/arm64](#linuxarm64)
+    - [Linux/amd64 (Ubuntu 20.04)](#linuxamd64-ubuntu-2004)
+    - [Linux/arm64 (Ubuntu 20.04)](#linuxarm64-ubuntu-2004)
   - [Create and List Keys](#create-and-list-keys)
     - [Create keys](#create-keys)
     - [Import keys](#import-keys)
@@ -29,33 +31,35 @@ The `eigenlayer` CLI tool versions are managed with GitHub releases. To install 
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/<VERSION>/eigenlayer-linux-<ARCH> --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ### Linux/amd64
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-amd64 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ### Linux/arm64
 
 ```bash
 curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-arm64 --output eigenlayer
+chmod +x eigenlayer
 ```
 
-If you are using Ubuntu 20.04, you can also use the following command to install the binary:
-
-### Linux/amd64
+**_Note: If you are using `Ubuntu 20.04`, you can also use the below command to install the binary:_**
+### Linux/amd64 (Ubuntu 20.04)
 
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-amd64-ubuntu-20-04
- --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-amd64-ubuntu-20-04 --output eigenlayer
+chmod +x eigenlayer
 ```
 
-### Linux/arm64
+### Linux/arm64 (Ubuntu 20.04)
 ```bash
-curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-arm64-ubuntu-20-04
- --output eigenlayer
+curl -L https://github.com/NethermindEth/eigenlayer/releases/download/v0.4.3/eigenlayer-linux-arm64-ubuntu-20-04 --output eigenlayer
+chmod +x eigenlayer
 ```
 
 ## Install `eigenlayer` CLI using Go

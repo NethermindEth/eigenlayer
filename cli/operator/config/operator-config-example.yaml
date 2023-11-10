@@ -4,7 +4,7 @@
 # https://github.com/Layr-Labs/eigenlayer-contracts/blob/92ccacc868785350973afc15e90a18dcd39fbc0b/src/contracts/interfaces/IDelegationManager.sol#L21:
 operator:
   # This is the standard Ethereum address format (ex: 0x6a8c0D554a694899041E52a91B4EC3Ff23d8aBD5) of your operator
-  # which you created or imported using EigenLayer CLI
+  # which is the ecdsa key you created or imported using EigenLayer CLI
   address:
   # This is the standard Ethereum address format (ex: 0x6a8c0D554a694899041E52a91B4EC3Ff23d8aBD5)
   # This is the address where your operator will receive earnings. This could be same as operator address
@@ -13,8 +13,9 @@ operator:
   # This is the address which will approve delegation requests.
   # If you don't want to gate delegation requests, set this to 0x0000000000000000000000000000000000000000
   delegation_approver_address:
-  #  Please refer to this link for more details on this field https://github.com/Layr-Labs/eigenlayer-contracts/blob/92ccacc868785350973afc15e90a18dcd39fbc0b/src/contracts/interfaces/IDelegationManager.sol#L33:
-  staker_opt_out_window_blocks:
+  # Please refer to this link for more details on this field https://github.com/Layr-Labs/eigenlayer-contracts/blob/92ccacc868785350973afc15e90a18dcd39fbc0b/src/contracts/interfaces/IDelegationManager.sol#L33:
+  # Please keep this field to 0, and it can be updated later using EigenLayer CLI
+  staker_opt_out_window_blocks: 0
   metadata_url: https://example.com/metadata.json
 
 # EigenLayer Slasher contract address

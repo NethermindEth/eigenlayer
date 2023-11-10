@@ -11,8 +11,9 @@ operator:
   earnings_receiver_address:
   # This is the standard Ethereum address format (0x...)
   # This is the address which operator will use to approve delegation requests from stakers.
-  # If you don't want to gate delegation requests, set this to 0x0000000000000000000000000000000000000000
-  delegation_approver_address:
+  # if set, this address must sign and approve new delegation from Stakers to this Operator
+  # This is optional, so you can leave it  with the default value for un-gated delegation requests
+  delegation_approver_address: 0x0000000000000000000000000000000000000000
   # Please refer to this link for more details on this field https://github.com/Layr-Labs/eigenlayer-contracts/blob/92ccacc868785350973afc15e90a18dcd39fbc0b/src/contracts/interfaces/IDelegationManager.sol#L33:
   # Please keep this field to 0, and it can be updated later using EigenLayer CLI
   staker_opt_out_window_blocks: 0

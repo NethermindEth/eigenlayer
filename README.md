@@ -184,7 +184,7 @@ Output
 ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
 Please backup the above private key hex in safe place.
 
-Key location: /home/ubuntu/operator_keys/test.ecdsa.key.json
+Key location: /home/ubuntu/.eigenlayer/operator_keys/test.ecdsa.key.json
 Public Key hex:  a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
 Ethereum Address 0x9F664973BF656d6077E66973c474cB58eD5E97E1
 ```

@@ -145,13 +145,13 @@ eigenlayer operator keys create --key-type ecdsa test
 Output
 This outputs the public key and the ethereum address associated with the key. This will also be your operator address.
 ```bash
-? Enter password to encrypt the ecdsa private key: *******
-ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
+? Enter password to encrypt the ecdsa private key:
+ECDSA Private Key (Hex):  b3eba201405d5b5f7aaa9adf6bb734dc6c0f448ef64dd39df80ca2d92fca6d7b
 Please backup the above private key hex in safe place.
 
-Key location: ./operator_keys/test.ecdsa.key.json
-a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
-0x9F664973BF656d6077E66973c474cB58eD5E97E1
+Key location: /home/ubuntu/.eigenlayer/operator_keys/test.ecdsa.key.json
+Public Key hex:  f87ee475109c2943038b3c006b8a004ee17bebf3357d10d8f63ef202c5c28723906533dccfda5d76c1da0a9f05cc6d32085ca1af8aaab5a28171474b1ad0aa68
+Ethereum Address 0x6a8c0D554a694899041E52a91B4EC3Ff23d8aBD5
 ```
 
 
@@ -184,9 +184,9 @@ Output
 ECDSA Private Key (Hex):  6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6
 Please backup the above private key hex in safe place.
 
-Key location: ./operator_keys/test.ecdsa.key.json
-a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
-0x9F664973BF656d6077E66973c474cB58eD5E97E1
+Key location: /home/ubuntu/.eigenlayer/operator_keys/test.ecdsa.key.json
+Public Key hex:  a30264c19cd7292d5153da9c9df58f81aced417e8587dd339021c45ee61f20d55f4c3d374d6f472d3a2c4382e2a9770db395d60756d3b3ea97e8c1f9013eb1bb
+Ethereum Address 0x9F664973BF656d6077E66973c474cB58eD5E97E1
 ```
 
 This will prompt a password which you can use to encrypt the keys. Keys will be stored in local disk and will be shown once keys are created.

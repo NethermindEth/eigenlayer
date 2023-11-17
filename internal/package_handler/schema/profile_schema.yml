@@ -1,4 +1,260 @@
 $schema: "http://json-schema.org/draft-07/schema#"
+# Definitions of all type of Option
+definitions:
+  OptionInt:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "int"
+      default:
+        type: integer
+      validate:
+        type: object
+        properties:
+          min_value:
+            type: integer
+          max_value:
+            type: integer
+        required:
+          - min_value
+          - max_value
+        additionalProperties: false
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false 
+  OptionString:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "str"
+      default:
+        type: string
+      validate:
+        type: object
+        properties:
+          re2_regex:
+            type: string
+        required:
+          - re2_regex
+        additionalProperties: false 
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionFloat:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "float"
+      default:
+        type: number
+      validate:
+        type: object
+        properties:
+          min_value:
+            type: number
+          max_value:
+            type: number
+        required:
+          - min_value
+          - max_value
+        additionalProperties: false
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionBool:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "bool"
+      default:
+        type: boolean
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionPathDir:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "path_dir"
+      default:
+        type: string
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionPathFile:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "path_file"
+      default:
+        type: string
+      validate:
+        type: object
+        properties:
+          format:
+            type: string
+        required:
+          - format
+        additionalProperties: false 
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionURI:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "uri"
+      default:
+        type: string
+      validate:
+        type: object
+        properties:
+          uri_scheme:
+            type: array
+            minItems: 1
+            items:
+              type: string
+        required:
+          - uri_scheme
+        additionalProperties: false 
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionSelect:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "select"
+      default:
+        type: string
+      validate:
+        type: object
+        properties:
+          options:
+            type: array
+            minItems: 1
+            items:
+              type: string
+        required:
+          - options
+        additionalProperties: false 
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionPort:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "port"
+      default:
+        type: integer
+        minumum: 1
+        maximum: 65535
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+  OptionID:
+    type: object
+    properties:
+      name:
+        type: string
+      target:
+        type: string
+      help:
+        type: string
+      type:
+        const: "id"
+      default:
+        type: string      
+    required:
+      - name
+      - target
+      - help
+      - type
+    additionalProperties: false
+
+# Profile Schema
 type: object
 properties:
   name:
@@ -34,43 +290,17 @@ properties:
   options:
     type: array
     items:
-      type: object
-      properties:
-        name:
-          type: string
-        target:
-          type: string
-        type:
-          type: string
-        default: {} #TODO: Add minimun_count = 1
-        help:
-          type: string
-        validate:
-          type: object
-          properties:
-            re2_regex:
-              type: string
-            format:
-              type: string
-            uri_scheme:
-              type: array
-              items:
-                type: string
-            min_value:
-              type: number
-            max_value:
-              type: number
-            options:
-              type: array
-              items:
-                type: string
-          additionalProperties: false
-      required:
-      - name
-      - target
-      - type
-      - help
-      additionalProperties: false
+      oneOf:
+        - $ref: '#/definitions/OptionInt'
+        - $ref: '#/definitions/OptionString'
+        - $ref: '#/definitions/OptionFloat'
+        - $ref: '#/definitions/OptionBool'
+        - $ref: '#/definitions/OptionPathDir'
+        - $ref: '#/definitions/OptionPathFile'
+        - $ref: '#/definitions/OptionURI'
+        - $ref: '#/definitions/OptionSelect'
+        - $ref: '#/definitions/OptionPort'
+        - $ref: '#/definitions/OptionID'
   monitoring:
     type: object
     properties:

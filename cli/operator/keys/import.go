@@ -2,6 +2,7 @@ package keys
 
 import (
 	"fmt"
+	"math/big"
 	"regexp"
 	"strings"
 
@@ -91,9 +92,26 @@ This command will import keys in ./operator_keys/ location
 				}
 				return saveEcdsaKey(keyName, p, privateKeyPair, insecure)
 			case KeyTypeBLS:
-				blsKeyPair, err := bls.NewKeyPairFromString(privateKey)
-				if err != nil {
-					return err
+				privateKeyBigInt := new(big.Int)
+				privateKeyBigInt, ok := privateKeyBigInt.SetString(privateKey, 10)
+				blsKeyPair := new(bls.KeyPair)
+				var err error
+				if ok {
+					fmt.Println("Importing from large integer")
+					blsKeyPair, err = bls.NewKeyPairFromString(privateKey)
+					if err != nil {
+						return err
+					}
+				} else {
+					// Try to parse as hex
+					fmt.Println("Importing from hex")
+					z := new(big.Int)
+					privateKey = strings.TrimPrefix(privateKey, "0x")
+					_, ok := z.SetString(privateKey, 16)
+					if !ok {
+						return fmt.Errorf("invalid hex private key")
+					}
+					blsKeyPair, err = bls.NewKeyPairFromString(z.String())
 				}
 				return saveBlsKey(keyName, p, blsKeyPair, insecure)
 			default:

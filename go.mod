@@ -33,8 +33,6 @@ require (
 	kythe.io v0.0.63
 )
 
-replace github.com/Layr-Labs/eigensdk-go => /Users/madhurshrimal/Desktop/github/Layr-Labs/eigensdk-go
-
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect

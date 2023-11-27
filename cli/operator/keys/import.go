@@ -93,7 +93,7 @@ This command will import keys in ./operator_keys/ location
 				return saveEcdsaKey(keyName, p, privateKeyPair, insecure)
 			case KeyTypeBLS:
 				privateKeyBigInt := new(big.Int)
-				privateKeyBigInt, ok := privateKeyBigInt.SetString(privateKey, 10)
+				_, ok := privateKeyBigInt.SetString(privateKey, 10)
 				blsKeyPair := new(bls.KeyPair)
 				var err error
 				if ok {
@@ -112,6 +112,9 @@ This command will import keys in ./operator_keys/ location
 						return fmt.Errorf("invalid hex private key")
 					}
 					blsKeyPair, err = bls.NewKeyPairFromString(z.String())
+					if err != nil {
+						return err
+					}
 				}
 				return saveBlsKey(keyName, p, blsKeyPair, insecure)
 			default:

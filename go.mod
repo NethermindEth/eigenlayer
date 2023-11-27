@@ -11,11 +11,11 @@ require (
 	github.com/compose-spec/compose-go v1.18.3
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v24.0.6+incompatible
-	github.com/ethereum/go-ethereum v1.13.4
+	github.com/ethereum/go-ethereum v1.13.5
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/gofrs/flock v0.8.1
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/grafana/grafana-api-golang-client v0.23.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/prometheus/client_golang v1.17.0
@@ -32,6 +32,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	kythe.io v0.0.63
 )
+
+replace github.com/Layr-Labs/eigensdk-go => /Users/madhurshrimal/Desktop/github/Layr-Labs/eigensdk-go
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -108,8 +110,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark-crypto v0.12.1 // indirect
-	github.com/crate-crypto/go-kzg-4844 v0.3.0 // indirect
-	github.com/ethereum/c-kzg-4844 v0.3.1 // indirect
+	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
+	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect

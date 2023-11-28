@@ -127,7 +127,7 @@ func TestImportCmd(t *testing.T) {
 			keyPath:         filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),
 		},
 		{
-			name:    "valid bls key import for hex key",
+			name:    "invalid bls key import for hex key",
 			args:    []string{"--key-type", "bls", "test", "0xfes"},
 			err:     ErrInvalidHexPrivateKey,
 			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),

@@ -109,7 +109,7 @@ This command will import keys in ./operator_keys/ location
 					privateKey = strings.TrimPrefix(privateKey, "0x")
 					_, ok := z.SetString(privateKey, 16)
 					if !ok {
-						return fmt.Errorf("invalid hex private key")
+						return ErrInvalidHexPrivateKey
 					}
 					blsKeyPair, err = bls.NewKeyPairFromString(z.String())
 					if err != nil {

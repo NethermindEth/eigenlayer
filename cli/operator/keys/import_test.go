@@ -22,11 +22,12 @@ func TestImportCmd(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		args       []string
-		err        error
-		keyPath    string
-		promptMock func(p *prompterMock.MockPrompter)
+		name            string
+		args            []string
+		err             error
+		keyPath         string
+		expectedPrivKey string
+		promptMock      func(p *prompterMock.MockPrompter)
 	}{
 		{
 			name: "no arguments",
@@ -92,7 +93,8 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
-			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
+			expectedPrivKey: "6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6",
+			keyPath:         filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
 		},
 		{
 			name: "valid ecdsa key import with 0x prefix",
@@ -101,7 +103,8 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
-			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
+			expectedPrivKey: "6842fb8f5fa574d0482818b8a825a15c4d68f542693197f2c2497e3562f335f6",
+			keyPath:         filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.ecdsa.key.json"),
 		},
 		{
 			name: "valid bls key import",
@@ -110,6 +113,23 @@ func TestImportCmd(t *testing.T) {
 			promptMock: func(p *prompterMock.MockPrompter) {
 				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
 			},
+			expectedPrivKey: "20030410000080487431431153104351076122223465926814327806350179952713280726583",
+			keyPath:         filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),
+		},
+		{
+			name: "valid bls key import for hex key",
+			args: []string{"--key-type", "bls", "test", "0xfe198b992d97545b3b0174f026f781039f167c13f6d0ce9f511d0d2e973b7f02"},
+			err:  nil,
+			promptMock: func(p *prompterMock.MockPrompter) {
+				p.EXPECT().InputHiddenString(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil)
+			},
+			expectedPrivKey: "5491383829988096583828972342810831790467090979842721151380259607665538989821",
+			keyPath:         filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),
+		},
+		{
+			name:    "invalid bls key import for hex key",
+			args:    []string{"--key-type", "bls", "test", "0xfes"},
+			err:     ErrInvalidHexPrivateKey,
 			keyPath: filepath.Join(homePath, OperatorKeystoreSubFolder, "/test.bls.key.json"),
 		},
 	}
@@ -144,7 +164,7 @@ func TestImportCmd(t *testing.T) {
 				} else if tt.args[1] == KeyTypeBLS {
 					key, err := bls.ReadPrivateKeyFromFile(tt.keyPath, "")
 					assert.NoError(t, err)
-					assert.Equal(t, tt.args[3], key.PrivKey.String())
+					assert.Equal(t, tt.expectedPrivKey, key.PrivKey.String())
 				}
 			} else {
 				assert.EqualError(t, err, tt.err.Error())

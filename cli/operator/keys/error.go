@@ -10,4 +10,5 @@ var (
 	ErrPrivateKeyContainsWhitespaces = errors.New("private key cannot contain spaces")
 	ErrInvalidKeyType                = errors.New("invalid key type. key type must be either 'ecdsa' or 'bls'")
 	ErrInvalidPassword               = errors.New("invalid password")
+	ErrInvalidHexPrivateKey          = errors.New("invalid hex private key")
 )

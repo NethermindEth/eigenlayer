@@ -1,3 +1,6 @@
+> ⚠️ This repository has been archived and moved to https://github.com/Layr-Labs/eigenlayer-cli ⚠️
+
+
 # EigenLayer CLI
 
 EigenLayer CLI is used to manage core operator functionalities like local key management, operator registration and updates. 

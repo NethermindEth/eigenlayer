@@ -1,4 +1,4 @@
-> ⚠️ This repository has been archived and moved to https://github.com/Layr-Labs/eigenlayer-cli ⚠️
+> ⚠️ This repository has been archived and not longer maintained. The codebase has been moved to https://github.com/Layr-Labs/eigenlayer-cli ⚠️
 
 
 # EigenLayer CLI

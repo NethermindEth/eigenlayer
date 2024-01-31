@@ -99,7 +99,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_performance_score",
+			"expr": "eigen_performance_score{instance_id=\"$InstanceID\"}",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -175,7 +175,7 @@
 			  "uid": "egn-prom"
 			},
 			"editorMode": "builder",
-			"expr": "eigen_performance_score{instanceID=\"$InstanceID\"}",
+			"expr": "eigen_performance_score{instance_id=\"$InstanceID\"}",
 			"legendFormat": "__auto",
 			"range": true,
 			"refId": "A"
@@ -242,7 +242,7 @@
 			},
 			"editorMode": "code",
 			"exemplar": false,
-			"expr": "label_replace(eigen_performance_score, \"short_commit_hash\", \"$1\", \"instance_commit_hash\", \"(.{12}).*\")",
+			"expr": "label_replace(eigen_performance_score{instance_id=\"$InstanceID\"}, \"short_commit_hash\", \"$1\", \"instance_commit_hash\", \"(.{12}).*\")",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -311,7 +311,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_performance_score",
+			"expr": "eigen_performance_score{instance_id=\"$InstanceID\"}",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -380,7 +380,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_performance_score",
+			"expr": "eigen_performance_score{instance_id=\"$InstanceID\"}",
 			"format": "table",
 			"instant": true,
 			"legendFormat": "__auto",
@@ -409,7 +409,7 @@
 		  "type": "prometheus",
 		  "uid": "egn-prom"
 		},
-		"description": "The total balance in AVS Node per used token.",
+		"description": "The total stakes in AVS Node per used token.",
 		"fieldConfig": {
 		  "defaults": {
 			"color": {
@@ -458,13 +458,17 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "eigen_balance_total{instanceID=\"$InstanceID\"}",
-			"legendFormat": "${{token}}",
+			"expr": "eigen_registered_stakes{instance_id=\"$InstanceID\"}",
+			"format": "time_series",
+			"hide": false,
+			"instant": false,
+			"interval": "",
+			"legendFormat": "{{token}} in {{unit}} ",
 			"range": true,
-			"refId": "A"
+			"refId": "B"
 		  }
 		],
-		"title": "Balance Total",
+		"title": "Stakes Total",
 		"type": "stat"
 	  },
 	  {
@@ -472,7 +476,7 @@
 		  "type": "prometheus",
 		  "uid": "egn-prom"
 		},
-		"description": "The total slashing incurred per token.",
+		"description": "1 if the operator has been slashed.",
 		"fieldConfig": {
 		  "defaults": {
 			"color": {
@@ -483,8 +487,12 @@
 			  "mode": "absolute",
 			  "steps": [
 				{
-				  "color": "red",
+				  "color": "green",
 				  "value": null
+				},
+				{
+				  "color": "dark-red",
+				  "value": 1
 				}
 			  ]
 			}
@@ -500,7 +508,7 @@
 		"id": 6,
 		"options": {
 		  "colorMode": "value",
-		  "graphMode": "area",
+		  "graphMode": "none",
 		  "justifyMode": "auto",
 		  "orientation": "auto",
 		  "reduceOptions": {
@@ -510,7 +518,7 @@
 			"fields": "",
 			"values": false
 		  },
-		  "textMode": "auto"
+		  "textMode": "value"
 		},
 		"pluginVersion": "9.4.3",
 		"targets": [
@@ -520,13 +528,17 @@
 			  "uid": "egn-prom"
 			},
 			"editorMode": "builder",
-			"expr": "eigen_slashing_incurred_total{instanceID=\"$InstanceID\"}",
-			"legendFormat": "${{token}}",
+			"exemplar": false,
+			"expr": "eigen_slashing_status{instance_id=\"$InstanceID\"}",
+			"format": "time_series",
+			"hide": false,
+			"instant": false,
+			"legendFormat": "__auto",
 			"range": true,
-			"refId": "A"
+			"refId": "B"
 		  }
 		],
-		"title": "Slashing incurred",
+		"title": "Slashing status",
 		"type": "stat"
 	  },
 	  {
@@ -582,8 +594,8 @@
 			  "uid": "egn-prom"
 			},
 			"editorMode": "builder",
-			"expr": "eigen_fees_earned_total{instanceID=\"$InstanceID\"}",
-			"legendFormat": "${{token}}",
+			"expr": "eigen_fees_earned_total{instance_id=\"$InstanceID\"}",
+			"legendFormat": "{{token}} in {{unit}} ",
 			"range": true,
 			"refId": "A"
 		  }
@@ -687,9 +699,9 @@
 			  "type": "prometheus",
 			  "uid": "egn-prom"
 			},
-			"editorMode": "code",
-			"expr": "rate(eigen_rpc_request_duration_seconds_sum{method=~\".*\", instanceID=\"$InstanceID\"}[5m])",
-			"legendFormat": "__auto",
+			"editorMode": "builder",
+			"expr": "rate(eigen_rpc_request_duration_seconds_sum{method=~\".*\", instance_id=\"$InstanceID\"}[5m])",
+			"legendFormat": "AVS: {{avs_name}}, Instance: {{instance_id}}, Method: {{method}}, Client Version: {{client_version}}",
 			"range": true,
 			"refId": "A"
 		  }
@@ -777,7 +789,7 @@
 			  "uid": "egn-prom"
 			},
 			"editorMode": "builder",
-			"expr": "eigen_rpc_request_total{instanceID=\"$InstanceID\"}",
+			"expr": "eigen_rpc_request_total{instance_id=\"$InstanceID\"}",
 			"legendFormat": "{{method}}",
 			"range": true,
 			"refId": "A"
@@ -854,7 +866,7 @@
 			},
 			"editorMode": "builder",
 			"exemplar": false,
-			"expr": "rate(eigen_rpc_request_duration_seconds_count{instanceID=\"$InstanceID\"}[$__rate_interval])",
+			"expr": "rate(eigen_rpc_request_duration_seconds_count{instance_id=\"$InstanceID\"}[$__rate_interval])",
 			"format": "time_series",
 			"instant": false,
 			"legendFormat": "{{method}}",
@@ -912,6 +924,6 @@
 	"timezone": "",
 	"title": "AVS Specification Metrics",
 	"uid": "l8RpPN94z",
-	"version": 3,
+	"version": 1,
 	"weekStart": ""
   }
